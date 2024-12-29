@@ -161,7 +161,7 @@ function startHyperspace() {
 
   starCanvas.style.opacity = 1;
   isHyperspaceActive = true;
-  createStars(200);
+  createStars(500);
   animateStars();
 
   setTimeout(() => {
