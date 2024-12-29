@@ -56,8 +56,14 @@ function skipScene() {
 function completeSequence() {
   sceneCompleted = true;
 
-  // Redirect to dashboard.html
-  window.location.href = "html/dashboard.html";
+  // Add fade-out effect
+  document.body.style.transition = "opacity 1s ease";
+  document.body.style.opacity = "0";
+
+  // Redirect after the fade-out finishes
+  setTimeout(() => {
+    window.location.href = "html/dashboard.html";
+  }, 1000); // Match the transition duration (1 second)
 }
 
 /***************************************************************
