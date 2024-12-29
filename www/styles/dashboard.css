@@ -1,27 +1,54 @@
 /* Sidebar Styles */
 #sidebar {
-    width: 250px;
-    min-width: 250px;
-    max-width: 250px;
-    transition: transform 0.3s ease-in-out;
-  }
-  
-  main {
-    flex-grow: 1;
-  }
-  
-  body {
-    overflow-x: hidden;
-  }
-  
-  /* Ensure the sidebar toggles correctly */
-  .collapse:not(.show) {
-    transform: translateX(-250px);
-  }
-  
-  @media (min-width: 768px) {
-    #sidebar {
-      transform: none !important;
-    }
-  }
-  
+  width: 250px;
+  transition: all 0.3s ease-in-out;
+}
+
+#sidebar.collapsed {
+  width: 70px; /* Collapsed width */
+}
+
+.sidebar-header {
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar-header .logo {
+  display: block;
+  transition: all 0.3s ease-in-out;
+}
+
+#sidebar.collapsed .sidebar-header .logo {
+  display: none; /* Hide logo when collapsed */
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease-in-out;
+}
+
+#sidebar.collapsed .nav-link {
+  justify-content: center; /* Center icons */
+}
+
+#sidebar.collapsed .nav-link .menu-text {
+  display: none; /* Hide menu text when collapsed */
+}
+
+#toggle-sidebar {
+  width: 100%;
+  text-align: left;
+  transition: all 0.3s ease-in-out;
+}
+
+#toggle-sidebar i {
+  font-size: 1.25rem;
+}
+
+main {
+  flex-grow: 1;
+  background-color: #1e1e1e; /* Darker shade */
+  color: #ffffff; /* Adjust text color for better contrast */
+  padding: 20px; /* Maintain padding for spacing */
+  transition: background-color 0.3s ease; /* Optional: Smooth transition */
+}
