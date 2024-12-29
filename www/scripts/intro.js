@@ -56,17 +56,8 @@ function skipScene() {
 function completeSequence() {
   sceneCompleted = true;
 
-  const finalMessage = document.createElement("div");
-  finalMessage.textContent = "Welcome to the login page!";
-  finalMessage.style.color = "#0f0";
-  finalMessage.style.fontSize = "2rem";
-  finalMessage.style.position = "absolute";
-  finalMessage.style.top = "50%";
-  finalMessage.style.left = "50%";
-  finalMessage.style.transform = "translate(-50%, -50%)";
-  finalMessage.style.textAlign = "center";
-
-  document.body.appendChild(finalMessage);
+  // Redirect to dashboard.html
+  window.location.href = "html/dashboard.html";
 }
 
 /***************************************************************
