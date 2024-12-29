@@ -1,2 +1,2 @@
 # Eru Labs Webpage
-erulabs.ai webpage
+erulabs.ai webpage with entry to Ea Platform
