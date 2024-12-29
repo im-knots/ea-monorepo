@@ -1,0 +1,83 @@
+/********************************************
+ * Logo Styling
+ ********************************************/
+ #logo-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1000; /* Ensures it stays above other elements */
+  }
+  
+  #logo {
+    max-width: 300px; /* Adjust size as needed */
+    height: auto;
+    display: block;
+  }
+  
+  /********************************************
+   * Page + Container Setup
+   ********************************************/
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #000;
+    font-family: monospace;
+    overflow: hidden; /* Hide scrollbars */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /********************************************
+   * Terminal
+   ********************************************/
+  #terminal-container {
+    position: relative;
+    z-index: 2;
+    width: 300px;
+    text-align: left;
+    text-shadow:
+      0 0 5px #0f0,
+      0 0 10px #0f0,
+      0 0 20px #0f0; 
+    font-size: 1.2rem;
+    line-height: 1.5;
+    color: #0f0; 
+    white-space: pre;
+    transition: opacity 1s ease; /* Fade-out transition */
+  }
+  
+  .cursor {
+    display: inline-block;
+    width: 9px;
+    height: 1em;
+    vertical-align: baseline;
+    background-color: #0f0;
+    box-shadow:
+      0 0 5px #0f0,
+      0 0 10px #0f0,
+      0 0 20px #0f0;
+    animation: blink 0.8s steps(1) infinite;
+  }
+  
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+  
+  /********************************************
+   * Starfield (Hyperspace)
+   ********************************************/
+  #star-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background-color: #000;
+    opacity: 0; /* Start invisible, we'll fade it in */
+    transition: opacity 1s ease;
+  }
+  
