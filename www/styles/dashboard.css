@@ -45,10 +45,53 @@
   font-size: 1.25rem;
 }
 
+/* main area */
 main {
   flex-grow: 1;
   background-color: #1e1e1e; /* Darker shade */
   color: #ffffff; /* Adjust text color for better contrast */
   padding: 20px; /* Maintain padding for spacing */
   transition: background-color 0.3s ease; /* Optional: Smooth transition */
+}
+
+/* card styles */
+.card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* TABLE STYLES */
+/* Status Bubbles */
+.status-indicator {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-indicator.active {
+  background-color: green;
+}
+
+.status-indicator.offline {
+  background-color: gray;
+}
+
+.status-indicator.error {
+  background-color: red;
+}
+
+th {
+  cursor: pointer;
+}
+
+th i {
+  margin-left: 8px;
+  font-size: 0.8em;
+  vertical-align: middle;
 }

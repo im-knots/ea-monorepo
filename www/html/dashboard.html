@@ -8,6 +8,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="../styles/dashboard.css">
 </head>
 <body>
@@ -51,24 +52,120 @@
       </ul>
     </nav>
 
-    <!-- Main Content -->
-    <main class="flex-grow-1 text-light p-4">
-      <!-- Main Content Area -->
-      <h1>Ea Platform Dashboard</h1>
-      <p>some dope shit goes here</p>
-    </main>
-  </div>
+  <!-- Main Content -->
+  <main class="flex-grow-1 text-light p-4">
+    <!-- Main Content Header -->
+    <h1>Ea Platform Dashboard</h1>
+
+    <!-- Stats Panels -->
+    <div class="row g-4 mb-5">
+      <!-- Panel 1: Stat -->
+      <div class="col-md-6">
+        <div class="card bg-dark text-light p-4">
+          <div class="card-body">
+            <h5 class="card-title">My Compute Credits</h5>
+            <div class="d-flex align-items-center">
+              <h1 class="display-4 me-3" id="totalComputeCredits">0</h1> <!-- ID added -->
+              <p class="mb-0">credits earned so far</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card bg-dark text-light p-4">
+          <div class="card-body">
+            <h5 class="card-title">My Compute Rate</h5>
+            <div class="d-flex align-items-center">
+              <h1 class="display-4 me-3" id="totalComputeRate">0</h1> <!-- ID added -->
+              <p class="mb-0">TFLOPS</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Panel 2: Graph -->
+      <div class="col-md-6">
+        <div class="card bg-dark text-light p-4">
+          <div class="card-body">
+            <h5 class="card-title">Compute Rate vs Usage</h5>
+            <canvas id="computeUsageChart" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- Tile Section -->
+    <div class="container">
+      <div class="row g-4">
+        <!-- Tile 1 -->
+        <div class="col-md-4">
+          <a href="page1.html" class="text-decoration-none">
+            <div class="card bg-dark text-light text-center p-4 h-100">
+              <div class="card-body">
+                <i class="bi bi-download fs-1 mb-3"></i>
+                <h5 class="card-title">Install Ainulindale</h5>
+                <p class="card-text">Install the ainulindale software on your device to earn Ea comput credits</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        <!-- Tile 2 -->
+        <div class="col-md-4">
+          <a href="profile.html" class="text-decoration-none">
+            <div class="card bg-dark text-light text-center p-4 h-100">
+              <div class="card-body">
+                <i class="bi bi-cpu fs-1 mb-3"></i>
+                <h5 class="card-title">Start a job</h5>
+                <p class="card-text">Start a training or inference job on the Ea network</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        <!-- Tile 3 -->
+        <div class="col-md-4">
+          <a href="settings.html" class="text-decoration-none">
+            <div class="card bg-dark text-light text-center p-4 h-100">
+              <div class="card-body">
+                <i class="bi bi-shop-window fs-1 mb-3"></i>
+                <h5 class="card-title">Marketplace</h5>
+                <p class="card-text">Buy or sell models and datasets</p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+
+      <!-- Devices Table -->
+      <h2 class="mt-5">My Compute</h2>
+      <div class="table-responsive">
+        <table class="table table-dark table-hover">
+          <thead>
+            <tr>
+              <th scope="col" data-sort="name">Device Name <i class="bi bi-arrow-up-down"></i></th>
+              <th scope="col" data-sort="os">Device OS <i class="bi bi-arrow-up-down"></i></th>
+              <th scope="col" data-sort="type">Compute Type <i class="bi bi-arrow-up-down"></i></th>
+              <th scope="col" data-sort="status">Status <i class="bi bi-arrow-up-down"></i></th>
+              <th scope="col" data-sort="id">ID <i class="bi bi-arrow-up-down"></i></th>
+              <th scope="col" data-sort="lastActive">Last Active <i class="bi bi-arrow-up-down"></i></th>
+            </tr>
+          </thead>
+          <tbody id="devices-table-body">
+            <!-- Rows dynamically populated via API -->
+            <tr>
+              <td colspan="4" class="text-center">No devices found. Please install Ainulindale on supported devices</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>      
+    </div>
+  </main>
+
 
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // Toggle Sidebar Collapse
-    const toggleSidebar = document.getElementById('toggle-sidebar');
-    const sidebar = document.getElementById('sidebar');
-
-    toggleSidebar.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-    });
   </script>
+    <!-- Dashboard JavaScript -->
+  <script src="../scripts/dashboard.js"></script>
 </body>
 </html>
