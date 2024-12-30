@@ -68,6 +68,17 @@
           </div>
         </div>
       </div>
+      <div class="col">
+        <div class="card bg-dark text-light p-4">
+          <div class="card-body">
+            <h5 class="card-title">Agents</h5>
+            <div class="d-flex align-items-center">
+              <h1 class="display-4 me-3" id="agentJobsInProgress">0</h1> <!-- ID added -->
+              <p class="mb-0">Agents currently doing tasks</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- graphs -->
@@ -159,11 +170,32 @@
             <th scope="col" data-sort="os">Device OS <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="type">Compute Type <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="status">Status <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="computeRate">Compute Rate (TFLOPS) <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="id">ID <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="lastActive">Last Active <i class="bi bi-arrow-up-down"></i></th>
           </tr>
         </thead>
         <tbody id="devices-table-body">
+          <!-- Rows dynamically populated via API -->
+          <tr>
+            <td colspan="4" class="text-center">No devices found. Please install Ainulindale on supported devices</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>  
+    <!-- Jobs Table -->
+    <h2 class="mt-5">My Agents and Jobs</h2>
+    <div class="table-responsive">
+      <table class="table table-dark table-hover">
+        <thead>
+          <tr>
+            <th scope="col" data-sort="name">Job Name <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="type">Job Type <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="status">Status <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="lastActive">Last Active <i class="bi bi-arrow-up-down"></i></th>
+          </tr>
+        </thead>
+        <tbody id="jobs-table-body">
           <!-- Rows dynamically populated via API -->
           <tr>
             <td colspan="4" class="text-center">No devices found. Please install Ainulindale on supported devices</td>

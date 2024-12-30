@@ -1,5 +1,6 @@
-// Global Devices Array
+// Global
 let devices = [];
+let jobs = [];
 
 // Load Sidebar
 fetch('../html/sidebar.html')
@@ -29,7 +30,19 @@ const fetchDevices = async () => {
     { name: "Knot's IPhone 15 Pro", os: "iOS", type: "CPU", status: "Active", computeRate: 10, id: "356f4cdc-37e3-4efd-90b5-4ab2b327f040", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "Knot's Samsung Galaxy Tab S10 Ultra", os: "Linux (Android)", type: "CPU", status: "Offline", computeRate: 0, id: "57d63e95-3198-4b3f-9ab7-e40d60f4b72c", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "work-laptop-001", os: "Windows", type: "CPU", status: "Error", computeRate: 0, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" },
-    { name: "gcp-instance-10", os: "Linux (Fedora)", type: "TPU", status: "Active", computeRate: 30, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" }
+    { name: "gcp-instance-10", os: "Linux (Fedora)", type: "TPU", status: "Active", computeRate: 504, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "crypto-gpu-miner", os: "Linux (Debian)", type: "GPU", status: "Active", computeRate: 1500, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" }
+  ];
+};
+
+// Mock Call for jobs
+const fetchJobs = async () => {
+  return [
+    { name: "Travel Planner Agent", type: "Agent", status: "Active", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "Personal Helper Bot", type: "Agent", status: "Offline", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "Stock Market Automation", type: "Agent", status: "Active", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "Stable Diffusion fine tuning", type: "Training", status: "In Progress", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "Video Generation", type: "Inference", status: "In Progress", lastActive: "2024-12-29 10:00:00 ET" },
   ];
 };
 
@@ -43,11 +56,11 @@ const fetchStatsAndGraphData = async () => {
     totalComputeCredits: 1250, // Total credits
     computeUsage: {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"], // Example months
-      data: [5, 10, 7, 12, 8, 15, 20], // Example usage data
+      data: [5, 10, 7, 12, 8, 150, 200], // Example usage data
     },
     computeRate: {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"], // Example months
-      data: [0, 0, 20, 40, 80, 20, totalComputeRate], // Inject the calculated rate
+      data: [0, 0, 100, 40, 80, 600, totalComputeRate], // Inject the calculated rate
     },
   };
 };
@@ -64,6 +77,21 @@ const updateStatsPanel = async () => {
   const totalComputeRate = devices.reduce((sum, device) => sum + device.computeRate, 0);
   const totalComputeElement = document.getElementById("totalComputeRate");
   totalComputeElement.textContent = totalComputeRate;
+
+  // Calculate and update the inference jobs dynamically
+  const inferenceJobsInProgress = jobs.filter(job => job.type === "Inference" && job.status === "In Progress").length;
+  const inferenceJobsElement = document.getElementById("inferenceJobsInProgress");
+  inferenceJobsElement.textContent = inferenceJobsInProgress;
+
+  // Calculate and update the training jobs dynamically
+  const trainingJobsInProgress = jobs.filter(job => job.type === "Training" && job.status === "In Progress").length;
+  const trainingJobsElement = document.getElementById("trainingJobsInProgress");
+  trainingJobsElement.textContent = trainingJobsInProgress;
+
+  // Calculate and update the active agents dynamically
+  const agentJobsInProgress = jobs.filter(job => job.type === "Agent" && job.status === "Active").length;
+  const agentJobsElement = document.getElementById("agentJobsInProgress");
+  agentJobsElement.textContent = agentJobsInProgress;
 
   // Update the graph
   const ctx = document.getElementById("computeUsageChart").getContext("2d");
@@ -113,13 +141,6 @@ const updateStatsPanel = async () => {
   });
 };
 
-// Initialize Stats and Devices on Page Load
-document.addEventListener('DOMContentLoaded', async () => {
-  devices = await fetchDevices();
-  populateDevicesTable();
-  updateStatsPanel();
-});
-
 // Populate Devices Table
 const populateDevicesTable = () => {
   const devicesTableBody = document.getElementById('devices-table-body');
@@ -142,6 +163,7 @@ const populateDevicesTable = () => {
           <td>
             <span class="status-indicator ${statusClass}"></span>${device.status}
           </td>
+          <td>${device.computeRate}</td>
           <td>${device.id}</td>
           <td>${device.lastActive}</td>
         </tr>
@@ -156,3 +178,53 @@ const populateDevicesTable = () => {
     `;
   }
 };
+
+// Populate jobs Table
+const populateJobsTable = () => {
+  const jobsTableBody = document.getElementById('jobs-table-body');
+  jobsTableBody.innerHTML = ''; // Clear existing rows
+
+  if (jobs.length > 0) {
+    jobs.forEach((job) => {
+      const statusClass =
+        job.status === "Active"
+          ? "active"
+          : job.status === "In Progress"
+          ? "inprogress"
+          : job.status === "Offline"
+          ? "offline"
+          : "error";
+
+      const row = `
+        <tr>
+          <td>${job.name}</td>
+          <td>${job.type}</td>
+          <td>
+            <span class="status-indicator ${statusClass}"></span>${job.status}
+          </td>
+          <td>${job.lastActive}</td>
+        </tr>
+      `;
+      jobsTableBody.innerHTML += row;
+    });
+  } else {
+    jobsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center">No compute jobs</td>
+      </tr>
+    `;
+  }
+};
+
+// Initialize Stats and Devices on Page Load
+document.addEventListener('DOMContentLoaded', async () => {
+  devices = await fetchDevices();
+  jobs = await fetchJobs();
+  
+  populateDevicesTable();
+  populateJobsTable();
+
+  updateStatsPanel();
+});
+
+

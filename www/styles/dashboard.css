@@ -35,6 +35,10 @@ main {
   background-color: gray;
 }
 
+.status-indicator.inprogress {
+  background-color: orange;
+}
+
 .status-indicator.error {
   background-color: red;
 }
