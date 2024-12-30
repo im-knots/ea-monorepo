@@ -62,7 +62,7 @@ function completeSequence() {
 
   // Redirect after the fade-out finishes
   setTimeout(() => {
-    window.location.href = "html/dashboard.html";
+    window.location.href = "html/brand.html";
   }, 1000); // Match the transition duration (1 second)
 }
 

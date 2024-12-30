@@ -1,0 +1,38 @@
+/* main area */
+main {
+    flex-grow: 1;
+    background-color: #1e1e1e; /* Darker shade */
+    color: #ffffff; /* Adjust text color for better contrast */
+    padding: 20px; /* Maintain padding for spacing */
+    transition: background-color 0.3s ease; /* Optional: Smooth transition */
+}
+  
+/* card styles */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+body {
+    padding-top: 80px; /* Ensure content doesn't overlap with fixed navbar */
+  }
+  .card {
+    text-align: center;
+  }
+  .card-header, .card-body {
+    text-align: center;
+  }
+  .navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1030; /* Ensure navbar stays on top */
+  }
+  .card-title small {
+    color: #fff; /* Ensure / month text is white */
+  }

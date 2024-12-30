@@ -25,13 +25,13 @@ const fetchDevices = async () => {
   return [
     { name: "Knot's Samsung Galaxy S21", os: "Linux (Android)", type: "CPU", status: "Active", computeRate: 5, id: "07627d25-a263-4c93-8a13-30252f7f19a6", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "Athena", os: "Linux (Ubuntu)", type: "CPU + GPU", status: "Active", computeRate: 85, id: "e6f4bcae-4f4a-4459-a154-0af50a045f99", lastActive: "2024-12-29 10:00:00 ET" },
-    { name: "SPR-1135UH", os: "MacOs", type: "GPU", status: "Error", computeRate: 0, id: "3d6e3664-6dad-456d-ba8b-4ca58a6ae49d", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "SPR-1135UH", os: "MacOs", type: "GPU", status: "Active", computeRate: 100, id: "3d6e3664-6dad-456d-ba8b-4ca58a6ae49d", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "pi-lab", os: "Linux (Raspberry Pi OS)", type: "CPU", status: "Offline", computeRate: 0, id: "bcf5283d-3c2e-43e7-8943-269724549d8c", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "Knot's IPhone 15 Pro", os: "iOS", type: "CPU", status: "Active", computeRate: 10, id: "356f4cdc-37e3-4efd-90b5-4ab2b327f040", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "Knot's Samsung Galaxy Tab S10 Ultra", os: "Linux (Android)", type: "CPU", status: "Offline", computeRate: 0, id: "57d63e95-3198-4b3f-9ab7-e40d60f4b72c", lastActive: "2024-12-29 10:00:00 ET" },
-    { name: "work-laptop-001", os: "Windows", type: "CPU", status: "Error", computeRate: 0, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" },
+    { name: "work-laptop-001", os: "Windows", type: "CPU", status: "Offline", computeRate: 0, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" },
     { name: "gcp-instance-10", os: "Linux (Fedora)", type: "TPU", status: "Active", computeRate: 504, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" },
-    { name: "crypto-gpu-miner", os: "Linux (Debian)", type: "GPU", status: "Active", computeRate: 1500, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" }
+    { name: "crypto-gpu-miner", os: "Linux (Debian)", type: "GPU", status: "Error", computeRate: 0, id: "a31bd4d3-c5ad-48d0-a51b-260b3c779de7", lastActive: "2024-12-29 10:00:00 ET" }
   ];
 };
 
