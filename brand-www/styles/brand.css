@@ -6,6 +6,14 @@ main {
     padding: 20px; /* Maintain padding for spacing */
     transition: background-color 0.3s ease; /* Optional: Smooth transition */
 }
+
+:root {
+  --navbar-height: 80px; /* Adjust based on your navbar height */
+}
+
+section {
+  scroll-margin-top: var(--navbar-height); /* Add offset for smooth scrolling */
+}
   
 /* card styles */
 .card {
@@ -19,20 +27,89 @@ main {
 }
 
 body {
-    padding-top: 80px; /* Ensure content doesn't overlap with fixed navbar */
-  }
-  .card {
-    text-align: center;
-  }
-  .card-header, .card-body {
-    text-align: center;
-  }
-  .navbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1030; /* Ensure navbar stays on top */
-  }
-  .card-title small {
-    color: #fff; /* Ensure / month text is white */
-  }
+  padding-top: 80px; /* Ensure content doesn't overlap with fixed navbar */
+}
+
+.card {
+  text-align: center;
+}
+.card-header, .card-body {
+  text-align: center;
+}
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1030; /* Ensure navbar stays on top */
+}
+.card-title small {
+  color: #fff; /* Ensure / month text is white */
+}
+
+.carousel-caption {
+  position: absolute; /* Ensure it's positioned relative to the image */
+  top: 0; /* Align the top of the caption to the top of the carousel */
+  left: 0; /* Align the left of the caption to the carousel */
+  width: 100%; /* Cover the full width of the carousel */
+  height: 100%; /* Cover the full height of the carousel */
+  background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  display: flex; /* Use flexbox for centering */
+  flex-direction: column; /* Stack text and button vertically */
+  justify-content: center; /* Center the text vertically */
+  align-items: center; /* Center the text horizontally */
+  text-align: center; /* Center text inside the caption */
+  color: white; /* Ensure text is visible */
+  padding: 20px; /* Add padding inside the container */
+  box-sizing: border-box; /* Include padding in dimensions */
+}
+
+.carousel-caption h5 {
+  font-size: 2.5rem; /* Adjust heading size */
+  font-weight: bold; /* Optional: Make text bold */
+  margin-bottom: 10px; /* Add spacing below heading */
+}
+
+.carousel-caption p {
+  font-size: 1.5rem; /* Adjust paragraph size */
+  margin-bottom: 20px; /* Add spacing below paragraph */
+}
+
+.carousel-caption .btn {
+  margin-top: 10px; /* Add spacing above the button */
+  background-color: #ffffff; /* Light background for visibility */
+  color: #000000; /* Button text color */
+  border: 2px solid #000000; /* Add a border */
+  text-transform: uppercase; /* Optional: Capitalize text */
+}
+
+#offcanvasTop {
+  --bs-offcanvas-height: 30vh; /* Keep the height */
+  background-color: rgba(30, 30, 30, 0.85); /* Slightly transparent dark background */
+  color: #ffffff; /* Match text color to white for contrast */
+  backdrop-filter: blur(8px); /* Optional: Add a blur effect to the background */
+  border: 1px solid rgba(255, 255, 255, 0.1); /* Optional: Add a subtle border */
+}
+
+#offcanvasTop .btn-close {
+  color: #ffffff; /* Change the close button color */
+}
+
+#offcanvasTop .form-control {
+  background-color: rgba(42, 42, 42, 0.85); /* Transparent input field background */
+  color: #ffffff; /* Text color */
+  border: 1px solid #444; /* Subtle border */
+}
+
+#offcanvasTop .form-control::placeholder {
+  color: #bbbbbb; /* Lighter text for placeholders */
+}
+
+#offcanvasTop .btn-outline-secondary {
+  color: #ffffff; /* Text color */
+  border-color: #ffffff; /* Border color */
+}
+
+#offcanvasTop .btn-outline-secondary:hover {
+  background-color: rgba(68, 68, 68, 0.85); /* Slightly transparent hover background */
+  color: #ffffff; /* Ensure text remains visible */
+}
