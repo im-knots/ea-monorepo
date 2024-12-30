@@ -46,21 +46,27 @@ body {
   color: #fff; /* Ensure / month text is white */
 }
 
-.carousel-caption {
-  position: absolute; /* Ensure it's positioned relative to the image */
-  top: 0; /* Align the top of the caption to the top of the carousel */
-  left: 0; /* Align the left of the caption to the carousel */
-  width: 100%; /* Cover the full width of the carousel */
-  height: 100%; /* Cover the full height of the carousel */
+.carousel-caption-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  display: flex; /* Use flexbox for centering */
-  flex-direction: column; /* Stack text and button vertically */
-  justify-content: center; /* Center the text vertically */
-  align-items: center; /* Center the text horizontally */
-  text-align: center; /* Center text inside the caption */
-  color: white; /* Ensure text is visible */
-  padding: 20px; /* Add padding inside the container */
-  box-sizing: border-box; /* Include padding in dimensions */
+  display: flex; /* Use flexbox for content alignment */
+  justify-content: center;
+  align-items: center;
+  z-index: 1; /* Below the text but above the image */
+}
+
+.carousel-caption {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Adjust for centering */
+  z-index: 10; /* Ensure text is above the semi-transparent background */
+  color: #fff; /* Ensure text remains readable */
+  text-align: center;
 }
 
 .carousel-caption h5 {
