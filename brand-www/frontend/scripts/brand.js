@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+    fetch('header.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('site-header').outerHTML = data;
+    })
+    .catch(error => console.error('Error loading header:', error));
+    fetch('footer.html')
+    .then(response => response.text())
+    .then(data => {
+      document.getElementById('site-footer').outerHTML = data;
+    })
+    .catch(error => console.error('Error loading footer:', error));
     // Contact form submission
     const contactForm = document.getElementById('contactForm');
     if (contactForm) {

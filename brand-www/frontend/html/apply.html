@@ -1,0 +1,62 @@
+<!-- Apply Modal -->
+<div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-center w-100" id="applyModalLabel">Join Our Team</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="applyForm" class="bg-dark text-light p-3 rounded">
+                    <!-- First Name -->
+                    <div class="mb-3">
+                        <label for="firstName" class="form-label">First Name</label>
+                        <input type="text" class="form-control form-control-dark" id="firstName" name="firstName" placeholder="John" required>
+                    </div>
+                    <!-- Last Name -->
+                    <div class="mb-3">
+                        <label for="lastName" class="form-label">Last Name</label>
+                        <input type="text" class="form-control form-control-dark" id="lastName" name="lastName" placeholder="Doe" required>
+                    </div>
+                    <!-- Email -->
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control form-control-dark" id="email" name="email" placeholder="john.doe@example.com" required>
+                    </div>
+                    <!-- Phone -->
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone</label>
+                        <input type="tel" class="form-control form-control-dark" id="phone" name="phone" placeholder="+1234567890" required>
+                    </div>
+                    <!-- LinkedIn Profile -->
+                    <div class="mb-3">
+                        <label for="linkedin" class="form-label">LinkedIn Profile</label>
+                        <input type="url" class="form-control form-control-dark" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/yourprofile" required>
+                    </div>
+                    <!-- Resume Upload -->
+                    <div class="mb-3">
+                        <label for="resume" class="form-label">Upload Resume</label>
+                        <input type="file" class="form-control form-control-dark" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
+                    </div>
+                    <!-- Position Applying For -->
+                    <div class="mb-3">
+                        <label for="position" class="form-label">Position</label>
+                        <select class="form-select form-control-dark" id="position" name="position" required>
+                            <option value="" disabled selected>Select a Position</option>
+                            <option value="Software Engineer">Software Engineer</option>
+                            <option value="Machine Learning Engineer">Machine Learning Engineer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <!-- Cover Letter -->
+                    <div class="mb-3">
+                        <label for="coverLetter" class="form-label">Cover Letter</label>
+                        <textarea class="form-control form-control-dark" id="coverLetter" name="coverLetter" rows="3" placeholder="Tell us about yourself" required></textarea>
+                    </div>
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-dark w-100">Submit Application</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

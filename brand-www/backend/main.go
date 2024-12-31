@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
 )
 
 // FormSubmission represents the structure of form data
@@ -14,6 +17,18 @@ type FormSubmission struct {
 	Phone     string `json:"phone"`
 	Country   string `json:"country"`
 	Message   string `json:"message"`
+}
+
+// Application represents the structure of a job application
+type Application struct {
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	LinkedIn    string `json:"linkedin"`
+	Position    string `json:"position"`
+	CoverLetter string `json:"coverLetter"`
+	ResumePath  string `json:"resumePath"`
 }
 
 // Subscription represents the structure of a subscription
@@ -145,10 +160,90 @@ func handleWaitlist(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 }
 
+// handleApply handles the POST request for job applications
+func handleApply(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory
+	if err != nil {
+		http.Error(w, "Unable to parse form", http.StatusBadRequest)
+		return
+	}
+
+	// Extract form data
+	firstName := r.FormValue("firstName")
+	lastName := r.FormValue("lastName")
+	email := r.FormValue("email")
+	phone := r.FormValue("phone")
+	linkedin := r.FormValue("linkedin")
+	position := r.FormValue("position")
+	coverLetter := r.FormValue("coverLetter")
+
+	// Handle file upload
+	file, handler, err := r.FormFile("resume")
+	if err != nil {
+		http.Error(w, "Failed to upload resume", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	// Save the file to a local directory
+	resumePath := fmt.Sprintf("./uploads/%s", handler.Filename)
+	out, err := os.Create(resumePath)
+	if err != nil {
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+	_, err = io.Copy(out, file)
+	if err != nil {
+		http.Error(w, "Failed to save file", http.StatusInternalServerError)
+		return
+	}
+
+	// Create an Application object
+	application := Application{
+		FirstName:   firstName,
+		LastName:    lastName,
+		Email:       email,
+		Phone:       phone,
+		LinkedIn:    linkedin,
+		Position:    position,
+		CoverLetter: coverLetter,
+		ResumePath:  resumePath,
+	}
+
+	// Log the application and simulate saving to the database
+	log.Printf("Received application: %+v\n", application)
+	if err := MockDB(application); err != nil {
+		http.Error(w, "Failed to save application", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with success
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
 func main() {
 	http.HandleFunc("/submit", handleFormSubmit)
 	http.HandleFunc("/subscribe", handleSubscribe)
 	http.HandleFunc("/waitlist", handleWaitlist)
+	http.HandleFunc("/apply", handleApply)
 
 	// Bind to 0.0.0.0 to allow external connections
 	port := ":8080"
