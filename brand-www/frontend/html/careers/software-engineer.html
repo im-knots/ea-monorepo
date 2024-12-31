@@ -25,27 +25,46 @@
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html">Home</a>
+              <a class="nav-link active" href="../brand.html#">Home</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html#features">Features</a>
+              <a class="nav-link active" href="../brand.html#features">Features</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html#pricing">Pricing</a>
+              <a class="nav-link" href="../brand.html#pricing">Pricing</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html#about">About Us</a>
+              <a class="nav-link" href="../brand.html#about">About Us</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html#careers">Careers</a>
+              <a class="nav-link" href="../brand.html#careers">Careers</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="../../html/brand.html#contact">Contact</a>
+              <a class="nav-link" href="../brand.html#contact">Contact</a>
             </li>
           </ul>
+          <div class="d-flex">
+            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTop" aria-controls="offcanvasTop"><i class="fas fa-search"></i> Search</button>
+          </div>
         </div>
       </div>
     </nav>
+  
+    <!-- Offcanvas Block -->
+    <div class="offcanvas offcanvas-top" tabindex="-1" id="offcanvasTop" aria-labelledby="offcanvasTopLabel">
+      <div class="container pt-5">
+        <div class="offcanvas-header">
+          <h2 class="fw-bold pb-3">Search here</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+          <form class="position-relative" action="#" method="post">
+            <input type="tel" class="form-control" id="exampleFormControlInput1" placeholder="Examples: posts, services,..">
+            <button class="position-absolute top-0 end-0 border-0 bg-transparent py-2 pe-2 text-secondary" type="submit" name="search"><i class="fa-solid fa-magnifying-glass"></i></button>
+          </form>
+        </div>
+      </div>
+    </div>
   </header>
 
   <!-- Main Content -->

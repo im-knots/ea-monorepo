@@ -484,9 +484,9 @@
           </div>
           <div class="col-md-6 col-xl-3 col-sm-12">
             <h5 class="pb-3"><i class="fa-solid fa-paper-plane pe-1"></i> Stay updated</h5>
-            <form>
-              <input type="text" class="w-100 mb-2 form-control" name="" placeholder="Email ID">
-              <button class="w-100 btn btn-dark">Subscribe now</button>
+            <form id="subscribeForm">
+                <input type="email" class="w-100 mb-2 form-control" name="email" placeholder="user@example.com" required>
+                <button type="submit" class="w-100 btn btn-dark">Subscribe now</button>
             </form>
           </div>
         </div>
@@ -530,6 +530,24 @@
           <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Subscription Success Modal -->
+  <div class="modal fade" id="subscriptionSuccessModal" tabindex="-1" aria-labelledby="subscriptionSuccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="subscriptionSuccessModalLabel">Subscription Successful</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p>Thank you for subscribing! We'll keep you updated.</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
     </div>
   </div>
 
