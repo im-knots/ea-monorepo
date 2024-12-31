@@ -59,7 +59,7 @@
         </div>
         <div class="offcanvas-body">
           <form class="position-relative" action="#" method="post">
-            <input type="tel" class="form-control" id="exampleFormControlInput1" placeholder="Examples: posts, services,..">
+            <input type="tel" class="form-control form-control-dark" id="exampleFormControlInput1" placeholder="Examples: posts, services,..">
             <button class="position-absolute top-0 end-0 border-0 bg-transparent py-2 pe-2 text-secondary" type="submit" name="search"><i class="fa-solid fa-magnifying-glass"></i></button>
           </form>
         </div>
@@ -85,7 +85,7 @@
             <div class="carousel-caption d-none d-md-block">
               <h5>Unleash Creativity</h5>
               <p>Generate AI content using open source and 3rd party models, all in one place!</p>
-              <a href="http://localhost:8081" class="btn btn-dark btn-lg border border-light">Enter Ea Platform</a>
+              <button class="btn btn-dark btn-lg border border-light" data-bs-toggle="modal" data-bs-target="#waitlistModal">Join the Waitlist</button>
             </div>
           </div>
         </div>
@@ -95,7 +95,7 @@
             <div class="carousel-caption d-none d-md-block">
               <h5>Embrace an Artificial Workforce</h5>
               <p>Create AI agents to help with your day-to-day life, or to streamline your company processes.</p>
-              <a href="http://localhost:8081" class="btn btn-dark btn-lg border border-light">Enter Ea Platform</a>
+              <button class="btn btn-dark btn-lg border border-light" data-bs-toggle="modal" data-bs-target="#waitlistModal">Join the Waitlist</button>
             </div>
           </div>
         </div>
@@ -105,7 +105,7 @@
             <div class="carousel-caption d-none d-md-block">
               <h5>Compute for everyone</h5>
               <p>Join a global network of users pooling their compute resources to make datacenters a thing of the past.</p>
-              <a href="http://localhost:8081" class="btn btn-dark btn-lg border border-light">Enter Ea Platform</a>
+              <button class="btn btn-dark btn-lg border border-light" data-bs-toggle="modal" data-bs-target="#waitlistModal">Join the Waitlist</button>
             </div>
           </div>
         </div>
@@ -115,7 +115,7 @@
             <div class="carousel-caption d-none d-md-block">
               <h5>Need a side hustle?</h5>
               <p>Buy and sell custom models, datasets, AI Agents, or compute credits on our marketplace.</p>
-              <a href="http://localhost:8081" class="btn btn-dark btn-lg border border-light">Enter Ea Platform</a>
+              <button class="btn btn-dark btn-lg border border-light" data-bs-toggle="modal" data-bs-target="#waitlistModal">Join the Waitlist</button>
             </div>
           </div>
         </div>
@@ -192,7 +192,7 @@
               <i class="bi bi-trophy fs-3 me-3"></i>
               <div>
                 <h5>Leaderboards & Challenges</h5>
-                <p class="mb-0">Compete in challenges, earn badges, and climb the leaderboards while honing your skills.</p>
+                <p class="mb-0">Compete in challenges, earn badges, and climb the leaderboards.</p>
               </div>
             </div>
           </div>
@@ -425,31 +425,31 @@
               <div class="row g-4">
                 <div class="col-6 mb-3">
                   <label for="firstName" class="form-label">Fname</label>
-                  <input type="text" class="form-control" id="firstName" name="fname" placeholder="John" required>
+                  <input type="text" class="form-control form-control-dark" id="firstName" name="fname" placeholder="John" required>
                 </div>
                 <div class="col-6 mb-3">
                   <label for="lastName" class="form-label">Lname</label>
-                  <input type="text" class="form-control" id="lastName" name="lname" placeholder="Doe" required>
+                  <input type="text" class="form-control form-control-dark" id="lastName" name="lname" placeholder="Doe" required>
                 </div>
               </div>
               <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+                <input type="email" class="form-control form-control-dark" id="email" name="email" placeholder="name@example.com" required>
               </div>
               <div class="mb-3">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+1234567890" required>
+                <input type="tel" class="form-control form-control-dark" id="phone" name="phone" placeholder="+1234567890" required>
               </div>
               <div class="mb-3">
                 <label for="country" class="form-label">Country</label>
-                <select class="form-select" id="country" name="country" aria-label="Default select example">
+                <select class="form-select form-control form-control-dark" id="country" name="country" aria-label="Default select example">
                   <option value="1">USA</option>
                   <option value="2">Non USA</option>
                 </select>
               </div>
               <div class="mb-3">
                 <label for="message" class="form-label">Message</label>
-                <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+                <textarea class="form-control form-control-dark" id="message" name="message" rows="3"></textarea>
               </div>
               <button type="submit" class="btn btn-dark">Send Message</button>
             </form> 
@@ -485,7 +485,7 @@
           <div class="col-md-6 col-xl-3 col-sm-12">
             <h5 class="pb-3"><i class="fa-solid fa-paper-plane pe-1"></i> Stay updated</h5>
             <form id="subscribeForm">
-                <input type="email" class="w-100 mb-2 form-control" name="email" placeholder="user@example.com" required>
+                <input type="email" class="w-100 mb-2 form-control form-control-dark" name="email" placeholder="user@example.com" required>
                 <button type="submit" class="w-100 btn btn-dark">Subscribe now</button>
             </form>
           </div>
@@ -551,5 +551,47 @@
     </div>
   </div>
 
+  <!-- Waitlist Modal -->
+  <div class="modal fade" id="waitlistModal" tabindex="-1" aria-labelledby="waitlistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header border-0">
+          <h5 class="modal-title modal-title text-center w-100" id="waitlistModalLabel">Join the Waitlist</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="waitlistForm" class="bg-dark text-light p-3 rounded">
+            <div class="mb-3">
+              <label for="firstName" class="form-label">First Name</label>
+              <input type="text" class="form-control form-control-dark" id="firstName" name="firstName" placeholder="John" required>
+            </div>
+            <div class="mb-3">
+              <label for="lastName" class="form-label">Last Name</label>
+              <input type="text" class="form-control form-control-dark" id="lastName" name="lastName" placeholder="Doe" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control form-control-dark" id="email" name="email" placeholder="john.doe@example.com" required>
+            </div>
+            <div class="mb-3">
+              <label for="username" class="form-label">Desired Username</label>
+              <input type="text" class="form-control form-control-dark" id="username" name="username" placeholder="johndoe123" required>
+            </div>
+            <div class="mb-3">
+              <label for="desiredTier" class="form-label">Desired Tier</label>
+              <select class="form-select form-control-dark" id="desiredTier" name="desiredTier" required>
+                <option value="" disabled selected>Select a Tier</option>
+                <option value="Free">Free</option>
+                <option value="Pro">Pro</option>
+                <option value="Enterprise">Enterprise</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-dark w-100">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
 </body>
 </html>

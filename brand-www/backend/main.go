@@ -110,12 +110,48 @@ func handleSubscribe(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "subscribed"})
 }
 
-func main() {
-	http.HandleFunc("/submit", handleFormSubmit)  // Endpoint for form submissions
-	http.HandleFunc("/subscribe", handleSubscribe) // Endpoint for subscriptions
+// Update the Waitlist struct to include Desired Tier
+func handleWaitlist(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	// Start the server
-	port := ":8082"
-	log.Printf("Server running on http://localhost%s\n", port)
-	log.Fatal(http.ListenAndServe(port, nil))
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var waitlistEntry struct {
+		FirstName   string `json:"firstName"`
+		LastName    string `json:"lastName"`
+		Email       string `json:"email"`
+		Username    string `json:"username"`
+		DesiredTier string `json:"desiredTier"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&waitlistEntry); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Received waitlist entry: %+v\n", waitlistEntry)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
+}
+
+func main() {
+	http.HandleFunc("/submit", handleFormSubmit)
+	http.HandleFunc("/subscribe", handleSubscribe)
+	http.HandleFunc("/waitlist", handleWaitlist)
+
+	// Bind to 0.0.0.0 to allow external connections
+	port := ":8080"
+	log.Printf("Server running on http://0.0.0.0%s\n", port)
+	log.Fatal(http.ListenAndServe("0.0.0.0"+port, nil))
 }

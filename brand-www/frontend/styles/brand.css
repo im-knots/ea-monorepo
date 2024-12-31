@@ -121,3 +121,56 @@ body {
   background-color: rgba(68, 68, 68, 0.85); /* Slightly transparent hover background */
   color: #ffffff; /* Ensure text remains visible */
 }
+
+/* Form control dark theme */
+.form-control-dark {
+  background-color: #212529; /* Dark gray background */
+  border: 1px solid #495057; /* Subtle border */
+  color: #f8f9fa; /* White text */
+}
+
+.form-control-dark::placeholder {
+  color: #adb5bd; /* Placeholder color */
+}
+
+.form-control-dark:focus {
+  background-color: #2c3034; /* Slightly lighter gray on focus */
+  border-color: #007bff; /* Bootstrap's blue focus outline */
+  color: #f8f9fa; /* Ensure text remains white */
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); /* Blue focus glow */
+}
+
+/* Form select dropdown */
+.form-select.form-control-dark {
+  background-color: #212529;
+  border: 1px solid #495057;
+  color: #f8f9fa; /* White text */
+  appearance: none; /* Remove native dropdown styling */
+  padding-right: 2.5rem; /* Make space for custom arrow */
+}
+
+.form-select.form-control-dark:focus {
+  background-color: #2c3034;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  color: #f8f9fa; /* Ensure text remains white */
+}
+
+/* Custom arrow for dropdown */
+.form-select.form-control-dark::-ms-expand {
+  display: none; /* Hide default arrow in IE */
+}
+
+.form-select.form-control-dark::after {
+  content: '\25BC'; /* Downward triangle for dropdown arrow */
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #f8f9fa; /* White arrow */
+}
+
+.form-select {
+  position: relative; /* Ensure custom arrow positioning */
+}
