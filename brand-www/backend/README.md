@@ -10,12 +10,12 @@ erulabs.ai webpage with entry to Ea Platform
 ### Build and run the image
 ```bash
 $ docker build -t eru-labs-brand-www-frontend .
-$ docker run -p 8080:8080 eru-labs-brand-www-frontend
+$ docker run -p 8082:8080 eru-labs-brand-www-frontend
 ```
 
 ### Verify the container is running
-Visit `localhost:8080` in a browser or by running
+Visit `localhost:8082` in a browser or by running
 ```bash
-$ curl localhost:8080
+$ curl localhost:8082
 ```
 
