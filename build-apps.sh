@@ -21,21 +21,6 @@ push_docker_image() {
     docker push "$ARTIFACT_REGISTRY_DOCKER:$VERSION"
 }
 
-package_helm_chart() {
-    echo "Packaging Helm chart for $APP_NAME..."
-    cd "./$APP_NAME/chart" || exit
-    helm package . --destination ../../packaged-charts
-    cd - || exit
-}
-
-push_helm_chart() {
-    echo "Pushing Helm chart to GCP Artifact Registry..."
-
-    gcloud artifacts helm upload "packaged-charts/$APP_NAME-$VERSION.tgz" \
-        --repository="$REPO_NAME" \
-        --location="$REGION"
-}
-
 # Main Script
 if [[ -z "$APP_NAME" ]]; then
     echo "Usage: $0 <app-name> [version]"
@@ -46,7 +31,6 @@ echo "Starting build for $APP_NAME with version $VERSION..."
 
 build_docker_image
 push_docker_image
-package_helm_chart
-push_helm_chart
+
 
 echo "Build and deployment completed for $APP_NAME with version $VERSION."
