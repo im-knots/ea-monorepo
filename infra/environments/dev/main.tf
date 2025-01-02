@@ -6,8 +6,16 @@ terraform {
     }
     required_providers {
         google = {
-            source = "hashicorp/google"
+            source  = "hashicorp/google"
             version = "6.14.1"
+        }
+        helm = {
+            source  = "hashicorp/helm"
+            version = "2.17.0"
+        }
+        kubernetes = {
+            source  = "hashicorp/kubernetes"
+            version = "2.35.1"
         }
     }
 }
@@ -20,13 +28,15 @@ locals {
     gcp_apis = toset([
         "artifactregistry.googleapis.com",
         "compute.googleapis.com",
+        "container.googleapis.com",
+        "containerscanning.googleapis.com",
     ])
 
     eru_services = toset([
     "eru-labs-brand-frontend", 
     "eru-labs-brand-backend", 
     "ea-platform-frontend", 
-    "ea-platform-backend"
+    "ea-platform-backend",
   ])
 
 }
@@ -43,7 +53,6 @@ module project_setup {
   gcp_apis = local.gcp_apis
 
 }
-
 
 module artifact_registry {
   source  = "../../modules/artifact-registry"
@@ -64,9 +73,33 @@ module gke {
   depends_on = [
     module.project_setup
   ]
-
 }
 
+data "google_container_cluster" "cluster" {
+    name     = local.cluster_name
+    location = local.region
+}
 
+data "google_client_config" "provider" {}
 
+provider "kubernetes" {
+    host  = "https://${data.google_container_cluster.cluster.endpoint}"
+    token = data.google_client_config.provider.access_token
+    cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
+}
 
+provider "helm" {
+    kubernetes {
+        host  = "https://${data.google_container_cluster.cluster.endpoint}"
+        token = data.google_client_config.provider.access_token
+        cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
+    }
+}
+
+module monitoring {
+  source = "../../modules/monitoring"
+  
+  depends_on = [
+    module.gke
+  ]
+}
