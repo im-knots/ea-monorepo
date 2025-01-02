@@ -1,239 +1,34 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
+
+	"brand-backend/config"
+	"brand-backend/handlers"
+	"brand-backend/mongo"
+	"brand-backend/routes"
 )
 
-// FormSubmission represents the structure of form data
-type FormSubmission struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Country   string `json:"country"`
-	Message   string `json:"message"`
-}
-
-// Application represents the structure of a job application
-type Application struct {
-	FirstName   string `json:"firstName"`
-	LastName    string `json:"lastName"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-	LinkedIn    string `json:"linkedin"`
-	Position    string `json:"position"`
-	CoverLetter string `json:"coverLetter"`
-	ResumePath  string `json:"resumePath"`
-}
-
-// Subscription represents the structure of a subscription
-type Subscription struct {
-	Email string `json:"email"`
-}
-
-// MockDB is a simple mock function simulating a database insert
-func MockDB(data interface{}) error {
-	log.Printf("MockDB: Received data: %+v\n", data)
-	return nil
-}
-
-// handleFormSubmit handles the POST request for form submission
-func handleFormSubmit(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleFormSubmit: Invoked")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var submission FormSubmission
-	if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("handleFormSubmit: Received submission: %+v\n", submission)
-
-	if err := MockDB(submission); err != nil {
-		http.Error(w, "Failed to save data", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-}
-
-// handleSubscribe handles the POST request for email subscription
-func handleSubscribe(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleSubscribe: Invoked")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var subscription Subscription
-	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("handleSubscribe: Received subscription: %+v\n", subscription)
-
-	if err := MockDB(subscription); err != nil {
-		http.Error(w, "Failed to save data", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "subscribed"})
-}
-
-// handleWaitlist handles the POST request for waitlist entries
-func handleWaitlist(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleWaitlist: Invoked")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var waitlistEntry struct {
-		FirstName   string `json:"firstName"`
-		LastName    string `json:"lastName"`
-		Email       string `json:"email"`
-		Username    string `json:"username"`
-		DesiredTier string `json:"desiredTier"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&waitlistEntry); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	log.Printf("handleWaitlist: Received waitlist entry: %+v\n", waitlistEntry)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-}
-
-// handleApply handles the POST request for job applications
-func handleApply(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleApply: Invoked")
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	err := r.ParseMultipartForm(10 << 20)
-	if err != nil {
-		http.Error(w, "Unable to parse form", http.StatusBadRequest)
-		return
-	}
-
-	firstName := r.FormValue("firstName")
-	lastName := r.FormValue("lastName")
-	email := r.FormValue("email")
-	phone := r.FormValue("phone")
-	linkedin := r.FormValue("linkedin")
-	position := r.FormValue("position")
-	coverLetter := r.FormValue("coverLetter")
-
-	file, handler, err := r.FormFile("resume")
-	if err != nil {
-		http.Error(w, "Failed to upload resume", http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	resumePath := fmt.Sprintf("./uploads/%s", handler.Filename)
-	out, err := os.Create(resumePath)
-	if err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
-		return
-	}
-	defer out.Close()
-	_, err = io.Copy(out, file)
-	if err != nil {
-		http.Error(w, "Failed to save file", http.StatusInternalServerError)
-		return
-	}
-
-	application := Application{
-		FirstName:   firstName,
-		LastName:    lastName,
-		Email:       email,
-		Phone:       phone,
-		LinkedIn:    linkedin,
-		Position:    position,
-		CoverLetter: coverLetter,
-		ResumePath:  resumePath,
-	}
-
-	log.Printf("handleApply: Received application: %+v\n", application)
-
-	if err := MockDB(application); err != nil {
-		http.Error(w, "Failed to save application", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-}
-
 func main() {
-	http.HandleFunc("/submit", handleFormSubmit)
-	http.HandleFunc("/subscribe", handleSubscribe)
-	http.HandleFunc("/waitlist", handleWaitlist)
-	http.HandleFunc("/apply", handleApply)
+	// Load configuration
+	config := config.LoadConfig()
 
-	port := ":8080"
-	log.Printf("Server running on http://0.0.0.0%s\n", port)
-	log.Fatal(http.ListenAndServe("0.0.0.0"+port, nil))
+	// Initialize MongoDB client
+	dbClient, err := mongo.NewMongoClient(config.DBURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+	defer dbClient.Disconnect()
+
+	// Pass MongoDB client to handlers
+	handlers.SetDBClient(dbClient)
+
+	log.Println("MongoDB client successfully passed to handlers")
+
+	mux := http.NewServeMux()
+	routes.RegisterRoutes(mux)
+
+	log.Printf("Server running on http://0.0.0.0:%s\n", config.Port)
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+config.Port, mux))
 }
