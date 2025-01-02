@@ -7,7 +7,7 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="applyForm" class="bg-dark text-light p-3 rounded">
+                <form id="applyForm" action="http://localhost:8082/apply" method="POST" class="bg-dark text-light p-3 rounded" enctype="multipart/form-data">
                     <!-- First Name -->
                     <div class="mb-3">
                         <label for="firstName" class="form-label">First Name</label>

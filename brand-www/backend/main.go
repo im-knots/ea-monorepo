@@ -38,47 +38,41 @@ type Subscription struct {
 
 // MockDB is a simple mock function simulating a database insert
 func MockDB(data interface{}) error {
-	// Simulate a successful database operation
 	log.Printf("MockDB: Received data: %+v\n", data)
 	return nil
 }
 
 // handleFormSubmit handles the POST request for form submission
 func handleFormSubmit(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers for both preflight and actual requests
+	log.Println("handleFormSubmit: Invoked")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	// Handle preflight requests
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Ensure it's a POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse and decode the JSON body
 	var submission FormSubmission
 	if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Log the submission
-	log.Printf("Received submission: %+v\n", submission)
+	log.Printf("handleFormSubmit: Received submission: %+v\n", submission)
 
-	// Simulate saving to the database
 	if err := MockDB(submission); err != nil {
 		http.Error(w, "Failed to save data", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
@@ -86,47 +80,44 @@ func handleFormSubmit(w http.ResponseWriter, r *http.Request) {
 
 // handleSubscribe handles the POST request for email subscription
 func handleSubscribe(w http.ResponseWriter, r *http.Request) {
-	// Set CORS headers for both preflight and actual requests
+	log.Println("handleSubscribe: Invoked")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 
-	// Handle preflight requests
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	// Ensure it's a POST request
 	if r.Method != http.MethodPost {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Parse and decode the JSON body
 	var subscription Subscription
 	if err := json.NewDecoder(r.Body).Decode(&subscription); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Log the subscription
-	log.Printf("Received subscription: %+v\n", subscription)
+	log.Printf("handleSubscribe: Received subscription: %+v\n", subscription)
 
-	// Simulate saving to the database
 	if err := MockDB(subscription); err != nil {
 		http.Error(w, "Failed to save data", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "subscribed"})
 }
 
-// Update the Waitlist struct to include Desired Tier
+// handleWaitlist handles the POST request for waitlist entries
 func handleWaitlist(w http.ResponseWriter, r *http.Request) {
+	log.Println("handleWaitlist: Invoked")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -154,7 +145,8 @@ func handleWaitlist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Received waitlist entry: %+v\n", waitlistEntry)
+	log.Printf("handleWaitlist: Received waitlist entry: %+v\n", waitlistEntry)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
@@ -162,6 +154,8 @@ func handleWaitlist(w http.ResponseWriter, r *http.Request) {
 
 // handleApply handles the POST request for job applications
 func handleApply(w http.ResponseWriter, r *http.Request) {
+	log.Println("handleApply: Invoked")
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -176,14 +170,12 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max memory
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
 
-	// Extract form data
 	firstName := r.FormValue("firstName")
 	lastName := r.FormValue("lastName")
 	email := r.FormValue("email")
@@ -192,7 +184,6 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 	position := r.FormValue("position")
 	coverLetter := r.FormValue("coverLetter")
 
-	// Handle file upload
 	file, handler, err := r.FormFile("resume")
 	if err != nil {
 		http.Error(w, "Failed to upload resume", http.StatusBadRequest)
@@ -200,7 +191,6 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Save the file to a local directory
 	resumePath := fmt.Sprintf("./uploads/%s", handler.Filename)
 	out, err := os.Create(resumePath)
 	if err != nil {
@@ -214,7 +204,6 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create an Application object
 	application := Application{
 		FirstName:   firstName,
 		LastName:    lastName,
@@ -226,14 +215,13 @@ func handleApply(w http.ResponseWriter, r *http.Request) {
 		ResumePath:  resumePath,
 	}
 
-	// Log the application and simulate saving to the database
-	log.Printf("Received application: %+v\n", application)
+	log.Printf("handleApply: Received application: %+v\n", application)
+
 	if err := MockDB(application); err != nil {
 		http.Error(w, "Failed to save application", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]string{"status": "success"})
@@ -245,7 +233,6 @@ func main() {
 	http.HandleFunc("/waitlist", handleWaitlist)
 	http.HandleFunc("/apply", handleApply)
 
-	// Bind to 0.0.0.0 to allow external connections
 	port := ":8080"
 	log.Printf("Server running on http://0.0.0.0%s\n", port)
 	log.Fatal(http.ListenAndServe("0.0.0.0"+port, nil))
