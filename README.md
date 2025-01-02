@@ -9,6 +9,7 @@ A monorepo for all things eru labs
     - Built with Bootstrap for frontend
     - Built with `go 1.22.2` for backend
 - Ainulindale Client software for various platforms
+- Terraform to deploy infrastructure and Eru Labs services to GCP
 
 ## Requirements
 - Docker
