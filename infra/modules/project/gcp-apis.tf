@@ -3,5 +3,5 @@ resource "google_project_service" "apis_enable" {
   project  = var.project
   service  = each.value
 
-  disable_on_destroy = true
+  disable_on_destroy = false
 }

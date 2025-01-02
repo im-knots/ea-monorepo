@@ -54,52 +54,52 @@ module project_setup {
 
 }
 
-module artifact_registry {
-  source  = "../../modules/artifact-registry"
+# module artifact_registry {
+#   source  = "../../modules/artifact-registry"
 
-  eru_services = local.eru_services
+#   eru_services = local.eru_services
 
-  depends_on = [
-    module.project_setup
-  ]
+#   depends_on = [
+#     module.project_setup
+#   ]
 
-}
+# }
 
-module gke {
-  source = "../../modules/gke"
+# module gke {
+#   source = "../../modules/gke"
   
-  cluster_name = local.cluster_name
+#   cluster_name = local.cluster_name
 
-  depends_on = [
-    module.project_setup
-  ]
-}
+#   depends_on = [
+#     module.project_setup
+#   ]
+# }
 
-data "google_container_cluster" "cluster" {
-    name     = local.cluster_name
-    location = local.region
-}
+# data "google_container_cluster" "cluster" {
+#     name     = local.cluster_name
+#     location = local.region
+# }
 
-data "google_client_config" "provider" {}
+# data "google_client_config" "provider" {}
 
-provider "kubernetes" {
-    host  = "https://${data.google_container_cluster.cluster.endpoint}"
-    token = data.google_client_config.provider.access_token
-    cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
-}
+# provider "kubernetes" {
+#     host  = "https://${data.google_container_cluster.cluster.endpoint}"
+#     token = data.google_client_config.provider.access_token
+#     cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
+# }
 
-provider "helm" {
-    kubernetes {
-        host  = "https://${data.google_container_cluster.cluster.endpoint}"
-        token = data.google_client_config.provider.access_token
-        cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
-    }
-}
+# provider "helm" {
+#     kubernetes {
+#         host  = "https://${data.google_container_cluster.cluster.endpoint}"
+#         token = data.google_client_config.provider.access_token
+#         cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate) 
+#     }
+# }
 
-module monitoring {
-  source = "../../modules/monitoring"
+# module monitoring {
+#   source = "../../modules/monitoring"
   
-  depends_on = [
-    module.gke
-  ]
-}
+#   depends_on = [
+#     module.gke
+#   ]
+# }

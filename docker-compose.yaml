@@ -4,7 +4,7 @@ services:
   # Service 1: eru-labs-brand-backend
   eru-labs-brand-backend:
     build:
-      context: ./brand-www/backend
+      context: ./brand-backend
       dockerfile: Dockerfile
     ports:
       - "8082:8080" 
@@ -13,7 +13,7 @@ services:
   # Service 2: eru-labs-brand-frontend
   eru-labs-brand-frontend:
     build:
-      context: ./brand-www/frontend
+      context: ./brand-frontend
       dockerfile: Dockerfile
     ports:
       - "8080:8080" 
@@ -22,7 +22,7 @@ services:
   # Service 2: ea-frontend
   ea-frontend:
     build:
-      context: ./ea-platform/frontend
+      context: ./ea-frontend
       dockerfile: Dockerfile
     ports:
       - "8081:8080" 
