@@ -46,14 +46,25 @@ spec:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- with .Values.volumeMounts }}
-          volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-      {{- with .Values.volumes }}
-      volumes:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+          env:
+            # Non-secret environment variables
+            {{- with .Values.config }}
+            {{- range $key, $value := . }}
+            - name: {{ $key | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+
+            # Secret environment variables
+            {{- with .Values.secrets }}
+            {{- range $key, $value := . }}
+            - name: {{ $key | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: brand-backend-secrets
+                  key: {{ $key | quote }}
+            {{- end }}
+            {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
