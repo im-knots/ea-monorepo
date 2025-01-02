@@ -14,7 +14,7 @@ type Config struct {
 func LoadConfig() Config {
 	return Config{
 		Port:  getEnv("PORT", "8080"),
-		DBURL: getEnv("DB_URL", "mongodb://admin:password@localhost:8083"),
+		DBURL: getEnv("DB_URL", "mongodb://admin:password@mongodb:27017"),
 	}
 }
 

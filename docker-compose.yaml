@@ -1,14 +1,14 @@
 version: "3.8"
 
 services:
-  # # Service 1: eru-labs-brand-backend
-  # eru-labs-brand-backend:
-  #   build:
-  #     context: ./brand-backend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8082:8080" 
-  #   container_name: eru-labs-brand-backend
+  # Service 1: eru-labs-brand-backend
+  eru-labs-brand-backend:
+    build:
+      context: ./brand-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8080" 
+    container_name: eru-labs-brand-backend
 
   # # Service 2: eru-labs-brand-frontend
   # eru-labs-brand-frontend:
