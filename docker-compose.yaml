@@ -11,22 +11,22 @@ services:
     container_name: eru-labs-brand-backend
 
   # # Service 2: eru-labs-brand-frontend
-  # eru-labs-brand-frontend:
-  #   build:
-  #     context: ./brand-frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8080:8080" 
-  #   container_name: eru-labs-brand-frontend
+  eru-labs-brand-frontend:
+    build:
+      context: ./brand-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" 
+    container_name: eru-labs-brand-frontend
 
   # # Service 3: ea-frontend
-  # ea-frontend:
-  #   build:
-  #     context: ./ea-frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8081:8080" 
-  #   container_name: ea-frontend
+  ea-frontend:
+    build:
+      context: ./ea-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080" 
+    container_name: ea-frontend
 
   # Service 4: mongodb
   mongodb:
