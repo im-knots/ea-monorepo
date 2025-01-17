@@ -13,12 +13,13 @@ A monorepo for all things eru labs
 - Documentation diagrams managed as code for the whole of Eru Labs
 
 
-## Requirements
+## Run everything locally with docker compose
+### Requirements
 - Docker
 - Docker Compose
 - A Web Browser + curl/postman
 
-## Run everything locally with docker compose
+### Start up all Eru Labs components locally
 ```bash
 docker-compose up --build
 ```
