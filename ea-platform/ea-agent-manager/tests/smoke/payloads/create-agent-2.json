@@ -1,0 +1,53 @@
+{
+    "name": "Instagram Post Agent",
+    "user": "knots",
+    "description": "An agent that will generate content to post on instagram",
+    "nodes": [
+        {
+            "id": "input",
+            "type": "input",
+            "data": "promptInput",
+            "provider": "ea",
+            "model": "default-tokenizer"
+        },
+        {
+            "id": "time-trigger",
+            "type": "time-trigger",
+            "data": "* * * * * cron format??",
+            "provider": "triggers"
+        },
+        {
+            "id": "generate-video",
+            "type": "txt2video",
+            "data": "i guess we extend this to include the model settings?",
+            "provider": "stable-diffusion",
+            "model": "stable-diffusionXL4.0"
+        },
+        {
+            "id": "create-tags",
+            "type": "llm",
+            "data": "promptInput",
+            "provider": "ollama",
+            "model": "llama3.3"
+        },
+        {
+            "id": "create-description",
+            "type": "llm",
+            "data": "promptInput",
+            "provider": "ollama",
+            "model": "llama3.3"
+        },
+        {
+            "id": "instagram-post",
+            "type": "social",
+            "data": "video, and generated text",
+            "provider": "external"
+        }
+    ],
+    "edges": [
+        { "from": "input", "to": "time-trigger" },
+        { "from": "time-trigger", "to": "generate-video" },
+        { "from": "generate-video", "to": ["create-tags", "create-description"] },
+        { "from": ["create-tags", "create-description"], "to": "instagram-post" }
+    ]
+}
