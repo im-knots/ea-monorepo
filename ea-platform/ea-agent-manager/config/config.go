@@ -11,7 +11,8 @@ type Config struct {
 // LoadConfig initializes the configuration from environment variables.
 func LoadConfig() Config {
 	return Config{
-		Port: getEnv("PORT", "8080"),
+		Port:  getEnv("PORT", "8080"),
+		DBURL: getEnv("DB_URL", "mongodb://admin:password@mongodb:27017"),
 	}
 }
 
