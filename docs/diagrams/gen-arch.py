@@ -42,38 +42,38 @@ with Diagram("Eru Labs", show=False):
 
     
     # Ea User Engine
-    with Cluster("User Engine"):
-        eaUser = Pod("User API")
-        eaUserDB = Storage("User DB")
-        authProvider = Iam("Some Auth Provider?")
-        eaFrontend >> eaUser >> eaUserDB
-        eaUser >> authProvider
+    # with Cluster("User Engine"):
+    #     eaUser = Pod("User API")
+    #     eaUserDB = Storage("User DB")
+    #     authProvider = Iam("Some Auth Provider?")
+    #     eaFrontend >> eaUser >> eaUserDB
+    #     eaUser >> authProvider
 
     # Ea Game Engine
-    with Cluster("Game Engine"):
-        eaGame = Pod("Game API")
-        eaGameDB = Storage("Game DB")
-        eaFrontend >> eaGame >> eaGameDB
+    # with Cluster("Game Engine"):
+    #     eaGame = Pod("Game API")
+    #     eaGameDB = Storage("Game DB")
+    #     eaFrontend >> eaGame >> eaGameDB
 
     # Ea User Data Engine
-    with Cluster("Data Engine"):
-        eaDataManager = Pod("User Data Manager API")
-        userDataBuckets = GCS("User Data Buckets")
-        eaFrontend - eaDataManager - userDataBuckets
+    # with Cluster("Data Engine"):
+    #     eaDataManager = Pod("User Data Manager API")
+    #     userDataBuckets = GCS("User Data Buckets")
+    #     eaFrontend - eaDataManager - userDataBuckets
     
     # Ea Commerce Engine
-    with Cluster("Commerce Engine"):
-        eaMarketplace = Pod("Marketplace API")
-        eaMarketplaceDB = Storage("Marketplace DB")
-        eaCredits = Pod("Compute Credit API")
-        eaFrontend >> eaMarketplace >> eaMarketplaceDB
-        eaCredits - eaUser
+    # with Cluster("Commerce Engine"):
+    #     eaMarketplace = Pod("Marketplace API")
+    #     eaMarketplaceDB = Storage("Marketplace DB")
+    #     eaCredits = Pod("Compute Credit API")
+    #     eaFrontend >> eaMarketplace >> eaMarketplaceDB
+    #     eaCredits - eaUser
     
     # Ea Analytics Engine
-    with Cluster("Analytics Engine"):
-        eaDataAggregator = Pod("Data Aggregator API")
-        eaDataGrafana = Grafana("Database Dashboards")
-        eaDataGrafana << eaDataAggregator << [brandDB, eaUserDB, eaGameDB, eaMarketplaceDB, eaAgentDB]
+    # with Cluster("Analytics Engine"):
+    #     eaDataAggregator = Pod("Data Aggregator API")
+    #     eaDataGrafana = Grafana("Database Dashboards")
+    #     eaDataGrafana << eaDataAggregator << [brandDB, eaUserDB, eaGameDB, eaMarketplaceDB, eaAgentDB]
 
 
         
