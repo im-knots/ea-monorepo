@@ -4,36 +4,38 @@ import (
 	"net/http"
 )
 
-// HandleRoot checks MongoDB connection and returns a 200 status if successful.
 func HandleRoot(w http.ResponseWriter, r *http.Request) {
-	// w.Header().Set("Access-Control-Allow-Origin", "*")
-	// w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	// w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	// if r.Method == http.MethodOptions {
-	// 	w.WriteHeader(http.StatusOK)
-	// 	return
-	// }
-
-	// if r.Method != http.MethodGet {
-	// 	http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-	// 	return
-	// }
-
-	// if dbClient == nil {
-	// 	http.Error(w, "Database client is not initialized", http.StatusInternalServerError)
-	// 	log.Println("HandleRoot error: dbClient is nil")
-	// 	return
-	// }
-
-	// // Test the connection to the MongoDB collection
-	// collectionName := "yourCollectionName" // Replace with your actual collection name
-	// if err := dbClient.TestConnection("ea-www-agent-manager", collectionName); err != nil {
-	// 	http.Error(w, "Failed to connect to database", http.StatusInternalServerError)
-	// 	log.Printf("Failed to connect to MongoDB collection '%s': %v\n", collectionName, err)
-	// 	return
-	// }
-
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("MongoDB connection successful"))
+	w.Write([]byte("Hello World!"))
+}
+
+// HandleGetNodes will pull a given Agents component nodes
+// TODO: Define agent builder node type schema or declarative language?
+func HandleGetNode(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("heres your list of agent builder node types! :)"))
+}
+
+// HandleGetPresets will populate a list of presets or a specific preset Agent and its associated component nodes
+func HandleGetPresets(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Heres your list of Agent Presets and their component nodes!"))
+}
+
+// HandleCreateAgent will create an Agent container for nodes
+func HandleCreateAgent(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("an Agent!"))
+}
+
+// HandleCreateNode will create a Node component in a given Agent
+func HandleCreateAgentNode(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("an Agent Node!"))
+}
+
+// HandleCreateJob will create a Job in a given Agent
+func HandleCreateAgentJob(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("an Agent Job!"))
 }
