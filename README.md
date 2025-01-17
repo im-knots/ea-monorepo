@@ -12,7 +12,6 @@ A monorepo for all things eru labs
 - Terraform to deploy infrastructure and Eru Labs services to GCP
 - Documentation diagrams managed as code for the whole of Eru Labs
 
-
 ## Run everything locally with docker compose
 ### Requirements
 - Docker
@@ -29,3 +28,7 @@ clean up
 docker-compose down --remove-orphans
 docker system prune -f
 ```
+
+
+## Ea Platform Architecture
+![Ea Platform Architecture](docs/diagrams/eru_labs.png)
