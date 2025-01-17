@@ -51,13 +51,9 @@ with Diagram("Eru Labs", show=False):
 
     # Ea Game Engine
     with Cluster("Game Engine"):
-        eaLeaderboard = Pod("Leaderboard API")
-        eaChallenge = Pod("Challenge API")
+        eaGame = Pod("Game API")
         eaGameDB = Storage("Game DB")
-        eaFrontend >> [eaLeaderboard, eaChallenge]
-        eaLeaderboard - eaGameDB
-        eaChallenge - eaGameDB
-        eaChallenge - eaUser
+        eaFrontend >> eaGame >> eaGameDB
 
     # Ea User Data Engine
     with Cluster("Data Engine"):
