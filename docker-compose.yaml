@@ -28,7 +28,16 @@ services:
       - "8081:8080" 
     container_name: ea-frontend
 
-  # Service 4: mongodb
+  # # Service 4: ea-backend
+  ea-backend:
+    build:
+      context: ./ea-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8080" 
+    container_name: ea-backend
+
+  # Service 5: mongodb
   mongodb:
     image: mongo:latest
     container_name: local-mongodb
