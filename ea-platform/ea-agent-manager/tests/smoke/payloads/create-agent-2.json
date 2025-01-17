@@ -1,52 +1,125 @@
 {
     "name": "Instagram Post Agent",
     "user": "knots",
-    "description": "An agent that will generate content to post on instagram",
+    "description": "An agent that will generate content to post on Instagram",
     "nodes": [
         {
             "id": "input",
-            "type": "input",
-            "data": "promptInput",
-            "provider": "ea",
-            "model": "default-tokenizer"
+            "type": "input.internal.text",
+            "data": [
+                {
+                    "key": "prompt",
+                    "value": "Generate a creative Instagram post idea."
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Main input node for text prompts",
+                    "tags": ["input", "text"]
+                }
+            ]
         },
         {
-            "id": "time-trigger",
-            "type": "time-trigger",
-            "data": "* * * * * cron format??",
-            "provider": "triggers"
+            "id": "trigger",
+            "type": "trigger.internal.timed",
+            "data": [
+                {
+                    "key": "cron",
+                    "value": "* * * * *"
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Cron trigger for running the agent periodically"
+                }
+            ]
         },
         {
             "id": "generate-video",
-            "type": "txt2video",
-            "data": "i guess we extend this to include the model settings?",
-            "provider": "stable-diffusion",
-            "model": "stable-diffusionXL4.0"
+            "type": "worker.inference.stable-diffusion.video",
+            "data": [
+                {
+                    "key": "model",
+                    "value": "stable-diffusionXL4.0"
+                },
+                {
+                    "key": "settings",
+                    "value": {
+                        "style": "cinematic",
+                        "duration": "10s"
+                    }
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Generates a video based on the provided settings",
+                    "tags": ["worker", "video", "stable-diffusion"]
+                }
+            ]
         },
         {
             "id": "create-tags",
-            "type": "llm",
-            "data": "promptInput",
-            "provider": "ollama",
-            "model": "llama3.3"
+            "type": "worker.inference.llm.ollama",
+            "data": [
+                {
+                    "key": "model",
+                    "value": "llama3.3"
+                },
+                {
+                    "key": "prompt",
+                    "value": "Generate hashtags for the video content."
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Creates relevant tags for the content",
+                    "tags": ["worker", "llm", "tags"]
+                }
+            ]
         },
         {
             "id": "create-description",
-            "type": "llm",
-            "data": "promptInput",
-            "provider": "ollama",
-            "model": "llama3.3"
+            "type": "worker.inference.llm.openai",
+            "data": [
+                {
+                    "key": "model",
+                    "value": "gpt-4"
+                },
+                {
+                    "key": "prompt",
+                    "value": "Write a compelling description for the Instagram post."
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Generates a post description",
+                    "tags": ["worker", "llm", "description"]
+                }
+            ]
         },
         {
             "id": "instagram-post",
-            "type": "social",
-            "data": "video, and generated text",
-            "provider": "external"
+            "type": "destination.external.social.instagram",
+            "data": [
+                {
+                    "key": "content",
+                    "value": {
+                        "video": "generated_video.mp4",
+                        "text": "This is an amazing Instagram post with creative hashtags!"
+                    }
+                }
+            ],
+            "metadata": [
+                {
+                    "description": "Uploads the generated content to Instagram",
+                    "tags": ["destination", "social", "instagram"]
+                }
+            ]
         }
     ],
     "edges": [
-        { "from": "input", "to": "time-trigger" },
-        { "from": "time-trigger", "to": "generate-video" },
+        { "from": "input", "to": "trigger" },
+        { "from": "trigger", "to": "generate-video" },
         { "from": "generate-video", "to": ["create-tags", "create-description"] },
         { "from": ["create-tags", "create-description"], "to": "instagram-post" }
     ]

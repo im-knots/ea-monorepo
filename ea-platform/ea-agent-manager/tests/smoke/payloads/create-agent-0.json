@@ -1,0 +1,35 @@
+{
+    "name": "Test Agent",
+    "user": "test_user",
+    "description": "A test agent with nodes",
+    "nodes": [
+        {
+            "id": "node1",
+            "type": "input.text",
+            "data": [
+                {"key": "prompt", "value": "Hello, world!"}
+            ],
+            "metadata": [
+                {"description": "Main input node", "tags": ["input", "text"]}
+            ]
+        },
+        {
+            "id": "node2",
+            "type": "worker.llm.openai",
+            "data": [
+                {"key": "model", "value": "gpt-4"},
+                {"key": "temperature", "value": 0.7}
+            ],
+            "metadata": [
+                {"description": "OpenAI LLM worker", "tags": ["llm", "worker"]}
+            ]
+        }
+    ],
+    "edges": [
+        {"from": "node1", "to": "node2"}
+    ],
+    "metadata": {
+        "created_at": "2025-01-17T10:00:00Z",
+        "updated_at": "2025-01-17T10:00:00Z"
+    }
+}

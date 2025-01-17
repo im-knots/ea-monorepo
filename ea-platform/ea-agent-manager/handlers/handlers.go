@@ -33,11 +33,21 @@ type Agent struct {
 }
 
 type Node struct {
-	ID       string `json:"id"`
-	Type     string `json:"type"`
-	Data     string `json:"data,omitempty"`
-	Provider string `json:"provider,omitempty"`
-	Model    string `json:"model,omitempty"`
+	ID       string         `json:"id"`
+	Type     string         `json:"type"`
+	Data     []NodeData     `json:"data,omitempty"`
+	Metadata []NodeMetadata `json:"metadata,omitempty"`
+}
+
+type NodeData struct {
+	Key   string      `json:"key"`
+	Value interface{} `json:"value"`
+}
+
+type NodeMetadata struct {
+	Description string                 `json:"description,omitempty"`
+	Tags        []string               `json:"tags,omitempty"`
+	Additional  map[string]interface{} `json:"additional,omitempty"`
 }
 
 type Edge struct {
@@ -46,6 +56,11 @@ type Edge struct {
 }
 
 type MultiString []string
+
+type Metadata struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
 
 // UnmarshalJSON handles single strings and arrays for MultiString.
 func (m *MultiString) UnmarshalJSON(data []byte) error {
@@ -62,11 +77,6 @@ func (m *MultiString) UnmarshalJSON(data []byte) error {
 	}
 
 	return json.Unmarshal(data, m)
-}
-
-type Metadata struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // HandleCreateAgent handles the creation of an agent.
@@ -92,7 +102,7 @@ func HandleCreateAgent(w http.ResponseWriter, r *http.Request) {
 		metrics.StepCounter.WithLabelValues(path, "decoding_request", "success").Inc()
 	}
 
-	// populate metadata for Agent
+	// Populate metadata for Agent
 	input.Metadata = Metadata{
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
@@ -126,27 +136,45 @@ func HandleCreateAgent(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// HandleGetNodes will pull a given Agents component nodes
-// TODO: Define agent builder node type schema or declarative language?
-func HandleGetNode(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("heres your list of agent builder node types! :)"))
-}
+// HandleCreateNodeDef handles the creation of a node definition
+func HandleCreateNodeDef(w http.ResponseWriter, r *http.Request) {
+	var input Node
+	path := "/api/v1/nodes"
 
-// HandleGetPresets will populate a list of presets or a specific preset Agent and its associated component nodes
-func HandleGetPresets(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Heres your list of Agent Presets and their component nodes!"))
-}
+	if r.Method != http.MethodPost {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		logger.Slog.Error("Invalid request method", "method", r.Method)
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	} else {
+		metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
+	}
 
-// HandleCreateNode will create a Node component in a given Agent
-func HandleCreateAgentNode(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("an Agent Node!"))
-}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	} else {
+		metrics.StepCounter.WithLabelValues(path, "decoding_request", "success").Inc()
+	}
 
-// HandleCreateJob will create a Job in a given Agent
-func HandleCreateAgentJob(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("an Agent Job!"))
+	result, err := dbClient.InsertRecord("nodeDefs", "nodes", input)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
+		logger.Slog.Error("Failed to insert node definition into database", "error", err)
+		http.Error(w, "Failed to insert node definition into database", http.StatusInternalServerError)
+		return
+	} else {
+		metrics.StepCounter.WithLabelValues(path, "db_insertion", "success").Inc()
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
+	logger.Slog.Info("Node definition inserted successfully", "ID", result.InsertedID)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":  "Node definition created successfully",
+		"agent_id": result.InsertedID,
+	})
 }

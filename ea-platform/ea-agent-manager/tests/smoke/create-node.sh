@@ -4,10 +4,10 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8084/api/v1/agents"
+API_ENDPOINT="http://localhost:8084/api/v1/nodes"
 
 # Iterate through matching files in the payload directory
-for file in "$PAYLOAD_DIR"/*create-agent*.json; do
+for file in "$PAYLOAD_DIR"/*create-node-def*.json; do
     if [[ -f "$file" ]]; then
         curl -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \

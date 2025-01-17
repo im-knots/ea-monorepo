@@ -1,0 +1,28 @@
+{
+    "id": "worker.inference.llm.openai",
+    "type": "worker.inference.llm",
+    "data": [
+        {
+            "key": "model",
+            "value": "gpt-4"
+        },
+        {
+            "key": "temperature",
+            "value": 0.7
+        },
+        {
+            "key": "prompt",
+            "value": "get prompt from some input"
+        }
+    ],
+    "metadata": [
+        {
+            "description": "A worker node for processing text using OpenAI's GPT-4",
+            "tags": ["worker", "llm", "openai"],
+            "additional": {
+                "api_endpoint": "https://api.openai.com/v1/chat/completions",
+                "timeout": 30
+            }
+        }
+    ]
+}

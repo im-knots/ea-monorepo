@@ -10,4 +10,5 @@ Here you will find some tests for the Ea Agent Manager.
 
 ```bash
 ./smoke/create-agent.sh
+./smoke/create-node.sh
 ```

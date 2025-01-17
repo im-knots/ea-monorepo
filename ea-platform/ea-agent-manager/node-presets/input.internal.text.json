@@ -1,0 +1,16 @@
+{
+    "id": "input.internal.text",
+    "type": "input.internal.text",
+    "data": [
+        {
+            "key": "prompt",
+            "value": "Enter your text prompt here"
+        }
+    ],
+    "metadata": [
+        {
+            "description": "Accepts a text input for the agent workflow.",
+            "tags": ["input", "text"]
+        }
+    ]
+}

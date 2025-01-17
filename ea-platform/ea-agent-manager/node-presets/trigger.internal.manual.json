@@ -1,0 +1,11 @@
+{
+    "id": "trigger.internal.manual",
+    "type": "trigger.internal.manual",
+    "data": [],
+    "metadata": [
+        {
+            "description": "A manual trigger to start the agent workflow.",
+            "tags": ["trigger", "manual"]
+        }
+    ]
+}
