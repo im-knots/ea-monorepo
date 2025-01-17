@@ -10,6 +10,8 @@ A monorepo for all things eru labs
     - Built with `go 1.22.2` for backend
 - Ainulindale Client software for various platforms
 - Terraform to deploy infrastructure and Eru Labs services to GCP
+- Documentation diagrams managed as code for the whole of Eru Labs
+
 
 ## Requirements
 - Docker

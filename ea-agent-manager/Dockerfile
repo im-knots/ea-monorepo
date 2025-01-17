@@ -15,7 +15,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN go build -o ea-www-backend .
+RUN go build -o ea-agent-manager .
 
 # Use a minimal Alpine image to run the built application
 FROM alpine:latest
@@ -24,10 +24,9 @@ FROM alpine:latest
 WORKDIR /app
 
 # Copy the built application binary from the builder stage
-COPY --from=builder /app/ea-www-backend .
+COPY --from=builder /app/ea-agent-manager .
 
 # Expose port 8080
 EXPOSE 8080
 
-# Command to run the Go eru-brand-www-backend application
-CMD ["./ea-www-backend"]
+CMD ["./ea-agent-manager"]

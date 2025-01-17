@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"ea-backend/handlers"
+	"ea-agent-manager/handlers"
 )
 
 // RegisterRoutes sets up the routes and their corresponding handlers.
