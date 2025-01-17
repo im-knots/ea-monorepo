@@ -37,9 +37,8 @@ with Diagram("Eru Labs", show=False):
     # Ea Agent Engine
     with Cluster("Agent Engine"):
         eaAgentManager = Pod("Agent Manager API")
-        eaScheduledAgent = Cronjob("Scheduled Agent Task")
-        eaFrontend >> eaAgentManager >> eaScheduledAgent >> eaJobOrchestrator
-        eaAgentManager >> eaJobOrchestrator
+        eaAgentDB = Storage("Agent Manager DB")
+        eaFrontend >> eaAgentManager >> [eaJobOrchestrator, eaAgentDB]
 
     
     # Ea User Engine
@@ -54,11 +53,10 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Game Engine"):
         eaLeaderboard = Pod("Leaderboard API")
         eaChallenge = Pod("Challenge API")
-        eaLeaderboardDB = Storage("Leaderboard DB")
-        eaChallengeDB = Storage("Challenge DB")
+        eaGameDB = Storage("Game DB")
         eaFrontend >> [eaLeaderboard, eaChallenge]
-        eaLeaderboard - eaLeaderboardDB
-        eaChallenge - eaChallengeDB
+        eaLeaderboard - eaGameDB
+        eaChallenge - eaGameDB
         eaChallenge - eaUser
 
     # Ea User Data Engine
@@ -79,7 +77,7 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Analytics Engine"):
         eaDataAggregator = Pod("Data Aggregator API")
         eaDataGrafana = Grafana("Database Dashboards")
-        eaDataGrafana << eaDataAggregator << [brandDB, eaUserDB, eaChallengeDB, eaLeaderboardDB, eaMarketplaceDB]
+        eaDataGrafana << eaDataAggregator << [brandDB, eaUserDB, eaGameDB, eaMarketplaceDB, eaAgentDB]
 
 
         
