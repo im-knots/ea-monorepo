@@ -29,33 +29,57 @@ services:
   #   container_name: ea-frontend
 
   # # Service 4: ea-agent-manager
-  ea-agent-manager:
-    build:
-      context: ./ea-platform/ea-agent-manager
-      dockerfile: Dockerfile
-    ports:
-      - "8084:8080" 
-    container_name: ea-agent-manager
+  # ea-agent-manager:
+  #   build:
+  #     context: ./ea-platform/ea-agent-manager
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8084:8080" 
+  #   container_name: ea-agent-manager
 
-  ea-job-engine:
-    build:
-      context: ./ea-platform/ea-job-engine
-      dockerfile: Dockerfile
-    ports:
-      - "8085:8080" 
-    container_name: ea-job-engine
+  # ea-job-engine:
+  #   build:
+  #     context: ./ea-platform/ea-job-engine
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8085:8080" 
+  #   container_name: ea-job-engine
 
-  # Service 5: mongodb
-  mongodb:
-    image: mongo:latest
-    container_name: local-mongodb
+  # # Service 5: mongodb
+  # mongodb:
+  #   image: mongo:latest
+  #   container_name: local-mongodb
+  #   ports:
+  #     - "8083:27017" 
+  #   volumes:
+  #     - mongo-data:/data/db
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: admin
+  #     MONGO_INITDB_ROOT_PASSWORD: password
+
+  # Service 6: ollama for local LLMs
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
     ports:
-      - "8083:27017" 
+      - "11434:11434"
     volumes:
-      - mongo-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
+      - ollama-data:/root/.ollama
+
+  # Curl container to interact with Ollama API to preload models
+  ollama-model-loader:
+    image: curlimages/curl:latest
+    container_name: model-loader
+    depends_on:
+      - ollama
+    entrypoint: >
+      sh -c "
+      curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"llama3.2\"}';
+      # you can add more models to preload here but we are just gonna start with llama3.2
+      # curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"deepseek-r1:8b\"}';
+      exit 0;
+      "
 
 volumes:
   mongo-data:
+  ollama-data:
