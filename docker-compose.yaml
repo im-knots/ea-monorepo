@@ -37,6 +37,14 @@ services:
       - "8084:8080" 
     container_name: ea-agent-manager
 
+  ea-job-engine:
+    build:
+      context: ./ea-platform/ea-job-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8080" 
+    container_name: ea-job-engine
+
   # Service 5: mongodb
   mongodb:
     image: mongo:latest
