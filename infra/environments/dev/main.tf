@@ -32,13 +32,6 @@ locals {
         "containerscanning.googleapis.com",
     ])
 
-    eru_services = toset([
-    "eru-labs-brand-frontend", 
-    "eru-labs-brand-backend", 
-    "ea-platform-frontend", 
-    "ea-platform-backend",
-  ])
-
 }
 
 provider "google" {
@@ -53,17 +46,6 @@ module project_setup {
   gcp_apis = local.gcp_apis
 
 }
-
-# module artifact_registry {
-#   source  = "../../modules/artifact-registry"
-
-#   eru_services = local.eru_services
-
-#   depends_on = [
-#     module.project_setup
-#   ]
-
-# }
 
 # module gke {
 #   source = "../../modules/gke"
@@ -98,6 +80,14 @@ module project_setup {
 
 # module monitoring {
 #   source = "../../modules/monitoring"
+  
+#   depends_on = [
+#     module.gke
+#   ]
+# }
+
+# module ollama {
+#   source = "../../modules/ollama"
   
 #   depends_on = [
 #     module.gke

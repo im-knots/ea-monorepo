@@ -1,6 +1,6 @@
 {
     "name": "My Sample Ollama Agent",
-    "user": "alice@example.com",
+    "user": "marco@erulabs.ai",
     "description": "An example agent using the Ollama LLM definition.",
     "nodes": [
       {
