@@ -4,4 +4,7 @@ resource "helm_release" "name" {
   chart             = "ollama"
   namespace         = "ea-platform-ollama"
   create_namespace  = true
+
+  values = [file("${path.module}/helm-values.yaml")]
+
 }
