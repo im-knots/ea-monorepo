@@ -11,6 +11,7 @@ with Diagram("Eru Labs", show=False):
     dns = DNS("Public DNS")
     
     ainuClients = Mobile("Ainulindale Client Compute")
+    k8sCompute = Pod("Ea Platform k8s Compute")
 
     # Brand www
     with Cluster("Brand WWW"):
@@ -32,8 +33,10 @@ with Diagram("Eru Labs", show=False):
         eaJobInf = Job("User Inference Job")
         eaJobTrn = Job("User Training Job")
         eaJobAgt = Job("User Agent Job")
-        eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
-    
+        eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> k8sCompute
+        # Future state
+        # eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
+
     # Ea Agent Engine
     with Cluster("Agent Engine"):
         eaAgentManager = Pod("Agent Manager API")
