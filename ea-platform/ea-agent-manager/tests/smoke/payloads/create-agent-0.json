@@ -1,35 +1,30 @@
 {
-    "name": "Test Agent",
-    "user": "test_user",
-    "description": "A test agent with nodes",
+    "name": "My Sample Ollama Agent",
+    "user": "alice@example.com",
+    "description": "An example agent using the Ollama LLM definition.",
     "nodes": [
-        {
-            "id": "node1",
-            "type": "input.text",
-            "data": [
-                {"key": "prompt", "value": "Hello, world!"}
-            ],
-            "metadata": [
-                {"description": "Main input node", "tags": ["input", "text"]}
-            ]
-        },
-        {
-            "id": "node2",
-            "type": "worker.llm.openai",
-            "data": [
-                {"key": "model", "value": "gpt-4"},
-                {"key": "temperature", "value": 0.7}
-            ],
-            "metadata": [
-                {"description": "OpenAI LLM worker", "tags": ["llm", "worker"]}
-            ]
+      {
+        "id": "node-1",
+        "definition_ref": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama2-13b",
+          "prompt": "Tell me a short story about a flying cat."
         }
+      },
+      {
+        "id": "node-2",
+        "definition_ref": "destination.internal.text",
+        "parameters": {
+          "label": "Print out the result from node-1"
+        }
+      }
     ],
     "edges": [
-        {"from": "node1", "to": "node2"}
+      { "from": ["node-1"],"to": ["node-2"] }
     ],
     "metadata": {
-        "created_at": "2025-01-17T10:00:00Z",
-        "updated_at": "2025-01-17T10:00:00Z"
+      "created_at": "2025-01-01T00:00:00Z",
+      "updated_at": "2025-01-01T00:00:00Z"
     }
-}
+  }
+  
