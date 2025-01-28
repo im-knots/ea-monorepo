@@ -4,15 +4,15 @@ import "os"
 
 // Config holds application configuration.
 type Config struct {
-	Port  string
-	DBURL string
+	Port            string
+	AgentManagerUrl string
 }
 
 // LoadConfig initializes the configuration from environment variables.
 func LoadConfig() Config {
 	return Config{
-		Port:  getEnv("PORT", "8080"),
-		DBURL: getEnv("DB_URL", "mongodb://admin:password@mongodb:27017"),
+		Port:            getEnv("PORT", "8080"),
+		AgentManagerUrl: getEnv("AGENT_MANAGER_URL", "http://ea-agent-manager:8080/api/v1/agents/"),
 	}
 }
 
