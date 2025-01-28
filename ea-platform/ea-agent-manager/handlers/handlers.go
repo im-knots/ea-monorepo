@@ -60,6 +60,7 @@ type NodeDefinition struct {
 	Name       string                 `json:"name,omitempty"`
 	API        *NodeAPI               `json:"api,omitempty"`
 	Parameters []NodeParameter        `json:"parameters,omitempty"`
+	Outputs    []NodeParameter        `json:"outputs,omitempty"`
 	Metadata   NodeDefinitionMetadata `json:"metadata,omitempty"`
 }
 

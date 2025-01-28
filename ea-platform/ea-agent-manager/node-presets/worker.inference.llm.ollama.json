@@ -31,6 +31,15 @@
       "default": 0.7
     }
   ],
+  "outputs": [
+    {
+      "key": "textoutput",
+      "type": "string",
+      "description": "the result of the prompt",
+      "enum": ["some", "promptoutput"],
+      "default": "someoutput"
+    }
+  ],
   "metadata": {
     "description": "Makes an inference call to an Ollama instance for text generation.",
     "tags": ["worker", "llm", "ollama", "inference"],
