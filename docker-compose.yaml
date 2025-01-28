@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # Service 1: eru-labs-brand-backend
   # eru-labs-brand-backend:
   #   build:
   #     context: ./brand/brand-backend
@@ -10,7 +9,6 @@ services:
   #     - "8082:8080" 
   #   container_name: eru-labs-brand-backend
 
-  # # Service 2: eru-labs-brand-frontend
   # eru-labs-brand-frontend:
   #   build:
   #     context: ./brand/brand-frontend
@@ -19,7 +17,6 @@ services:
   #     - "8080:8080" 
   #   container_name: eru-labs-brand-frontend
 
-  # # Service 3: ea-frontend
   # ea-frontend:
   #   build:
   #     context: ./ea-platform/ea-frontend
@@ -28,7 +25,6 @@ services:
   #     - "8081:8080" 
   #   container_name: ea-frontend
 
-  # # Service 4: ea-agent-manager
   ea-agent-manager:
     build:
       context: ./ea-platform/ea-agent-manager
@@ -45,7 +41,6 @@ services:
       - "8085:8080" 
     container_name: ea-job-engine
 
-  # Service 5: mongodb
   mongodb:
     image: mongo:latest
     container_name: local-mongodb
@@ -57,28 +52,27 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
 
-  # Service 6: ollama for local LLMs
-  ollama:
-    image: ollama/ollama
-    container_name: ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
+  # ollama:
+  #   image: ollama/ollama
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-data:/root/.ollama
 
-  # Curl container to interact with Ollama API to preload models
-  ollama-model-loader:
-    image: curlimages/curl:latest
-    container_name: model-loader
-    depends_on:
-      - ollama
-    entrypoint: >
-      sh -c "
-      curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"llama3.2\"}';
-      # you can add more models to preload here but we are just gonna start with llama3.2
-      # curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"deepseek-r1:8b\"}';
-      exit 0;
-      "
+  # # Curl container to interact with Ollama API to preload models
+  # ollama-model-loader:
+  #   image: curlimages/curl:latest
+  #   container_name: model-loader
+  #   depends_on:
+  #     - ollama
+  #   entrypoint: >
+  #     sh -c "
+  #     curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"llama3.2\"}';
+  #     # you can add more models to preload here but we are just gonna start with llama3.2
+  #     # curl -X POST http://ollama:11434/api/pull -H 'Content-Type: application/json' -d '{\"model\": \"deepseek-r1:8b\"}';
+  #     exit 0;
+  #     "
 
 volumes:
   mongo-data:
