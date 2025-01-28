@@ -1,43 +1,51 @@
 {
-    "id": "worker.inference.llm.ollama",
-    "type": "worker.inference.llm",
-    "name": "Ollama LLM Inference",
-    "api": {
-      "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
-      "endpoint": "/api/generate",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json"
-      }
+  "id": "worker.inference.llm.ollama",
+  "type": "worker.inference.llm",
+  "name": "Ollama LLM Inference",
+  "api": {
+    "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
+    "endpoint": "/api/generate",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  "parameters": [
+    {
+      "key": "model",
+      "type": "string",
+      "description": "Name of the model to use, e.g. 'llama2-7b'.",
+      "enum": ["llama3.2", "deepseek-r1:8b"],
+      "default": "llama3.2"
     },
-    "parameters": [
-      {
-        "key": "model",
-        "type": "string",
-        "description": "Name of the model to use, e.g. 'llama2-7b'.",
-        "enum": ["llama3.2", "deepseek-r1:8b"],
-        "default": "llama3.2"
-      },
-      {
-        "key": "prompt",
-        "type": "text",
-        "description": "User prompt to be sent to the model.",
-        "default": "Hello world"
-      },
-      {
-        "key": "temperature",
-        "type": "number",
-        "description": "Controls randomness in generation (0.0 - 1.0).",
-        "default": 0.7
-      }
-    ],
-    "metadata": {
-      "description": "Makes an inference call to an Ollama instance for text generation.",
-      "tags": ["worker", "llm", "ollama", "inference"],
-      "additional": {
-        "documentation_url": "https://github.com/ollama/ollama/blob/main/docs/api.md",
-        "timeout": 30
-      }
+    {
+      "key": "prompt",
+      "type": "text",
+      "description": "User prompt to be sent to the model.",
+      "default": "Hello world"
+    },
+    {
+      "key": "temperature",
+      "type": "number",
+      "description": "Controls randomness in generation (0.0 - 1.0).",
+      "default": 0.7
+    }
+  ],
+  "outputs": [
+    {
+      "key": "textoutput",
+      "type": "string",
+      "description": "the result of the prompt",
+      "enum": ["some", "promptoutput"],
+      "default": "someoutput"
+    }
+  ],
+  "metadata": {
+    "description": "Makes an inference call to an Ollama instance for text generation.",
+    "tags": ["worker", "llm", "ollama", "inference"],
+    "additional": {
+      "documentation_url": "https://github.com/ollama/ollama/blob/main/docs/api.md",
+      "timeout": 30
     }
   }
-  
+}
