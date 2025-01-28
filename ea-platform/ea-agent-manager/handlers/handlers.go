@@ -3,11 +3,14 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"ea-agent-manager/logger"
 	"ea-agent-manager/metrics"
 	"ea-agent-manager/mongo"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // dbClient is the shared MongoDB client for handlers.
@@ -102,6 +105,66 @@ func HandleCreateNodeDef(w http.ResponseWriter, r *http.Request) {
 		"message": "Node definition created successfully",
 		"node_id": result.InsertedID,
 	})
+}
+
+// HandleGetAllNodeDefs retrieves all node definitions from the database, but only their IDs and names.
+func HandleGetAllNodeDefs(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/nodes"
+
+	if r.Method != http.MethodGet {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Query all node definitions but only retrieve `id` and `name`
+	projection := bson.M{
+		"id":   1, // Include the `id` field
+		"name": 1, // Include the `name` field
+		"_id":  1, // Include the MongoDB internal `_id` field
+	}
+	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", bson.M{}, projection)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve node definitions from database", "error", err)
+		http.Error(w, "Failed to retrieve node definitions", http.StatusInternalServerError)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(nodeDefs)
+}
+
+// HandleGetNodeDef retrieves a specific node definition by ID.
+func HandleGetNodeDef(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/nodes/"
+
+	if r.Method != http.MethodGet {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := strings.TrimPrefix(r.URL.Path, path)
+	if id == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing node definition ID")
+		http.Error(w, "Missing node definition ID", http.StatusBadRequest)
+		return
+	}
+
+	nodeDef, err := dbClient.FindRecordByID("nodeDefs", "nodes", id)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve node definition from database", "error", err)
+		http.Error(w, "Failed to retrieve node definition", http.StatusInternalServerError)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(nodeDef)
 }
 
 //-----------------------------------------------------------------------------
@@ -212,4 +275,66 @@ func HandleCreateAgent(w http.ResponseWriter, r *http.Request) {
 		"message":  "Agent created successfully",
 		"agent_id": result.InsertedID,
 	})
+}
+
+// HandleGetAllAgents retrieves all agents from the database with their id, _id, and name fields.
+func HandleGetAllAgents(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/agents"
+
+	if r.Method != http.MethodGet {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Define the projection to include id, _id, and name
+	projection := bson.M{
+		"user": 1, // Include the `user` field
+		"_id":  1, // Include the MongoDB `_id` field
+		"name": 1, // Include the `name` field
+	}
+
+	// Retrieve agents with the defined projection
+	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", bson.M{}, projection)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve agents from database", "error", err)
+		http.Error(w, "Failed to retrieve agents", http.StatusInternalServerError)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(agents)
+}
+
+// HandleGetAgent retrieves a specific agent by ID.
+func HandleGetAgent(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/agents/"
+
+	if r.Method != http.MethodGet {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := strings.TrimPrefix(r.URL.Path, path)
+	if id == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing agent ID")
+		http.Error(w, "Missing agent ID", http.StatusBadRequest)
+		return
+	}
+
+	agent, err := dbClient.FindRecordByID("userAgents", "agents", id)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve agent from database", "error", err)
+		http.Error(w, "Failed to retrieve agent", http.StatusInternalServerError)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(agent)
 }

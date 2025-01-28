@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -45,4 +47,52 @@ func (m *MongoClient) InsertRecord(database, collection string, record interface
 
 	coll := m.client.Database(database).Collection(collection)
 	return coll.InsertOne(ctx, record)
+}
+
+// FindAllRecords retrieves all records from a collection.
+func (m *MongoClient) FindAllRecords(database, collection string) ([]map[string]interface{}, error) {
+	coll := m.client.Database(database).Collection(collection)
+	cursor, err := coll.Find(context.TODO(), bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []map[string]interface{}
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// FindRecordByID retrieves a single record by ID from a collection.
+func (m *MongoClient) FindRecordByID(database, collection, id string) (map[string]interface{}, error) {
+	coll := m.client.Database(database).Collection(collection)
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]interface{}
+	if err = coll.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&result); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// FindRecordsWithProjection retrieves records from a collection with a specified projection.
+func (m *MongoClient) FindRecordsWithProjection(database, collection string, filter, projection interface{}) ([]map[string]interface{}, error) {
+	coll := m.client.Database(database).Collection(collection)
+	opts := options.Find().SetProjection(projection)
+	cursor, err := coll.Find(context.TODO(), filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var results []map[string]interface{}
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

@@ -119,3 +119,197 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 - Scalability: Multiple agents can reuse the same Node Definition. For example, “worker.inference.llm.ollama” can appear in hundreds of different Agent workflows without duplicating configuration.
 - Consistency: By enumerating possible parameter values (enum) or providing defaults in the Node Definition, you guide users to valid settings. The Agent just overrides them if needed.
 - Versatility: If you decide to add new Node Definitions (like “worker.inference.llm.openai”), you don’t need to alter the schema—just create a new Node Definition. Agents can reference it immediately.
+
+## API Documentation
+
+### Endpoints Overview
+
+| Method | Path                     | Description                                |
+|--------|--------------------------|--------------------------------------------|
+| **GET**   | `/api/v1/nodes`          | Retrieve all nodes with their `id` and `name`. |
+| **GET**   | `/api/v1/nodes/{id}`     | Retrieve a specific node by its `id`.      |
+| **POST**  | `/api/v1/nodes`          | Create a new node definition.             |
+| **GET**   | `/api/v1/agents`         | Retrieve all agents with their `id`, `_id`, and `name`. |
+| **GET**   | `/api/v1/agents/{id}`    | Retrieve a specific agent by its `id`.    |
+| **POST**  | `/api/v1/agents`         | Create a new agent.                       |
+
+### Nodes
+
+#### `GET /api/v1/nodes`
+Retrieve a list of all nodes.
+
+**Response Example:**
+```json
+[
+    {
+        "id": "worker.inference.llm.ollama",
+        "name": "Ollama Worker"
+    },
+    {
+        "id": "worker.inference.llm.openai",
+        "name": "OpenAI Worker"
+    }
+]
+```
+
+#### `GET /api/v1/nodes/{id}`
+Retrieve a specific node definition by its `id`.
+
+**Response Example:**
+```json
+{
+    "id": "worker.inference.llm.ollama",
+    "name": "Ollama Worker",
+    "type": "worker.inference.llm",
+    "api": {
+        "base_url": "http://example.com/api",
+        "endpoint": "/inference",
+        "method": "POST",
+        "headers": {
+            "Authorization": "Bearer token"
+        }
+    },
+    "parameters": [
+        {
+            "key": "temperature",
+            "type": "float",
+            "description": "Sampling temperature for inference",
+            "default": 0.7
+        }
+    ],
+    "metadata": {
+        "description": "Node definition for LLM inference",
+        "tags": ["inference", "llm"]
+    }
+}
+```
+
+#### `POST /api/v1/nodes`
+Create a new node definition.
+
+**Request Body Example:**
+```json
+{
+    "id": "worker.inference.llm.newmodel",
+    "name": "New LLM Worker",
+    "type": "worker.inference.llm",
+    "api": {
+        "base_url": "http://example.com/api",
+        "endpoint": "/newmodel",
+        "method": "POST",
+        "headers": {
+            "Authorization": "Bearer newtoken"
+        }
+    },
+    "parameters": [
+        {
+            "key": "max_tokens",
+            "type": "int",
+            "description": "Maximum number of tokens to generate",
+            "default": 256
+        }
+    ],
+    "metadata": {
+        "description": "Node definition for a new LLM model",
+        "tags": ["inference", "llm"]
+    }
+}
+```
+
+**Response Example:**
+```json
+{
+    "message": "Node definition created successfully",
+    "node_id": "worker.inference.llm.newmodel"
+}
+```
+
+### Agents
+
+#### `GET /api/v1/agents`
+Retrieve a list of all agents.
+
+**Response Example:**
+```json
+[
+    {
+        "_id": "64f0a0f7a2b1c8e3f29e0b1a",
+        "id": "agent1",
+        "name": "Agent One"
+    },
+    {
+        "_id": "64f0a0f7a2b1c8e3f29e0b1b",
+        "id": "agent2",
+        "name": "Agent Two"
+    }
+]
+```
+
+#### `GET /api/v1/agents/{id}`
+Retrieve a specific agent by its `id`.
+
+**Response Example:**
+```json
+{
+    "_id": "64f0a0f7a2b1c8e3f29e0b1a",
+    "id": "agent1",
+    "name": "Agent One",
+    "description": "First test agent",
+    "user": "user1",
+    "nodes": [
+        {
+            "id": "node1",
+            "definition_ref": "worker.inference.llm.ollama",
+            "parameters": {
+                "temperature": 0.7
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": ["node1"],
+            "to": ["node2"]
+        }
+    ],
+    "metadata": {
+        "created_at": "2025-01-28T00:00:00Z",
+        "updated_at": "2025-01-28T00:00:00Z"
+    }
+}
+```
+
+#### `POST /api/v1/agents`
+Create a new agent.
+
+**Request Body Example:**
+```json
+{
+    "id": "agent3",
+    "name": "Agent Three",
+    "description": "Third test agent",
+    "user": "user3",
+    "nodes": [
+        {
+            "id": "node1",
+            "definition_ref": "worker.inference.llm.openai",
+            "parameters": {
+                "temperature": 0.9
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": ["node1"],
+            "to": ["node2"]
+        }
+    ]
+}
+```
+
+**Response Example:**
+```json
+{
+    "message": "Agent created successfully",
+    "agent_id": "agent3"
+}
+```
