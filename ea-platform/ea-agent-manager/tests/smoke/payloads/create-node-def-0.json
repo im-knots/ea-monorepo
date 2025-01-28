@@ -15,8 +15,8 @@
         "key": "model",
         "type": "string",
         "description": "Name of the model to use, e.g. 'llama2-7b'.",
-        "enum": ["llama2-7b", "llama2-13b", "llama2-70b"],
-        "default": "llama2-7b"
+        "enum": ["llama3.2", "deepseek-r1:8b"],
+        "default": "llama3.2"
       },
       {
         "key": "prompt",

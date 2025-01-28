@@ -41,7 +41,8 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Agent Engine"):
         eaAgentManager = Pod("Agent Manager API")
         eaAgentDB = Storage("Agent Manager DB")
-        eaFrontend >> eaAgentManager >> [eaJobOrchestrator, eaAgentDB]
+        eaFrontend >> eaAgentManager >> eaAgentDB
+        eaJobOrchestrator >> eaAgentManager
 
     
     # Ea User Engine

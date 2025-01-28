@@ -29,33 +29,33 @@ services:
   #   container_name: ea-frontend
 
   # # Service 4: ea-agent-manager
-  # ea-agent-manager:
-  #   build:
-  #     context: ./ea-platform/ea-agent-manager
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8084:8080" 
-  #   container_name: ea-agent-manager
+  ea-agent-manager:
+    build:
+      context: ./ea-platform/ea-agent-manager
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8080" 
+    container_name: ea-agent-manager
 
-  # ea-job-engine:
-  #   build:
-  #     context: ./ea-platform/ea-job-engine
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "8085:8080" 
-  #   container_name: ea-job-engine
+  ea-job-engine:
+    build:
+      context: ./ea-platform/ea-job-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8080" 
+    container_name: ea-job-engine
 
-  # # Service 5: mongodb
-  # mongodb:
-  #   image: mongo:latest
-  #   container_name: local-mongodb
-  #   ports:
-  #     - "8083:27017" 
-  #   volumes:
-  #     - mongo-data:/data/db
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: admin
-  #     MONGO_INITDB_ROOT_PASSWORD: password
+  # Service 5: mongodb
+  mongodb:
+    image: mongo:latest
+    container_name: local-mongodb
+    ports:
+      - "8083:27017" 
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
 
   # Service 6: ollama for local LLMs
   ollama:
