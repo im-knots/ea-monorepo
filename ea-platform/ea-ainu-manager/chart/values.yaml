@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/ea-agent-manager
+  repository: localhost:5000/ea-ainu-manager
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -52,7 +52,7 @@ ingress:
   className: ""
   annotations: {}
   hosts:
-    - host: ea-agent-manager.dev.erulabs.ai
+    - host: ea-ainu-manager.dev.erulabs.ai
       paths:
         - path: /
           pathType: ImplementationSpecific

@@ -91,19 +91,32 @@ k8s_port_forward() {
 
     # Port-forward ea-agent-manager
     nohup kubectl port-forward deployment/ea-agent-manager 8083:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-agent-manager on port 8084 started."
+    echo "Port-forwarding for ea-agent-manager on port 8083 started."
 
     # Port-forward ea-job-engine
     nohup kubectl port-forward deployment/ea-job-engine 8084:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-job-engine on port 8085 started."
+    echo "Port-forwarding for ea-job-engine on port 8084 started."
+
+    # Port-forward ea-ainu-engine
+    nohup kubectl port-forward deployment/ea-ainu-manager 8085:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for ea-ainu-manager on port 8085 started."
+
+    # Port-forward ea-platform mongodb
+    nohup kubectl port-forward deployment/mongodb 8086:27017 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for ea-platform mongodb on port 8086 started."
+
+    # Port-forward eru-labs-brand mongodb
+    nohup kubectl port-forward deployment/mongodb 8087:27017 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for eru-labs-brand mongodb on port 8087 started."
 }
 
 seed_test_data() {
     echo "Seeding test data with smoke test scripts"
     cd ea-platform/ea-agent-manager/tests
-    pwd
     ./smoke/create-agent.sh
     ./smoke/create-node.sh
+    cd ../../ea-ainu-manager/tests
+    ./smoke/create-user.sh
 }
 
 cleanup() {

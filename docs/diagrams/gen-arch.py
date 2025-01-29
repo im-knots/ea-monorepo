@@ -25,7 +25,8 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Ea WWW"):
         eaLB = LoadBalancing("Ea WWW LB")
         eaFrontend = Pod("Ea Frontend")
-        dns >> eaLB >> eaFrontend
+        eaAPIGateway = Pod("Ea API Gateway")
+        dns >> eaLB >> eaFrontend >> eaAPIGateway
     
     # Ea Job Engine
     with Cluster("Job Engine"):
@@ -33,7 +34,7 @@ with Diagram("Eru Labs", show=False):
         eaJobInf = Job("User Inference Job")
         eaJobTrn = Job("User Training Job")
         eaJobAgt = Job("User Agent Job")
-        eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> k8sCompute
+        eaAPIGateway >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> k8sCompute
         # Future state
         # eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
 
@@ -41,9 +42,14 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Agent Engine"):
         eaAgentManager = Pod("Agent Manager API")
         eaAgentDB = Storage("Agent Manager DB")
-        eaFrontend >> eaAgentManager >> eaAgentDB
+        eaAPIGateway >> eaAgentManager >> eaAgentDB
         eaJobOrchestrator >> eaAgentManager
 
+    # Ea Ainu Engine
+    with Cluster("Ainulindale Engine"):
+        eaAinuUserManager = Pod("Ainu Engine User Manager")
+        eaAinuDB = Storage("Ainu Engine DB")
+        eaAPIGateway >> eaAinuUserManager >> eaAinuDB
     
     # Ea User Engine
     # with Cluster("User Engine"):
