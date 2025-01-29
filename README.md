@@ -12,8 +12,12 @@ A monorepo for all things eru labs
 ## Run everything locally with minikube
 Some services (ea-job-engine) require kubernetes specifically for their operator patterns. Therefore we need a local kubernetes cluster for development. Minikube is the best bet. 
 
+I have created a helper script to easily set up the entire platform in a local cluster.
+
 ### Requirements
 - minikube
+- terraform 1.10.3
+- tfenv (optional, for managing terraform versions)
 - helm
 - kubectl
 - docker
@@ -21,9 +25,8 @@ Some services (ea-job-engine) require kubernetes specifically for their operator
 ### Start up Eru Labs components locally with helm and minikube
 ```bash
 minikube delete # Clean up previous minikube setups
-minikube start --drivver=docker
+minikube start --driver=docker
 minikube addons enable registry
-eval $(minikube docker-env) # Tell docker to use the minikube registry
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development
 
@@ -31,7 +34,7 @@ eval $(minikube docker-env) # Tell docker to use the minikube registry
 
 ```
 ### Adding new services
-To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. The minikube.sh script will pick up the new app automatically. 
+To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
 
 Optionally, you can add a portforward line in the minikube.sh script's `k8s_port_forward()` function using existing as the example. 
 

@@ -1,0 +1,115 @@
+---
+prometheus:
+  prometheusSpec:
+    scrapeInterval: 1m
+    evaluationInterval: 1m
+
+    # Allow scraping other namespaces https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    logFormat: json
+    ruleSelector:
+      matchLabels:
+        prometheus_rule: "1"
+
+  ## Configure pod disruption budgets for Prometheus
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+  ## This configuration is immutable once created and will require the PDB to be deleted to be changed
+  ## https://github.com/kubernetes/kubernetes/issues/45398
+  ##
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""
+
+
+defaultRules:
+  labels:
+    prometheus_rule: "1"
+
+additionalPrometheusRulesMap:
+  sre-standard-prometheus-rules:
+    additionalLabels:
+      prometheus_rule: "1"
+    groups:
+      - name: kube-cluster-info
+        interval: 5m
+        rules:
+          - record: kube_cluster_info
+            expr: 1
+          - record: kube_metric_cardinality:gt500
+            expr: max by (namespace, job, name) (label_replace(count by(__name__, namespace, job, pod) ({pod=~".+", namespace=~".+"}), "name", "$1", "__name__", "(.+)")) > 500
+          - record: kube_workload_container_cpu_util:max5m
+            expr: max by (namespace, workload, container) (avg by (namespace, pod, container) (avg_over_time(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate[5m])) / min by (namespace, pod, container) (kube_pod_container_resource_requests{resource="cpu", container!="flink-main-container"} > 0.05) * on (namespace, pod) group_left(workload) namespace_workload_pod:kube_pod_owner:relabel{workload!~"cluster-overprovisioner.*", workload_type!="job"})
+          - record: kube_workload_container_memory_util:max5m
+            expr: max by (namespace, workload, container) (max by (namespace, pod, container) (max_over_time(container_memory_working_set_bytes{container!="", image!=""}[5m])) / min by (namespace, pod, container) (kube_pod_container_resource_requests{resource="memory", container!="flink-main-container"} > 100 * 1024 * 1024) * on (namespace, pod) group_left(workload) namespace_workload_pod:kube_pod_owner:relabel{workload!~"cluster-overprovisioner.*", workload_type!="job"})
+          - record: kube_prometheus_target_down_for_10m:count
+            expr: count by (namespace, job) ((up == 0) * (max_over_time(up[10m]) == 0))
+          - record: kube_hpa_unabletoscale_for_10m:count
+            expr: count by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_condition{status="false", condition="AbleToScale"} * min_over_time(kube_horizontalpodautoscaler_status_condition[10m]) == 1)
+          - record: kube_hpa_inactivescaling_for_10m:count
+            expr: count by (namespace, horizontalpodautoscaler) (kube_horizontalpodautoscaler_status_condition{status="false", condition="ScalingActive"} * min_over_time(kube_horizontalpodautoscaler_status_condition[10m]) == 1)
+          # - record: promtail_dropped_logs:sum5m
+          #   expr: sum(increase(promtail_dropped_entries_total[5m]))
+          # - record: loki_append_failures:sum5m
+          #   expr: sum(increase(loki_distributor_ingester_append_failures_total[5m]))
+      - name: kube-health
+        interval: 1d
+        rules:
+          - record: kube_workload_container_restarts:count1d
+            expr: sum by (namespace, workload, container) (((max_over_time(kube_pod_container_status_restarts_total[1d]) - kube_pod_container_status_restarts_total offset 1d or max_over_time(kube_pod_container_status_restarts_total[1d]) * 0) > 0) * on (namespace, pod) group_left(workload) max_over_time(namespace_workload_pod:kube_pod_owner:relabel[1d]))
+          - record: kube_workload_container_cpu_util:max5m:avg1d
+            expr: avg_over_time(kube_workload_container_cpu_util:max5m[1d])
+          - record: kube_workload_container_memory_util:max5m:max1d
+            expr: max_over_time(kube_workload_container_memory_util:max5m[1d])
+          - record: kube_metric_cardinality:gt500:max1d
+            expr: max_over_time(kube_metric_cardinality:gt500[1d])
+          - record: kube_prometheus_target_down_for_10m:count:max1d
+            expr: max_over_time(kube_prometheus_target_down_for_10m:count[1d])
+          - record: kube_hpa_unabletoscale_for_10m:count:max1d
+            expr: max_over_time(kube_hpa_unabletoscale_for_10m:count[1d])
+          - record: kube_hpa_inactivescaling_for_10m:count:max1d
+            expr: max_over_time(kube_hpa_inactivescaling_for_10m:count[1d])
+          # - record: promtail_dropped_logs:sum1d
+          #   expr: sum_over_time(promtail_dropped_logs:sum5m[24h])
+          # - record: loki_append_failures:sum1d
+          #   expr: sum_over_time(loki_append_failures:sum5m[24h])
+
+serviceMonitors:
+  - name: ""
+    namespaceSelector:
+      any: true
+
+grafana:
+  defaultDashboardsEnabled: true
+  sidecar:
+    dashboards:
+      label: grafana_dashboard
+      searchNamespace: ALL
+      SCProvider: false
+      defaultFolderName: default
+  grafana.ini:
+    auth:
+      disable_login_form: true
+    auth.anonymous:
+      enabled: true
+      org_role: Editor
+    auth.basic:
+      enabled: true
+  plugins:
+    - agenty-flowcharting-panel
+    - marcusolsson-dynamictext-panel
+    - marcusolsson-json-datasource 1.3.3
+    - netsage-sankey-panel
+    - yesoreyeram-boomtheme-panel
+    - yesoreyeram-infinity-datasource 2.5.0
+
+  ## Configure pod disruption budgets for Alertmanager
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
+  ## This configuration is immutable once created and will require the PDB to be deleted to be changed
+  ## https://github.com/kubernetes/kubernetes/issues/45398
+  ##
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+    maxUnavailable: ""

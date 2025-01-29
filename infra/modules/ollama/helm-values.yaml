@@ -1,15 +1,5 @@
 ---
 ollama:
   models:
-    - llama3.2
-    # - deepseek-r1:8b
-    # you can add more models from here: https://ollama.com/search
-
-
-# Probably need to tweak these but im not made of gcp credits yet. 
-resources:
-  requests:
-    cpu: 500m
-    memory: 8Gi
-  limits:
-    memory: 8Gi
+    pull:
+      - llama3.2
