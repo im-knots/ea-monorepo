@@ -1,8 +1,8 @@
 ---
 prometheus:
   prometheusSpec:
-    scrapeInterval: 1m
-    evaluationInterval: 1m
+    scrapeInterval: 30s
+    evaluationInterval: 30s
 
     # Allow scraping other namespaces https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
     podMonitorSelectorNilUsesHelmValues: false
