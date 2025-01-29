@@ -1,6 +1,18 @@
 # eru-labs-monorepo
 A monorepo for all things eru labs
 
+What is Eru Labs? We are a small team of nerds working to disrupt industries by commodifying the idle compute everyone is surrounded by every day.
+
+We make this possible with the Ea Platform. A system that allows users to donate their device's idle compute time in exchange for `compute credits` they can in turn use to run their own AI agents, infrence, and training jobs. 
+
+Core features of the Ea Platform are:
+- The Ainulindale client software that allows users to connect their idle device compute to the Ea network in exchange for compute credits
+- A Node based AI agent/workflow builder
+- A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
+- A marketplace for users to buy and sell Agent workflows, datasets, or their earned compute credits 
+- Leaderboards and gamification challenges for users to show off and earn more compute credits by completing challenges and gaining ranks
+- Dataset storage for users models, datasets, outputs, ect
+
 ## Contents
 - Eru Labs brand webpage front/backends 
 - Ea platform front/backends
