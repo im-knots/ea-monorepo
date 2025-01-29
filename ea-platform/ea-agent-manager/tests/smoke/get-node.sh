@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8084/api/v1/nodes"
+API_ENDPOINT="http://localhost:8083/api/v1/nodes"
 
 # Get all nodes
 echo "Fetching all nodes..."

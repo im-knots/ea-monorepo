@@ -4,7 +4,7 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8085/api/v1/jobs"
+API_ENDPOINT="http://localhost:8084/api/v1/jobs"
 
 # Iterate through matching files in the payload directory
 for file in "$PAYLOAD_DIR"/*create-job*.json; do

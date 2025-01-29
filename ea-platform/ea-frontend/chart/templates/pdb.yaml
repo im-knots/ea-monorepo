@@ -1,0 +1,22 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ea-frontend.fullname" . }}-pdb
+  labels:
+    app: {{ include "ea-frontend.name" . }}
+spec:
+  minAvailable: 
+    {{- if .Values.pdb.minAvailable }}
+    {{ .Values.pdb.minAvailable }}
+    {{- else }}
+    null
+    {{- end }}
+  maxUnavailable:
+    {{- if .Values.pdb.maxUnavailable }}
+    {{ .Values.pdb.maxUnavailable }}
+    {{- else }}
+    null
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ea-frontend.selectorLabels" . | nindent 6 }}

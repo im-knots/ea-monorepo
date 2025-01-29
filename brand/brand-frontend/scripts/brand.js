@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
 
             try {
-                const response = await fetch('http://localhost:8082/submit', {
+                const response = await fetch('http://localhost:8081/submit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(jsonData),
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                const response = await fetch('http://localhost:8082/subscribe', {
+                const response = await fetch('http://localhost:8081/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email }),
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
 
             try {
-                const response = await fetch('http://localhost:8082/waitlist', {
+                const response = await fetch('http://localhost:8081/waitlist', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(jsonData),
