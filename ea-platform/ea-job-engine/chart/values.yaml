@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/brand-backend
+  repository: localhost:5000/ea-job-engine
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -9,10 +9,10 @@ nameOverride: ""
 fullnameOverride: ""
 
 config:
-  # TEST_ENV: TEST
+  AGENT_MANAGER_URL: http://ea-agent-manager.ea-platform.svc.cluster.local:8080/api/v1/agents/
 
 secrets:
-  DB_URL: mongodb://mongodb.eru-labs-brand.svc.cluster.local
+ # DB_URL: mongodb://user:password@mongodb.brand-backend.svc.cluster.local
 
 resources: 
   limits:
@@ -59,11 +59,11 @@ ingress:
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /api/v1/metrics
     port: http
 readinessProbe:
   httpGet:
-    path: /
+    path: /api/v1/metrics
     port: http
 
 nodeSelector: {}

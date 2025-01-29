@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/brand-backend
+  repository: localhost:5000/ea-frontend
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -9,10 +9,10 @@ nameOverride: ""
 fullnameOverride: ""
 
 config:
-  # TEST_ENV: TEST
+  PORT: 8080
 
 secrets:
-  DB_URL: mongodb://mongodb.eru-labs-brand.svc.cluster.local
+  # DB_URL: mongodb://mongodb.ea-platform.svc.cluster.local
 
 resources: 
   limits:
@@ -52,7 +52,7 @@ ingress:
   className: ""
   annotations: {}
   hosts:
-    - host: brand-backend.erulabs.ai
+    - host: ea.dev.erulabs.ai
       paths:
         - path: /
           pathType: ImplementationSpecific

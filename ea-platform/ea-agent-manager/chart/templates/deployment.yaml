@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "eru-labs-brand-frontend.fullname" . }}
+  name: {{ include "ea-agent-manager.fullname" . }}
   labels:
-    {{- include "eru-labs-brand-frontend.labels" . | nindent 4 }}
+    {{- include "ea-agent-manager.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "eru-labs-brand-frontend.selectorLabels" . | nindent 6 }}
+      {{- include "ea-agent-manager.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "eru-labs-brand-frontend.labels" . | nindent 8 }}
+        {{- include "ea-agent-manager.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "eru-labs-brand-frontend.serviceAccountName" . }}
+      serviceAccountName: {{ include "ea-agent-manager.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -61,7 +61,7 @@ spec:
             - name: {{ $key | quote }}
               valueFrom:
                 secretKeyRef:
-                  name: brand-frontend-secrets
+                  name: ea-agent-manager-secrets
                   key: {{ $key | quote }}
             {{- end }}
             {{- end }}
