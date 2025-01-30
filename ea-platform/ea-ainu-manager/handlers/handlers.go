@@ -10,7 +10,10 @@ import (
 	"ea-ainu-manager/metrics"
 	"ea-ainu-manager/mongo"
 
+	"github.com/google/uuid"
+
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // dbClient is the shared MongoDB client for handlers.
@@ -27,14 +30,12 @@ func SetDBClient(client *mongo.MongoClient) {
 
 // UserDefinition represents a user on the Ea platform
 type UserDefinition struct {
+	ID             string        `json:"id" bson:"id"`
 	Name           string        `json:"name" bson:"name"`
 	ComputeCredits int           `json:"compute_credits" bson:"compute_credits"`
-	ComputeRate    float64       `json:"compute_rate" bson:"compute_rate"`
-	InferenceJobs  int           `json:"inference_jobs" bson:"inference_jobs"`
-	TrainingJobs   int           `json:"training_jobs" bson:"training_jobs"`
-	Agents         int           `json:"agents" bson:"agents"`
 	ComputeDevices []ComputeNode `json:"compute_devices" bson:"compute_devices"`
 	Jobs           []AgentJob    `json:"jobs" bson:"jobs"`
+	CreatedTime    time.Time     `json:"created_time" bson:"created_time"`
 }
 
 // ComputeNode represents a user's compute device
@@ -46,14 +47,17 @@ type ComputeNode struct {
 	ComputeRate float64   `json:"compute_rate" bson:"compute_rate"`
 	ID          string    `json:"id" bson:"id"`
 	LastActive  time.Time `json:"last_active" bson:"last_active"`
+	CreatedTime time.Time `json:"created_time" bson:"created_time"`
 }
 
 // AgentJob represents an agent or job managed by the user
 type AgentJob struct {
-	JobName    string    `json:"job_name" bson:"job_name"`
-	JobType    string    `json:"job_type" bson:"job_type"`
-	Status     string    `json:"status" bson:"status"`
-	LastActive time.Time `json:"last_active" bson:"last_active"`
+	JobName     string    `json:"job_name" bson:"job_name"`
+	JobType     string    `json:"job_type" bson:"job_type"`
+	Status      string    `json:"status" bson:"status"`
+	LastActive  time.Time `json:"last_active" bson:"last_active"`
+	ID          string    `json:"id" bson:"id"`
+	CreatedTime time.Time `json:"created_time" bson:"created_time"`
 }
 
 // HandleCreateUser handles the creation of a User data entry
@@ -73,19 +77,25 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		logger.Slog.Error("Failed to parse request body", "error", err)
 		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
 		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "decoding_request", "success").Inc()
 	}
 
-	// Insert UserDefinition into the "ainuUsers" database and "users" collection
+	input.ID = uuid.New().String()
+	input.CreatedTime = time.Now()
+	for i := range input.ComputeDevices {
+		input.ComputeDevices[i].ID = uuid.New().String()
+		input.ComputeDevices[i].CreatedTime = time.Now()
+	}
+	for i := range input.Jobs {
+		input.Jobs[i].ID = uuid.New().String()
+		input.Jobs[i].CreatedTime = time.Now()
+	}
+
 	result, err := dbClient.InsertRecord("ainuUsers", "users", input)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert node definition into database", "error", err)
-		http.Error(w, "Failed to insert node definition into database", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to insert user into database", "error", err)
+		http.Error(w, "Failed to insert user into database", http.StatusInternalServerError)
 		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "db_insertion", "success").Inc()
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
@@ -93,8 +103,10 @@ func HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Ainulindale User created successfully",
-		"user_id": result.InsertedID,
+		"message":    "User created successfully",
+		"user_id":    result.InsertedID,
+		"user":       input.Name,
+		"creat_time": input.CreatedTime,
 	})
 }
 
@@ -155,4 +167,72 @@ func HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
+}
+
+// HandleAddComputeDevice adds a new compute device to an existing user
+func HandleAddComputeDevice(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/users/"
+
+	if r.Method != http.MethodPost {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID from the URL
+	segments := strings.Split(strings.TrimPrefix(r.URL.Path, path), "/")
+	if len(segments) < 2 || segments[1] != "devices" {
+		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	userID := segments[0]
+
+	var newDevice ComputeNode
+	if err := json.NewDecoder(r.Body).Decode(&newDevice); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Assign new UUID and CreatedTime to the device
+	newDevice.ID = uuid.New().String()
+	newDevice.CreatedTime = time.Now()
+
+	// Convert user ID to MongoDB ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
+		logger.Slog.Error("Invalid user ID format", "error", err)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Update user record with the new device
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$push": bson.M{"compute_devices": newDevice}}
+
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to update user record", "error", err)
+		http.Error(w, "Failed to update user record", http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "no_update", "warning").Inc()
+		logger.Slog.Warn("No user found with given ID", "user_id", userID)
+		http.Error(w, "No user found with given ID", http.StatusNotFound)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
+	logger.Slog.Info("User compute device added successfully", "user_id", userID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Compute device added successfully",
+		"user_id": userID,
+		"device":  newDevice,
+	})
 }

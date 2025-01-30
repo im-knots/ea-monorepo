@@ -1,0 +1,43 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "compute_credits": { "type": "integer", "minimum": 0 },
+        "created_time": { "type": "string", "format": "date-time" },
+        "compute_devices": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "device_name": { "type": "string" },
+                    "device_os": { "type": "string" },
+                    "compute_type": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Active", "Offline", "Error"] },
+                    "compute_rate": { "type": "number", "minimum": 0 },
+                    "id": { "type": "string", "format": "uuid" },
+                    "last_active": { "type": "string", "format": "date-time" },
+                    "created_time": { "type": "string", "format": "date-time" }
+                },
+                "required": ["device_name", "device_os", "compute_type", "status", "compute_rate", "id", "last_active", "created_time"]
+            }
+        },
+        "jobs": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "job_name": { "type": "string" },
+                    "job_type": { "type": "string" },
+                    "status": { "type": "string", "enum": ["Active", "Offline"] },
+                    "last_active": { "type": "string", "format": "date-time" },
+                    "id": { "type": "string", "format": "uuid" },
+                    "created_time": { "type": "string", "format": "date-time" }
+                },
+                "required": ["job_name", "job_type", "status", "last_active", "id", "created_time"]
+            }
+        }
+    },
+    "required": ["id", "name", "compute_credits", "created_time", "compute_devices", "jobs"]
+}

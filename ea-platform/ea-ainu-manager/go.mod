@@ -3,6 +3,7 @@ module ea-ainu-manager
 go 1.22.2
 
 require (
+	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.20.5
 	go.mongodb.org/mongo-driver v1.17.2
 )

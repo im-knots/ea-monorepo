@@ -1,0 +1,36 @@
+{
+    "name": "dev@example.com",
+    "compute_credits": 8000,
+    "compute_devices": [
+        {
+            "device_name": "AWS-GPU-Cluster-1",
+            "device_os": "Linux (Amazon Linux)",
+            "compute_type": "GPU",
+            "status": "Active",
+            "compute_rate": 1000.0,
+            "last_active": "2025-01-28T10:00:00Z"
+        },
+        {
+            "device_name": "GCP-TPU-Worker",
+            "device_os": "Linux (Debian)",
+            "compute_type": "TPU",
+            "status": "Idle",
+            "compute_rate": 1200.0,
+            "last_active": "2025-01-28T09:45:00Z"
+        }
+    ],
+    "jobs": [
+        {
+            "job_name": "Automated Trading AI",
+            "job_type": "Agent",
+            "status": "Running",
+            "last_active": "2025-01-28T11:30:00Z"
+        },
+        {
+            "job_name": "Speech-to-Text Model",
+            "job_type": "Training",
+            "status": "Active",
+            "last_active": "2025-01-28T12:00:00Z"
+        }
+    ]
+}

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"strings"
 
 	"ea-ainu-manager/handlers"
 	"ea-ainu-manager/metrics"
@@ -11,16 +12,39 @@ import (
 func RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("/api/v1/metrics", metrics.MetricsHandler())
 
-	// User routes
+	mux.Handle("/api/v1/users/", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		segments := strings.Split(strings.TrimPrefix(path, "/api/v1/users/"), "/")
+
+		if len(segments) > 1 && segments[1] == "devices" {
+			// Compute Device routes under /api/v1/users/{user_id}/devices
+			if r.Method == http.MethodPost {
+				handlers.HandleAddComputeDevice(w, r) // Add a compute device
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+			return
+		}
+
+		if len(segments) == 1 {
+			if r.Method == http.MethodGet {
+				handlers.HandleGetUser(w, r) // GET: Retrieve a specific user
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+			return
+		}
+
+		http.Error(w, "Not Found", http.StatusNotFound)
+	})))
+
 	mux.Handle("/api/v1/users", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			handlers.HandleCreateUser(w, r) // POST: Create an User
+			handlers.HandleCreateUser(w, r) // Create a User
 		} else if r.Method == http.MethodGet {
-			handlers.HandleGetAllUsers(w, r) // GET: Retrieve all Users
+			handlers.HandleGetAllUsers(w, r) // Retrieve all Users
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})))
-	mux.Handle("/api/v1/users/", metrics.MetricsMiddleware(http.HandlerFunc(handlers.HandleGetUser))) // GET: Retrieve a specific User by ID
-
 }

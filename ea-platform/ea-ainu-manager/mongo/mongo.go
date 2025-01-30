@@ -96,3 +96,17 @@ func (m *MongoClient) FindRecordsWithProjection(database, collection string, fil
 	}
 	return results, nil
 }
+
+// UpdateRecord updates a record in the specified collection using a filter.
+func (m *MongoClient) UpdateRecord(database, collection string, filter, update interface{}) (*mongo.UpdateResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	coll := m.client.Database(database).Collection(collection)
+	result, err := coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

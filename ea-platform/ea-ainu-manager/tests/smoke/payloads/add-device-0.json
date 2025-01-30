@@ -1,0 +1,8 @@
+{
+    "device_name": "Titan",
+    "device_os": "Linux (Ubuntu 22.04)",
+    "compute_type": "GPU",
+    "status": "Active",
+    "compute_rate": 320.5,
+    "last_active": "2025-01-30T14:45:00Z"
+}

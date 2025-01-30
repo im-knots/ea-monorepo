@@ -1,0 +1,36 @@
+{
+    "name": "alice@whiterabbit.com",
+    "compute_credits": 3200,
+    "compute_devices": [
+        {
+            "device_name": "Cloud-GPU-1",
+            "device_os": "Linux (Ubuntu 20.04)",
+            "compute_type": "GPU",
+            "status": "Active",
+            "compute_rate": 600.0,
+            "last_active": "2025-01-25T08:30:00Z"
+        },
+        {
+            "device_name": "Personal-Workstation",
+            "device_os": "Linux (Arch)",
+            "compute_type": "CPU + GPU",
+            "status": "Active",
+            "compute_rate": 350.0,
+            "last_active": "2025-01-26T14:15:00Z"
+        }
+    ],
+    "jobs": [
+        {
+            "job_name": "Medical Image Analysis",
+            "job_type": "Agent",
+            "status": "Running",
+            "last_active": "2025-01-26T18:00:00Z"
+        },
+        {
+            "job_name": "Natural Language Processing",
+            "job_type": "Training",
+            "status": "Queued",
+            "last_active": "2025-01-26T12:30:00Z"
+        }
+    ]
+}
