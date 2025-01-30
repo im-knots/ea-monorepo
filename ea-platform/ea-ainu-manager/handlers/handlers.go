@@ -407,3 +407,71 @@ func HandleDeleteComputeDevice(w http.ResponseWriter, r *http.Request) {
 		"device_name": deviceName,
 	})
 }
+
+// HandleAddJob adds a new user job to an existing user
+func HandleAddJob(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/users/"
+
+	if r.Method != http.MethodPost {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID from the URL
+	segments := strings.Split(strings.TrimPrefix(r.URL.Path, path), "/")
+	if len(segments) < 2 || segments[1] != "jobs" {
+		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	userID := segments[0]
+
+	var newJob AgentJob
+	if err := json.NewDecoder(r.Body).Decode(&newJob); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Assign new UUID and CreatedTime to the device
+	newJob.ID = uuid.New().String()
+	newJob.CreatedTime = time.Now()
+
+	// Convert user ID to MongoDB ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
+		logger.Slog.Error("Invalid user ID format", "error", err)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Update user record with the new device
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$push": bson.M{"jobs": newJob}}
+
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to update user record", "error", err)
+		http.Error(w, "Failed to update user record", http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "no_update", "warning").Inc()
+		logger.Slog.Warn("No user found with given ID", "user_id", userID)
+		http.Error(w, "No user found with given ID", http.StatusNotFound)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
+	logger.Slog.Info("User job added successfully", "user_id", userID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "User job added successfully",
+		"user_id": userID,
+		"job":     newJob,
+	})
+}

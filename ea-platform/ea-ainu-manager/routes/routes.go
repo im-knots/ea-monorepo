@@ -28,6 +28,19 @@ func RegisterRoutes(mux *http.ServeMux) {
 			return
 		}
 
+		if len(segments) > 1 && segments[1] == "jobs" {
+			// User Job routes under /api/v1/users/{user_id}/jobs/{job_id}
+			// if r.Method == http.MethodDelete {
+			// 	handlers.HandleDeleteJob(w, r) // Delete a User job
+			// } else
+			if r.Method == http.MethodPost {
+				handlers.HandleAddJob(w, r) // Add a user job
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+			return
+		}
+
 		if len(segments) > 1 && segments[1] == "credits" {
 			// Compute Credits update route /api/v1/users/{user_id}/credits
 			if r.Method == http.MethodPut {
@@ -39,6 +52,7 @@ func RegisterRoutes(mux *http.ServeMux) {
 		}
 
 		if len(segments) == 1 {
+			// Get specific user route /api/v1/users/{user_id}
 			if r.Method == http.MethodGet {
 				handlers.HandleGetUser(w, r) // GET: Retrieve a specific user
 			} else {
