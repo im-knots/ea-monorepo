@@ -16,9 +16,11 @@ func RegisterRoutes(mux *http.ServeMux) {
 		path := r.URL.Path
 		segments := strings.Split(strings.TrimPrefix(path, "/api/v1/users/"), "/")
 
-		if len(segments) > 1 && segments[1] == "devices" {
-			// Compute Device routes under /api/v1/users/{user_id}/devices
-			if r.Method == http.MethodPost {
+		if len(segments) > 2 && segments[1] == "devices" {
+			// Compute Device routes under /api/v1/users/{user_id}/devices/{device_id}
+			if r.Method == http.MethodDelete {
+				handlers.HandleDeleteComputeDevice(w, r) // Delete a compute device
+			} else if r.Method == http.MethodPost {
 				handlers.HandleAddComputeDevice(w, r) // Add a compute device
 			} else {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -303,3 +303,107 @@ func HandleUpdateComputeCredits(w http.ResponseWriter, r *http.Request) {
 		"compute_credits": requestBody.ComputeCredits,
 	})
 }
+
+// HandleDeleteComputeDevice removes a compute device from a user's record
+func HandleDeleteComputeDevice(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/users/"
+
+	if r.Method != http.MethodDelete {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID and device ID from the URL
+	segments := strings.Split(strings.TrimPrefix(r.URL.Path, path), "/")
+	if len(segments) < 3 || segments[1] != "devices" {
+		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	userID := segments[0]
+	deviceID := segments[2]
+
+	// Convert user ID to MongoDB ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
+		logger.Slog.Error("Invalid user ID format", "error", err)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Find user record
+	user, err := dbClient.FindRecordByID("ainuUsers", "users", userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve user", "error", err)
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		return
+	}
+
+	// Extract compute_devices list safely and unmarshal it into a slice of ComputeNode
+	computeDevicesRaw, exists := user["compute_devices"]
+	if !exists {
+		http.Error(w, "Compute devices field missing from user record", http.StatusInternalServerError)
+		logger.Slog.Error("Compute devices field missing", "user_id", userID)
+		return
+	}
+
+	computeDevicesData, err := json.Marshal(computeDevicesRaw)
+	if err != nil {
+		http.Error(w, "Failed to process compute devices", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to marshal compute devices", "error", err, "user_id", userID)
+		return
+	}
+
+	var computeDevices []ComputeNode
+	if err := json.Unmarshal(computeDevicesData, &computeDevices); err != nil {
+		http.Error(w, "Failed to parse compute devices", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to unmarshal compute devices", "error", err, "user_id", userID)
+		return
+	}
+
+	// Extract device name
+	var deviceName string
+	for _, dev := range computeDevices {
+		if dev.ID == deviceID {
+			deviceName = dev.DeviceName
+			break
+		}
+	}
+
+	if deviceName == "" {
+		http.Error(w, "Device not found", http.StatusNotFound)
+		logger.Slog.Error("Failed to find device ID", "user_id", userID, "device_id", deviceID)
+		return
+	}
+
+	// Remove the compute device from the user's record
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$pull": bson.M{"compute_devices": bson.M{"id": deviceID}}}
+
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to remove compute device", "error", err)
+		http.Error(w, "Failed to remove compute device", http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "no_update", "warning").Inc()
+		logger.Slog.Warn("No device found with given ID", "device_id", deviceID)
+		http.Error(w, "No device found with given ID", http.StatusNotFound)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
+	logger.Slog.Info("Compute device removed successfully", "user_id", userID, "device_id", deviceID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":     "Compute device removed successfully",
+		"user_id":     userID,
+		"device_id":   deviceID,
+		"device_name": deviceName,
+	})
+}

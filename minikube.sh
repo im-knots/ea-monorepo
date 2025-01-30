@@ -87,7 +87,7 @@ seed_test_data() {
     ./smoke/create-agent.sh
     ./smoke/create-node.sh
     cd ../../ea-ainu-manager/tests
-    ./smoke/create-user.sh
+    ./smoke/post-user.sh
 }
 
 cleanup() {
