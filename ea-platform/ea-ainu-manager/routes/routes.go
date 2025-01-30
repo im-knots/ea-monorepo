@@ -26,6 +26,16 @@ func RegisterRoutes(mux *http.ServeMux) {
 			return
 		}
 
+		if len(segments) > 1 && segments[1] == "credits" {
+			// Compute Credits update route /api/v1/users/{user_id}/credits
+			if r.Method == http.MethodPut {
+				handlers.HandleUpdateComputeCredits(w, r) // Update compute credits
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+			return
+		}
+
 		if len(segments) == 1 {
 			if r.Method == http.MethodGet {
 				handlers.HandleGetUser(w, r) // GET: Retrieve a specific user

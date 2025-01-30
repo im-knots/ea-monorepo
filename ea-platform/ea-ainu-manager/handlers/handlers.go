@@ -236,3 +236,70 @@ func HandleAddComputeDevice(w http.ResponseWriter, r *http.Request) {
 		"device":  newDevice,
 	})
 }
+
+// HandleUpdateComputeCredits updates a user's compute credits
+func HandleUpdateComputeCredits(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/users/"
+
+	if r.Method != http.MethodPut {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID from the URL
+	segments := strings.Split(strings.TrimPrefix(r.URL.Path, path), "/")
+	if len(segments) < 1 {
+		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	userID := segments[0]
+
+	var requestBody struct {
+		ComputeCredits int `json:"compute_credits"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Convert user ID to MongoDB ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
+		logger.Slog.Error("Invalid user ID format", "error", err)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Update user record with the new compute credits
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$set": bson.M{"compute_credits": requestBody.ComputeCredits}}
+
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to update user compute credits", "error", err)
+		http.Error(w, "Failed to update user compute credits", http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "no_update", "warning").Inc()
+		logger.Slog.Warn("No user found with given ID", "user_id", userID)
+		http.Error(w, "No user found with given ID", http.StatusNotFound)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
+	logger.Slog.Info("User compute credits updated successfully", "user_id", userID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":         "Compute credits updated successfully",
+		"user_id":         userID,
+		"compute_credits": requestBody.ComputeCredits,
+	})
+}
