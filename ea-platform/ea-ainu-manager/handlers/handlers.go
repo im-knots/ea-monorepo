@@ -475,3 +475,107 @@ func HandleAddJob(w http.ResponseWriter, r *http.Request) {
 		"job":     newJob,
 	})
 }
+
+// HandleDeleteJob removes a user Job from a user's record
+func HandleDeleteJob(w http.ResponseWriter, r *http.Request) {
+	path := "/api/v1/users/"
+
+	if r.Method != http.MethodDelete {
+		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract user ID and device ID from the URL
+	segments := strings.Split(strings.TrimPrefix(r.URL.Path, path), "/")
+	if len(segments) < 3 || segments[1] != "jobs" {
+		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		return
+	}
+	userID := segments[0]
+	jobID := segments[2]
+
+	// Convert user ID to MongoDB ObjectID
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
+		logger.Slog.Error("Invalid user ID format", "error", err)
+		http.Error(w, "Invalid user ID format", http.StatusBadRequest)
+		return
+	}
+
+	// Find user record
+	user, err := dbClient.FindRecordByID("ainuUsers", "users", userID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve user", "error", err)
+		http.Error(w, "Failed to retrieve user", http.StatusInternalServerError)
+		return
+	}
+
+	// Extract jobs list safely and unmarshal it into a slice of ComputeNode
+	jobsRaw, exists := user["jobs"]
+	if !exists {
+		http.Error(w, "Jobs field missing from user record", http.StatusInternalServerError)
+		logger.Slog.Error("Jobs field missing", "user_id", userID)
+		return
+	}
+
+	jobsData, err := json.Marshal(jobsRaw)
+	if err != nil {
+		http.Error(w, "Failed to process user jobs", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to marshal user jobs", "error", err, "user_id", userID)
+		return
+	}
+
+	var userJobs []AgentJob
+	if err := json.Unmarshal(jobsData, &userJobs); err != nil {
+		http.Error(w, "Failed to parse user jobs", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to unmarshal user jobs", "error", err, "user_id", userID)
+		return
+	}
+
+	// Extract job name
+	var jobName string
+	for _, job := range userJobs {
+		if job.ID == jobID {
+			jobName = job.JobName
+			break
+		}
+	}
+
+	if jobName == "" {
+		http.Error(w, "Job not found", http.StatusNotFound)
+		logger.Slog.Error("Failed to find Job ID", "user_id", userID, "job_id", jobID)
+		return
+	}
+
+	// Remove the user job from the user's record
+	filter := bson.M{"_id": objectID}
+	update := bson.M{"$pull": bson.M{"jobs": bson.M{"id": jobID}}}
+
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to remove user job", "error", err)
+		http.Error(w, "Failed to remove user job", http.StatusInternalServerError)
+		return
+	}
+
+	if result.ModifiedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "no_update", "warning").Inc()
+		logger.Slog.Warn("No job found with given ID", "job_id", jobID)
+		http.Error(w, "No job found with given ID", http.StatusNotFound)
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
+	logger.Slog.Info("User job removed successfully", "user_id", userID, "job_id", jobID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":  "User job removed successfully",
+		"user_id":  userID,
+		"job_id":   jobID,
+		"job_name": jobName,
+	})
+}

@@ -28,12 +28,11 @@ func RegisterRoutes(mux *http.ServeMux) {
 			return
 		}
 
-		if len(segments) > 1 && segments[1] == "jobs" {
+		if len(segments) > 2 && segments[1] == "jobs" {
 			// User Job routes under /api/v1/users/{user_id}/jobs/{job_id}
-			// if r.Method == http.MethodDelete {
-			// 	handlers.HandleDeleteJob(w, r) // Delete a User job
-			// } else
-			if r.Method == http.MethodPost {
+			if r.Method == http.MethodDelete {
+				handlers.HandleDeleteJob(w, r) // Delete a User job
+			} else if r.Method == http.MethodPost {
 				handlers.HandleAddJob(w, r) // Add a user job
 			} else {
 				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
