@@ -1,6 +1,8 @@
 #!/bin/bash
 
-set -e
+# set -e
+
+REPO_DIR=$(pwd)
 
 # Base directories containing the app folders
 BASE_DIRS=("ea-platform" "brand")
@@ -12,20 +14,6 @@ VERSION=${2:-"latest"}
 # Namespaces for Helm deployments
 EA_NAMESPACE="ea-platform"
 BRAND_NAMESPACE="eru-labs-brand"
-
-# Array to store PIDs of background port-forward processes
-PORT_FORWARD_PIDS=()
-
-create_namespace() {
-    local namespace=$1
-    echo "Ensuring namespace $namespace exists..."
-    if ! kubectl get namespace "$namespace" &>/dev/null; then
-        kubectl create namespace "$namespace"
-        echo "Namespace $namespace created."
-    else
-        echo "Namespace $namespace already exists."
-    fi
-}
 
 build_and_push() {
     local app_path=$1
@@ -42,36 +30,11 @@ build_and_push() {
     echo "Completed build and push for $app_name"
 }
 
-deploy_app_helm_charts() {
-    local app_path=$1
-    local app_name=$(basename "$app_path")
-    local chart_path="$app_path/chart"
-    local namespace=$2
-
-    echo "Deploying Helm chart for $app_name in namespace $namespace..."
-
-    if [[ -d "$chart_path" ]]; then
-        helm upgrade --install "$app_name" "$chart_path" \
-            --namespace "$namespace" \
-            --set image.repository="$LOCAL_REGISTRY/$app_name" \
-            --set image.tag="$VERSION" \
-            --create-namespace
-        echo "Helm deployment for $app_name in namespace $namespace completed."
-    else
-        echo "No chart directory found for $app_name. Skipping Helm deployment."
-    fi
-}
-
-deploy_components_helm_charts() {
-    local namespace=$1
-
-    if helm upgrade --install "mongodb" "bitnami/mongodb" \
-        --namespace "$namespace" \
-        --set auth.enabled="false"; then
-        echo "MongoDB component installed successfully in namespace $namespace."
-    else
-        echo "Failed to install MongoDB component in namespace $namespace."
-    fi
+deploy_stack_terraform() {
+    cd infra/environments/local
+    terraform init
+    terraform apply -auto-approve
+    cd $REPO_DIR
 }
 
 k8s_port_forward() {
@@ -91,19 +54,40 @@ k8s_port_forward() {
 
     # Port-forward ea-agent-manager
     nohup kubectl port-forward deployment/ea-agent-manager 8083:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-agent-manager on port 8084 started."
+    echo "Port-forwarding for ea-agent-manager on port 8083 started."
 
     # Port-forward ea-job-engine
     nohup kubectl port-forward deployment/ea-job-engine 8084:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-job-engine on port 8085 started."
+    echo "Port-forwarding for ea-job-engine on port 8084 started."
+
+    # Port-forward ea-ainu-engine
+    nohup kubectl port-forward deployment/ea-ainu-manager 8085:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for ea-ainu-manager on port 8085 started."
+
+    # Port-forward ea-platform mongodb
+    nohup kubectl port-forward deployment/mongodb 8086:27017 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for ea-platform mongodb on port 8086 started."
+
+    # Port-forward eru-labs-brand mongodb
+    nohup kubectl port-forward deployment/mongodb 8087:27017 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for eru-labs-brand mongodb on port 8087 started."
+
+    # Port-forward Grafana
+    nohup kubectl port-forward deployment/kps-grafana 3000:3000 --namespace monitoring >/dev/null 2>&1 &
+    echo "Port-forwarding for Grafana on port 3000 started."
+
+    # Port-forward Prometheus
+    nohup kubectl port-forward pod/prometheus-kps-kube-prometheus-stack-prometheus-0  9090:9090 --namespace monitoring >/dev/null 2>&1 &
+    echo "Port-forwarding for Prometheus on port 9090 started."
 }
 
 seed_test_data() {
     echo "Seeding test data with smoke test scripts"
     cd ea-platform/ea-agent-manager/tests
-    pwd
     ./smoke/create-agent.sh
     ./smoke/create-node.sh
+    cd ../../ea-ainu-manager/tests
+    ./smoke/post-user.sh
 }
 
 cleanup() {
@@ -111,19 +95,18 @@ cleanup() {
     # Find all kubectl port-forward processes and kill them
     pkill -f "kubectl port-forward"
     echo "Port-forwarding processes stopped."
+    pwd
+    cd infra/environments/local
+    terraform init
+    terraform destroy -auto-approve
+    cd $REPO_DIR
 }
 
-
-delete_namespaces() {
-    echo "Deleting namespaces $EA_NAMESPACE and $BRAND_NAMESPACE..."
-    kubectl delete namespace "$EA_NAMESPACE" --ignore-not-found
-    kubectl delete namespace "$BRAND_NAMESPACE" --ignore-not-found
-    echo "Namespaces deleted successfully."
-}
 
 # Main Script
 case "$1" in
     start)
+        eval $(minikube docker-env)
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
 
@@ -133,28 +116,20 @@ case "$1" in
                 continue
             fi
 
-            # Set namespace based on directory
-            namespace=$([ "$dir" == "ea-platform" ] && echo "$EA_NAMESPACE" || echo "$BRAND_NAMESPACE")
-
-            # Ensure namespace exists
-            create_namespace "$namespace"
-
-            echo "Deploying component Helm charts in $namespace..."
-            deploy_components_helm_charts "$namespace"
-
             # Process each app in the directory
             echo "Iterating through apps in $dir..."
             for app_path in "$dir"/*; do
                 # Skip if it's not a directory
                 if [[ -d "$app_path" ]]; then
                     build_and_push "$app_path"
-                    deploy_app_helm_charts "$app_path" "$namespace"
                 fi
             done
         done
 
+        deploy_stack_terraform
+
         echo "Waiting some time for services to be ready before starting portforwarding"
-        sleep 30
+        sleep 10
         k8s_port_forward
         echo "Waiting some more time for port forwards to be set up before seeding data"
         sleep 5
@@ -165,7 +140,6 @@ case "$1" in
         ;;
     stop)
         cleanup
-        delete_namespaces
         ;;
     *)
         echo "Usage: $0 {start|stop} [version]"

@@ -1,6 +1,18 @@
 # eru-labs-monorepo
 A monorepo for all things eru labs
 
+What is Eru Labs? We are a small team of nerds working to disrupt industries by commodifying the idle compute everyone is surrounded by every day.
+
+We make this possible with the Ea Platform. A system that allows users to donate their device's idle compute time in exchange for `compute credits` they can in turn use to run their own AI agents, infrence, and training jobs. 
+
+Core features of the Ea Platform are:
+- The Ainulindale client software that allows users to connect their idle device compute to the Ea network in exchange for compute credits
+- A Node based AI agent/workflow builder
+- A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
+- A marketplace for users to buy and sell Agent workflows, datasets, or their earned compute credits 
+- Leaderboards and gamification challenges for users to show off and earn more compute credits by completing challenges and gaining ranks
+- Dataset storage for users models, datasets, outputs, ect
+
 ## Contents
 - Eru Labs brand webpage front/backends 
 - Ea platform front/backends
@@ -12,8 +24,12 @@ A monorepo for all things eru labs
 ## Run everything locally with minikube
 Some services (ea-job-engine) require kubernetes specifically for their operator patterns. Therefore we need a local kubernetes cluster for development. Minikube is the best bet. 
 
+I have created a helper script to easily set up the entire platform in a local cluster.
+
 ### Requirements
 - minikube
+- terraform 1.10.3
+- tfenv (optional, for managing terraform versions)
 - helm
 - kubectl
 - docker
@@ -21,9 +37,8 @@ Some services (ea-job-engine) require kubernetes specifically for their operator
 ### Start up Eru Labs components locally with helm and minikube
 ```bash
 minikube delete # Clean up previous minikube setups
-minikube start --drivver=docker
+minikube start --driver=docker
 minikube addons enable registry
-eval $(minikube docker-env) # Tell docker to use the minikube registry
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development
 
@@ -31,7 +46,7 @@ eval $(minikube docker-env) # Tell docker to use the minikube registry
 
 ```
 ### Adding new services
-To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. The minikube.sh script will pick up the new app automatically. 
+To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
 
 Optionally, you can add a portforward line in the minikube.sh script's `k8s_port_forward()` function using existing as the example. 
 

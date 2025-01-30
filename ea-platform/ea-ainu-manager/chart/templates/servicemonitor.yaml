@@ -1,0 +1,21 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "ea-ainu-manager.fullname" . }}
+  labels: {{- include "ea-ainu-manager.labels" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  endpoints:
+  - interval: {{ .Values.serviceMonitor.interval }}
+    path: /api/v1/metrics
+    port: http
+    scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace }}
+  selector:
+    matchLabels: {{- include "ea-ainu-manager.selectorLabels" . | nindent 6 }}
+  targetLabels:
+  - format
+{{- end }}

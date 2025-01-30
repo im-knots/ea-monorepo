@@ -1,0 +1,36 @@
+{
+    "name": "enterprise@bigcorp.ai",
+    "compute_credits": 25000,
+    "compute_devices": [
+        {
+            "device_name": "Datacenter-Cluster-1",
+            "device_os": "Linux (Red Hat)",
+            "compute_type": "TPU + GPU",
+            "status": "Active",
+            "compute_rate": 5000.0,
+            "last_active": "2025-01-28T08:00:00Z"
+        },
+        {
+            "device_name": "Datacenter-Cluster-2",
+            "device_os": "Linux (Red Hat)",
+            "compute_type": "TPU",
+            "status": "Idle",
+            "compute_rate": 4000.0,
+            "last_active": "2025-01-28T07:50:00Z"
+        }
+    ],
+    "jobs": [
+        {
+            "job_name": "AI Drug Discovery",
+            "job_type": "Training",
+            "status": "Running",
+            "last_active": "2025-01-28T09:15:00Z"
+        },
+        {
+            "job_name": "Fraud Detection AI",
+            "job_type": "Agent",
+            "status": "Active",
+            "last_active": "2025-01-28T10:30:00Z"
+        }
+    ]
+}

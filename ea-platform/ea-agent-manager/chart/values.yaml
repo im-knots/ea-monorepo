@@ -21,7 +21,12 @@ resources:
     cpu: 50m
     memory: 64Mi
 
-replicaCount: 2
+replicaCount: 1
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 30s
 
 pdb:
   maxUnavailable: "50%"

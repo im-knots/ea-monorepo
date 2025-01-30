@@ -1,0 +1,38 @@
+{
+    "name": "marco@erulabs.ai",
+    "compute_credits": 1250,
+    "compute_devices": [
+      {
+        "device_name": "Athena",
+        "device_os": "Linux (Ubuntu)",
+        "compute_type": "CPU + GPU",
+        "status": "Active",
+        "compute_rate": 85.0,
+        "last_active": "2024-12-29T10:00:00Z"
+      },
+      {
+        "device_name": "gcp-instance-10",
+        "device_os": "Linux (Fedora)",
+        "compute_type": "TPU",
+        "status": "Active",
+        "compute_rate": 504.0,
+        "id": "a31bd4d3-c5ad-4800-a51b-260cb3f79de7",
+        "last_active": "2024-12-29T10:00:00Z"
+      }
+    ],
+    "jobs": [
+      {
+        "job_name": "Travel Planner Agent",
+        "job_type": "Agent",
+        "status": "Active",
+        "last_active": "2024-12-29T10:00:00Z"
+      },
+      {
+        "job_name": "Stock Market Automation",
+        "job_type": "Agent",
+        "status": "Active",
+        "last_active": "2024-12-29T10:00:00Z"
+      }
+    ]
+  }
+  
