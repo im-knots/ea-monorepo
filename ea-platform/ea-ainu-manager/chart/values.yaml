@@ -10,6 +10,7 @@ fullnameOverride: ""
 
 config:
   PORT: 8080
+  GIN_MODE: release
 
 secrets:
   DB_URL: mongodb://mongodb.ea-platform.svc.cluster.local
