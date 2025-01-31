@@ -1,23 +1,51 @@
 package routes
 
 import (
-	"net/http"
-
 	"ea-job-engine/handlers"
 	"ea-job-engine/metrics"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// RegisterRoutes sets up the routes and their corresponding handlers.
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.Handle("/api/v1/metrics", metrics.MetricsHandler())
-	mux.Handle("/api/v1/jobs", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.HandleCreateJob(w, r) // POST: Create a Job
-		} else if r.Method == http.MethodGet {
-			handlers.HandleGetAllJobs(w, r) // GET: Retrieve all Jobs
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// RegisterRoutes sets up all API routes
+func RegisterRoutes() *gin.Engine {
+	router := gin.Default()
+
+	// Enable CORS middleware
+	router.Use(corsMiddleware())
+	// Enable metrics middleware
+	router.Use(metrics.MetricsMiddleware())
+
+	router.GET("/api/v1/metrics", func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+	})
+
+	// User routes
+	users := router.Group("/api/v1/jobs")
+	{
+		users.GET("", handlers.HandleGetAllJobs)      // List all jobs
+		users.POST("", handlers.HandleCreateJob)      // Create new job
+		users.GET("/:user_id", handlers.HandleGetJob) // Get job by ID
+
+	}
+
+	return router
+}
+
+// CORS middleware
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+			return
 		}
-	})))
-	mux.Handle("/api/v1/jobs/", metrics.MetricsMiddleware(http.HandlerFunc(handlers.HandleGetJob))) // GET: Retrieve a specific Job by ID
+
+		c.Next()
+	}
 }

@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+// Prometheus metrics
 var (
-	// Prometheus metrics
 	StepCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "ea_job_engine_handler_steps",
@@ -34,34 +34,16 @@ func init() {
 	prometheus.MustRegister(RequestLatencyHistogram)
 }
 
-// MetricsMiddleware tracks the latency of HTTP handler functions.
-func MetricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func MetricsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
 		start := time.Now()
-		path := r.URL.Path
-		method := r.Method
-
-		// Use a response wrapper to capture the status code
-		rw := &responseWriterWrapper{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(rw, r)
+		c.Next() // Process request
 
 		duration := time.Since(start).Seconds()
-		RequestLatencyHistogram.WithLabelValues(path, method, http.StatusText(rw.statusCode)).Observe(duration)
-	})
-}
+		path := c.Request.URL.Path
+		method := c.Request.Method
+		statusCode := c.Writer.Status()
 
-// responseWriterWrapper wraps http.ResponseWriter to capture the status code.
-type responseWriterWrapper struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriterWrapper) WriteHeader(statusCode int) {
-	rw.statusCode = statusCode
-	rw.ResponseWriter.WriteHeader(statusCode)
-}
-
-// MetricsHandler returns an HTTP handler for Prometheus metrics.
-func MetricsHandler() http.Handler {
-	return promhttp.Handler()
+		RequestLatencyHistogram.WithLabelValues(path, method, http.StatusText(statusCode)).Observe(duration)
+	}
 }

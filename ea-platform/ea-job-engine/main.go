@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"ea-job-engine/config"
 	"ea-job-engine/logger"
@@ -16,12 +15,11 @@ func main() {
 	// Load configuration
 	config := config.LoadConfig()
 
-	mux := http.NewServeMux()
-	routes.RegisterRoutes(mux)
+	// Initialize Gin router
+	router := routes.RegisterRoutes()
 
-	// Start watching for custom resource definitions (CRDs)
-	// go operator.WatchCRDs()
-
-	logger.Slog.Info("Server starting", "address", "http://0.0.0.0:"+config.Port)
-	log.Fatal(http.ListenAndServe("0.0.0.0:"+config.Port, mux))
+	// Start the server
+	serverAddr := "0.0.0.0:" + config.Port
+	logger.Slog.Info("Server starting", "address", serverAddr)
+	log.Fatal(router.Run(serverAddr))
 }
