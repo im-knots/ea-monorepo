@@ -84,8 +84,8 @@ k8s_port_forward() {
 seed_test_data() {
     echo "Seeding test data with smoke test scripts"
     cd ea-platform/ea-agent-manager/tests
-    ./smoke/create-agent.sh
-    ./smoke/create-node.sh
+    ./smoke/post-agent.sh
+    ./smoke/post-node.sh
     cd ../../ea-ainu-manager/tests
     ./smoke/post-user.sh
 }

@@ -1,37 +1,58 @@
 package routes
 
 import (
-	"net/http"
-
 	"ea-agent-manager/handlers"
 	"ea-agent-manager/metrics"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// RegisterRoutes sets up the routes and their corresponding handlers.
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.Handle("/api/v1/metrics", metrics.MetricsHandler())
+// RegisterRoutes sets up all API routes
+func RegisterRoutes() *gin.Engine {
+	router := gin.Default()
 
-	// Agent routes
-	mux.Handle("/api/v1/agents", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.HandleCreateAgent(w, r) // POST: Create an agent
-		} else if r.Method == http.MethodGet {
-			handlers.HandleGetAllAgents(w, r) // GET: Retrieve all agents
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})))
-	mux.Handle("/api/v1/agents/", metrics.MetricsMiddleware(http.HandlerFunc(handlers.HandleGetAgent))) // GET: Retrieve a specific agent by ID
+	// Enable CORS middleware
+	router.Use(corsMiddleware())
+	// Enable metrics middleware
+	router.Use(metrics.MetricsMiddleware())
 
-	// Node definition routes
-	mux.Handle("/api/v1/nodes", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.HandleCreateNodeDef(w, r) // POST: Create a node definition
-		} else if r.Method == http.MethodGet {
-			handlers.HandleGetAllNodeDefs(w, r) // GET: Retrieve all node definitions
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	router.GET("/api/v1/metrics", func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+	})
+
+	// Agents routes
+	agents := router.Group("/api/v1/agents")
+	{
+		agents.GET("", handlers.HandleGetAllAgents)       // List all Agents
+		agents.POST("", handlers.HandleCreateAgent)       // Create new Agent
+		agents.GET("/:agent_id", handlers.HandleGetAgent) // Get Agent by ID
+	}
+
+	// Nodes routes
+	nodes := router.Group("/api/v1/nodes")
+	{
+		nodes.GET("", handlers.HandleGetAllNodeDefs)      // List all nodes
+		nodes.POST("", handlers.HandleCreateNodeDef)      // Create new node
+		nodes.GET("/:node_id", handlers.HandleGetNodeDef) // Get node by ID
+	}
+
+	return router
+}
+
+// CORS middleware
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
+			return
 		}
-	})))
-	mux.Handle("/api/v1/nodes/", metrics.MetricsMiddleware(http.HandlerFunc(handlers.HandleGetNodeDef))) // GET: Retrieve a specific node definition by ID
+
+		c.Next()
+	}
 }
