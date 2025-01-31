@@ -57,7 +57,7 @@ curl -X POST http://localhost:8084/api/v1/jobs \
 5. **Ea Job Operator handles completion and cleanup**: The Ea Job Operator updates the job status and deletes the CR after execution.
 
 ## Deployment
-The Ea Job API is designed to run as a Kubernetes service and can be deployed using Helm charts.
+The Ea Job API is designed to run as a Kubernetes service and can be deployed using its helm chart in the `/charts` directory
 
 ## Environment Variables
 | Variable | Description |
