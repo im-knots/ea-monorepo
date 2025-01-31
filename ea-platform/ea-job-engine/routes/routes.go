@@ -22,12 +22,12 @@ func RegisterRoutes() *gin.Engine {
 		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 	})
 
-	// User routes
-	users := router.Group("/api/v1/jobs")
+	// jobs routes
+	jobs := router.Group("/api/v1/jobs")
 	{
-		users.GET("", handlers.HandleGetAllJobs)      // List all jobs
-		users.POST("", handlers.HandleCreateJob)      // Create new job
-		users.GET("/:user_id", handlers.HandleGetJob) // Get job by ID
+		jobs.GET("", handlers.HandleGetAllJobs)      // List all jobs
+		jobs.POST("", handlers.HandleCreateJob)      // Create new job
+		jobs.GET("/:user_id", handlers.HandleGetJob) // Get job by ID
 
 	}
 

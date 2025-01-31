@@ -3,13 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
 	"ea-agent-manager/logger"
 	"ea-agent-manager/metrics"
 	"ea-agent-manager/mongo"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -26,7 +26,7 @@ func SetDBClient(client *mongo.MongoClient) {
 }
 
 //-----------------------------------------------------------------------------
-// 1. NodeDefinition (the "template") structs and handler
+// Structs for Node Definitions & Agents
 //-----------------------------------------------------------------------------
 
 // NodeAPI describes how to call an API (base URL, endpoint, etc.).
@@ -43,7 +43,7 @@ type NodeParameter struct {
 	Type        string        `json:"type"`
 	Description string        `json:"description,omitempty"`
 	Default     interface{}   `json:"default,omitempty"`
-	Enum        []interface{} `json:"enum,omitempty"` // Could be []string if all enum values are strings
+	Enum        []interface{} `json:"enum,omitempty"`
 }
 
 // NodeDefinitionMetadata holds metadata about the node definition.
@@ -53,10 +53,10 @@ type NodeDefinitionMetadata struct {
 	Additional  map[string]interface{} `json:"additional,omitempty"`
 }
 
-// NodeDefinition is the "template" for a node, stored in the nodeDefs collection.
+// NodeDefinition represents the "template" for a node.
 type NodeDefinition struct {
-	ID         string                 `json:"id"`   // e.g. "worker.inference.llm.ollama"
-	Type       string                 `json:"type"` // e.g. "worker.inference.llm"
+	ID         string                 `json:"id"`
+	Type       string                 `json:"type"`
 	Name       string                 `json:"name,omitempty"`
 	API        *NodeAPI               `json:"api,omitempty"`
 	Parameters []NodeParameter        `json:"parameters,omitempty"`
@@ -64,125 +64,17 @@ type NodeDefinition struct {
 	Metadata   NodeDefinitionMetadata `json:"metadata,omitempty"`
 }
 
-// HandleCreateNodeDef handles the creation of a node definition (template).
-func HandleCreateNodeDef(w http.ResponseWriter, r *http.Request) {
-	var input NodeDefinition
-	path := "/api/v1/nodes"
-
-	if r.Method != http.MethodPost {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		logger.Slog.Error("Invalid request method", "method", r.Method)
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
-		logger.Slog.Error("Failed to parse request body", "error", err)
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
-		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "decoding_request", "success").Inc()
-	}
-
-	// Insert NodeDefinition into the "nodeDefs" database and "nodes" collection
-	result, err := dbClient.InsertRecord("nodeDefs", "nodes", input)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert node definition into database", "error", err)
-		http.Error(w, "Failed to insert node definition into database", http.StatusInternalServerError)
-		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "db_insertion", "success").Inc()
-	}
-
-	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
-	logger.Slog.Info("Node definition inserted successfully", "ID", result.InsertedID)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "Node definition created successfully",
-		"node_id": result.InsertedID,
-	})
-}
-
-// HandleGetAllNodeDefs retrieves all node definitions from the database, but only their IDs and names.
-func HandleGetAllNodeDefs(w http.ResponseWriter, r *http.Request) {
-	path := "/api/v1/nodes"
-
-	if r.Method != http.MethodGet {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Query all node definitions but only retrieve `id` and `name`
-	projection := bson.M{
-		"id":   1, // Include the `id` field
-		"name": 1, // Include the `name` field
-		"_id":  1, // Include the MongoDB internal `_id` field
-	}
-	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", bson.M{}, projection)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
-		logger.Slog.Error("Failed to retrieve node definitions from database", "error", err)
-		http.Error(w, "Failed to retrieve node definitions", http.StatusInternalServerError)
-		return
-	}
-
-	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(nodeDefs)
-}
-
-// HandleGetNodeDef retrieves a specific node definition by ID.
-func HandleGetNodeDef(w http.ResponseWriter, r *http.Request) {
-	path := "/api/v1/nodes/"
-
-	if r.Method != http.MethodGet {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := strings.TrimPrefix(r.URL.Path, path)
-	if id == "" {
-		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
-		logger.Slog.Error("Missing node definition ID")
-		http.Error(w, "Missing node definition ID", http.StatusBadRequest)
-		return
-	}
-
-	nodeDef, err := dbClient.FindRecordByID("nodeDefs", "nodes", id)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
-		logger.Slog.Error("Failed to retrieve node definition from database", "error", err)
-		http.Error(w, "Failed to retrieve node definition", http.StatusInternalServerError)
-		return
-	}
-
-	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(nodeDef)
-}
-
-//-----------------------------------------------------------------------------
-// 2. Agent (the "instance") structs and handler
-//-----------------------------------------------------------------------------
-
-// NodeInstance is a simplified node reference in the agent workflow.
+// NodeInstance represents a reference to a node definition.
 type NodeInstance struct {
 	ID            string                 `json:"id"`
 	DefinitionRef string                 `json:"definition_ref"`
 	Parameters    map[string]interface{} `json:"parameters,omitempty"`
 }
 
-// MultiString allows "from" or "to" to be either a single string or array of strings.
+// MultiString allows a field to be either a single string or an array of strings.
 type MultiString []string
 
-// UnmarshalJSON handles single strings and arrays for MultiString.
+// UnmarshalJSON for MultiString allows handling single strings as arrays.
 func (m *MultiString) UnmarshalJSON(data []byte) error {
 	var single string
 	if err := json.Unmarshal(data, &single); err == nil {
@@ -199,19 +91,19 @@ func (m *MultiString) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, m)
 }
 
-// Edge represents a link in the agent workflow graph.
+// Edge represents a connection between nodes in an agent workflow.
 type Edge struct {
 	From MultiString `json:"from"`
 	To   MultiString `json:"to"`
 }
 
-// Metadata holds creation/update timestamps.
+// Metadata holds timestamps for Agents.
 type Metadata struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Agent is the main object that references node definitions via NodeInstance.
+// Agent represents an AI workflow with interconnected nodes.
 type Agent struct {
 	Name        string         `json:"name"`
 	User        string         `json:"user"`
@@ -221,121 +113,174 @@ type Agent struct {
 	Metadata    Metadata       `json:"metadata"`
 }
 
-// HandleCreateAgent handles the creation of an agent (which references node definitions).
-func HandleCreateAgent(w http.ResponseWriter, r *http.Request) {
-	var input Agent
-	path := "/api/v1/agents"
+//-----------------------------------------------------------------------------
+// NodeDefinition Handlers
+//-----------------------------------------------------------------------------
 
-	if r.Method != http.MethodPost {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		logger.Slog.Error("Invalid request method", "method", r.Method)
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
-	}
+// HandleCreateNodeDef handles creating a node definition.
+func HandleCreateNodeDef(c *gin.Context) {
+	var input NodeDefinition
+	path := c.FullPath()
 
-	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Node definition creation request received")
+
+	if err := c.ShouldBindJSON(&input); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
 		logger.Slog.Error("Failed to parse request body", "error", err)
-		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
 		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "decoding_request", "success").Inc()
 	}
 
-	// Populate metadata for Agent
-	input.Metadata = Metadata{
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-	}
-	if input.Metadata.CreatedAt.IsZero() || input.Metadata.UpdatedAt.IsZero() {
-		metrics.StepCounter.WithLabelValues(path, "populating_metadata", "error").Inc()
-		logger.Slog.Error("Failed to populate metadata")
-		http.Error(w, "Internal server error while populating metadata", http.StatusInternalServerError)
+	metrics.StepCounter.WithLabelValues(path, "valid_request_body", "success").Inc()
+	result, err := dbClient.InsertRecord("nodeDefs", "nodes", input)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
+		logger.Slog.Error("Failed to insert node definition", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert node definition"})
 		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "populating_metadata", "success").Inc()
 	}
 
+	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
+	logger.Slog.Info("Node definition inserted successfully", "ID", result.InsertedID)
+	c.JSON(http.StatusCreated, gin.H{"message": "Node definition created", "node_id": result.InsertedID})
+}
+
+// HandleGetAllNodeDefs retrieves all node definitions (only `id` and `name`).
+func HandleGetAllNodeDefs(c *gin.Context) {
+	path := c.FullPath()
+	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
+
+	projection := bson.M{"id": 1, "name": 1, "_id": 1}
+	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", bson.M{}, projection)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve node definitions", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve node definitions"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	c.JSON(http.StatusOK, nodeDefs)
+}
+
+// HandleGetNodeDef retrieves a specific node definition by ID.
+func HandleGetNodeDef(c *gin.Context) {
+	path := c.FullPath()
+	nodeID := c.Param("node_id")
+
+	if nodeID == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing node definition ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing node definition ID"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Fetching node definition", "node_id", nodeID)
+
+	nodeDef, err := dbClient.FindRecordByID("nodeDefs", "nodes", nodeID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+		logger.Slog.Error("Failed to retrieve node definition", "node_id", nodeID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve node definition"})
+		return
+	}
+
+	if nodeDef == nil {
+		metrics.StepCounter.WithLabelValues(path, "node_not_found", "error").Inc()
+		logger.Slog.Warn("Node definition not found", "node_id", nodeID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node definition not found"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	logger.Slog.Info("Node definition retrieved successfully", "node_id", nodeID)
+	c.JSON(http.StatusOK, nodeDef)
+}
+
+//-----------------------------------------------------------------------------
+// Agent Handlers
+//-----------------------------------------------------------------------------
+
+// HandleCreateAgent handles creating an agent.
+func HandleCreateAgent(c *gin.Context) {
+	var input Agent
+	path := c.FullPath()
+
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Agent creation request received")
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
+		return
+	}
+
+	input.Metadata = Metadata{CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
 	result, err := dbClient.InsertRecord("userAgents", "agents", input)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert agent into database", "error", err)
-		http.Error(w, "Failed to insert agent into database", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to insert agent", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert agent"})
 		return
-	} else {
-		metrics.StepCounter.WithLabelValues(path, "db_insertion", "success").Inc()
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
 	logger.Slog.Info("Agent inserted successfully", "ID", result.InsertedID)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message":  "Agent created successfully",
-		"agent_id": result.InsertedID,
-	})
+	c.JSON(http.StatusCreated, gin.H{"message": "Agent created", "agent_id": result.InsertedID})
 }
 
-// HandleGetAllAgents retrieves all agents from the database with their id, _id, and name fields.
-func HandleGetAllAgents(w http.ResponseWriter, r *http.Request) {
-	path := "/api/v1/agents"
+// HandleGetAllAgents retrieves all agents with `user`, `_id`, and `name` fields.
+func HandleGetAllAgents(c *gin.Context) {
+	path := c.FullPath()
+	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	if r.Method != http.MethodGet {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	// Define the projection to include id, _id, and name
-	projection := bson.M{
-		"user": 1, // Include the `user` field
-		"_id":  1, // Include the MongoDB `_id` field
-		"name": 1, // Include the `name` field
-	}
-
-	// Retrieve agents with the defined projection
+	projection := bson.M{"user": 1, "_id": 1, "name": 1}
 	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", bson.M{}, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
-		logger.Slog.Error("Failed to retrieve agents from database", "error", err)
-		http.Error(w, "Failed to retrieve agents", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to retrieve agents", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve agents"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(agents)
+	c.JSON(http.StatusOK, agents)
 }
 
 // HandleGetAgent retrieves a specific agent by ID.
-func HandleGetAgent(w http.ResponseWriter, r *http.Request) {
-	path := "/api/v1/agents/"
+func HandleGetAgent(c *gin.Context) {
+	path := c.FullPath()
+	agentID := c.Param("agent_id")
 
-	if r.Method != http.MethodGet {
-		metrics.StepCounter.WithLabelValues(path, "invalid_method", "error").Inc()
-		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := strings.TrimPrefix(r.URL.Path, path)
-	if id == "" {
+	if agentID == "" {
 		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
-		logger.Slog.Error("Missing agent ID")
-		http.Error(w, "Missing agent ID", http.StatusBadRequest)
+		logger.Slog.Error("Missing agent ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing agent ID"})
 		return
 	}
 
-	agent, err := dbClient.FindRecordByID("userAgents", "agents", id)
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Fetching agent details", "agent_id", agentID)
+
+	agent, err := dbClient.FindRecordByID("userAgents", "agents", agentID)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
-		logger.Slog.Error("Failed to retrieve agent from database", "error", err)
-		http.Error(w, "Failed to retrieve agent", http.StatusInternalServerError)
+		logger.Slog.Error("Failed to retrieve agent", "agent_id", agentID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve agent"})
+		return
+	}
+
+	if agent == nil {
+		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
+		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(agent)
+	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID)
+	c.JSON(http.StatusOK, agent)
 }

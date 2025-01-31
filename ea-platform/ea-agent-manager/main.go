@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"ea-agent-manager/config"
 	"ea-agent-manager/handlers"
@@ -26,13 +25,19 @@ func main() {
 	}
 	defer dbClient.Disconnect()
 
-	// Pass MongoDB client to handlers
+	// Set the initialized MongoDB client in handlers
 	handlers.SetDBClient(dbClient)
-	logger.Slog.Info("MongoDB client successfully passed to handlers")
 
-	mux := http.NewServeMux()
-	routes.RegisterRoutes(mux)
+	// Initialize Gin router
+	router := routes.RegisterRoutes()
 
-	logger.Slog.Info("Server starting", "address", "http://0.0.0.0:"+config.Port)
-	log.Fatal(http.ListenAndServe("0.0.0.0:"+config.Port, mux))
+	// DEBUG: Print all registered routes
+	for _, r := range router.Routes() {
+		log.Printf("Registered Route: %s %s\n", r.Method, r.Path)
+	}
+
+	// Start the server
+	serverAddr := "0.0.0.0:" + config.Port
+	logger.Slog.Info("Server starting", "address", serverAddr)
+	log.Fatal(router.Run(serverAddr))
 }
