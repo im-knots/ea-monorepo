@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"ea-job-operator/handlers"
 	"ea-job-operator/metrics"
 
 	"github.com/gin-gonic/gin"
@@ -21,14 +20,6 @@ func RegisterRoutes() *gin.Engine {
 		c.Writer.Header().Set("Content-Type", "text/plain")
 		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 	})
-
-	// jobs routes
-	jobs := router.Group("/api/v1/jobs")
-	{
-		jobs.POST("", handlers.HandleCreateJob) // Create new job
-
-	}
-
 	return router
 }
 
