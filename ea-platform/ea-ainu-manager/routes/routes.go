@@ -1,75 +1,60 @@
 package routes
 
 import (
-	"net/http"
-	"strings"
-
 	"ea-ainu-manager/handlers"
 	"ea-ainu-manager/metrics"
+
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// RegisterRoutes sets up the routes and their corresponding handlers.
-func RegisterRoutes(mux *http.ServeMux) {
-	mux.Handle("/api/v1/metrics", metrics.MetricsHandler())
+// RegisterRoutes sets up all API routes
+func RegisterRoutes() *gin.Engine {
+	router := gin.Default()
 
-	mux.Handle("/api/v1/users/", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
-		segments := strings.Split(strings.TrimPrefix(path, "/api/v1/users/"), "/")
+	// Enable CORS middleware
+	router.Use(corsMiddleware())
+	// Enable metrics middleware
+	router.Use(metrics.MetricsMiddleware())
 
-		if len(segments) > 2 && segments[1] == "devices" {
-			// Compute Device routes under /api/v1/users/{user_id}/devices/{device_id}
-			if r.Method == http.MethodDelete {
-				handlers.HandleDeleteComputeDevice(w, r) // Delete a compute device
-			} else if r.Method == http.MethodPost {
-				handlers.HandleAddComputeDevice(w, r) // Add a compute device
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
+	router.GET("/api/v1/metrics", func(c *gin.Context) {
+		c.Writer.Header().Set("Content-Type", "text/plain")
+		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
+	})
+	
+
+	// User routes
+	users := router.Group("/api/v1/users")
+	{
+		users.GET("", handlers.HandleGetAllUsers)      // List all users
+		users.POST("", handlers.HandleCreateUser)      // Create new user
+		users.GET("/:user_id", handlers.HandleGetUser) // Get user by ID
+		users.PUT("/:user_id/credits", handlers.HandleUpdateComputeCredits)
+
+		// User Compute Devices
+		users.POST("/:user_id/devices", handlers.HandleAddComputeDevice)
+		users.DELETE("/:user_id/devices/:device_id", handlers.HandleDeleteComputeDevice)
+
+		// User Jobs
+		users.POST("/:user_id/jobs", handlers.HandleAddJob)
+		users.DELETE("/:user_id/jobs/:job_id", handlers.HandleDeleteJob)
+	}
+
+	return router
+}
+
+// CORS middleware
+func corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(200)
 			return
 		}
 
-		if len(segments) > 2 && segments[1] == "jobs" {
-			// User Job routes under /api/v1/users/{user_id}/jobs/{job_id}
-			if r.Method == http.MethodDelete {
-				handlers.HandleDeleteJob(w, r) // Delete a User job
-			} else if r.Method == http.MethodPost {
-				handlers.HandleAddJob(w, r) // Add a user job
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
-			return
-		}
-
-		if len(segments) > 1 && segments[1] == "credits" {
-			// Compute Credits update route /api/v1/users/{user_id}/credits
-			if r.Method == http.MethodPut {
-				handlers.HandleUpdateComputeCredits(w, r) // Update compute credits
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
-			return
-		}
-
-		if len(segments) == 1 {
-			// Get specific user route /api/v1/users/{user_id}
-			if r.Method == http.MethodGet {
-				handlers.HandleGetUser(w, r) // GET: Retrieve a specific user
-			} else {
-				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			}
-			return
-		}
-
-		http.Error(w, "Not Found", http.StatusNotFound)
-	})))
-
-	mux.Handle("/api/v1/users", metrics.MetricsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.HandleCreateUser(w, r) // Create a User
-		} else if r.Method == http.MethodGet {
-			handlers.HandleGetAllUsers(w, r) // Retrieve all Users
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})))
+		c.Next()
+	}
 }

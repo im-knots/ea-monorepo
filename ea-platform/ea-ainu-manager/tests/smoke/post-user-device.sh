@@ -27,7 +27,7 @@ API_ENDPOINT="http://localhost:8085/api/v1/users/$FIRST_USER_ID/devices"
 # Iterate through matching files in the payload directory
 for file in "$PAYLOAD_DIR"/*add-device*.json; do
     if [[ -f "$file" ]]; then
-        curl -X POST "$API_ENDPOINT" \
+        curl -v -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             --data-binary @"$file"
     else
