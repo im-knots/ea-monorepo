@@ -9,6 +9,12 @@ rules:
   - apiGroups: ["ea.erulabs.ai"]
     resources: ["agentjobs"]
     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+  - apiGroups: ["ea.erulabs.ai"]
+    resources: ["agentjobs/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1

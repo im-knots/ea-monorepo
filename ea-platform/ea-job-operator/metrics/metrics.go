@@ -18,6 +18,14 @@ var (
 		[]string{"path", "step", "type"},
 	)
 
+	OperatorStepCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "ea_job_operator_steps",
+			Help: "Total number of steps executed in the operator function",
+		},
+		[]string{"step", "type"},
+	)
+
 	RequestLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "ea_job_operator_http_request_duration_seconds",
@@ -31,6 +39,7 @@ var (
 func init() {
 	// Register Prometheus metrics
 	prometheus.MustRegister(StepCounter)
+	prometheus.MustRegister(OperatorStepCounter)
 	prometheus.MustRegister(RequestLatencyHistogram)
 }
 
