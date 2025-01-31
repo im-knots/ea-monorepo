@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/ea-job-engine
+  repository: localhost:5000/ea-job-api
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -40,9 +40,12 @@ autoscaling:
 
 serviceAccount:
   create: true
+  name: ea-job-api
   automount: true
   annotations: {}
-  name: ""
+
+rbac:
+  enabled: true
 
 podAnnotations: {}
 

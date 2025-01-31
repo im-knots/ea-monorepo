@@ -1,5 +1,5 @@
 from diagrams import Diagram, Cluster
-from diagrams.k8s.compute import Pod, Job, Cronjob
+from diagrams.k8s.compute import Pod, Job, Cronjob, CRD
 from diagrams.generic.storage import Storage
 from diagrams.generic.device import Mobile
 from diagrams.gcp.network import LoadBalancing, DNS
@@ -30,7 +30,7 @@ with Diagram("Eru Labs", show=False):
     
     # Ea Job Engine
     with Cluster("Job Engine"):
-        eaJobOrchestrator = Pod("Job Orchestrator API")
+        eaJobOrchestrator = Pod("Job API")
         eaJobInf = Job("User Inference Job")
         eaJobTrn = Job("User Training Job")
         eaJobAgt = Job("User Agent Job")

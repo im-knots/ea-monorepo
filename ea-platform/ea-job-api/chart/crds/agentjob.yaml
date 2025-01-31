@@ -1,0 +1,95 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: agentjobs.ea.erulabs.ai
+spec:
+  group: ea.erulabs.ai
+  scope: Namespaced
+  names:
+    plural: agentjobs
+    singular: agentjob
+    kind: AgentJob
+    shortNames:
+      - aj
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                agentID:
+                  type: string
+                  description: "The ID of the agent to execute"
+                name:
+                  type: string
+                  description: "Human-readable name of the job"
+                user:
+                  type: string
+                  description: "User who initiated the job"
+                nodes:
+                  type: array
+                  description: "List of nodes defining the workflow"
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: "Node identifier"
+                      definitionRef:
+                        type: string
+                        description: "Reference to the worker type"
+                      parameters:
+                        type: object
+                        additionalProperties: true
+                        description: "Key-value parameters for the node"
+                edges:
+                  type: array
+                  description: "Node connections"
+                  items:
+                    type: object
+                    properties:
+                      from:
+                        type: array
+                        items:
+                          type: string
+                      to:
+                        type: array
+                        items:
+                          type: string
+                metadata:
+                  type: object
+                  description: "Metadata information"
+                  properties:
+                    created_at:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time
+            status:
+              type: object
+              description: "Status of the job"
+              properties:
+                state:
+                  type: string
+                  description: "Current state of the agent job (e.g., Pending, Running, Completed, Failed)"
+                message:
+                  type: string
+                  description: "Any additional information regarding the state"
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: AgentID
+          type: string
+          jsonPath: ".spec.agentID"
+        - name: User
+          type: string
+          jsonPath: ".spec.user"
+        - name: Status
+          type: string
+          jsonPath: ".status.state"

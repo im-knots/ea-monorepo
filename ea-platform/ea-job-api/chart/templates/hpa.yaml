@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "ea-job-engine.fullname" . }}
+  name: {{ include "ea-job-api.fullname" . }}
   labels:
-    {{- include "ea-job-engine.labels" . | nindent 4 }}
+    {{- include "ea-job-api.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "ea-job-engine.fullname" . }}
+    name: {{ include "ea-job-api.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

@@ -1,5 +1,5 @@
 apiVersion: v2
-name: ea-job-engine
+name: ea-job-api
 description: A Helm chart for Kubernetes
 
 type: application

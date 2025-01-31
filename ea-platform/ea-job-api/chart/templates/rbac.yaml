@@ -1,0 +1,27 @@
+{{- if .Values.rbac.enabled }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ea-job-api-role
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: ["ea.erulabs.ai"]
+    resources: ["agentjobs"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ea-job-api-rolebinding
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "ea-job-api.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: ea-job-api-role
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

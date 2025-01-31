@@ -1,5 +1,5 @@
-# Ea Job Engine Tests
-Here you will find some tests for the Ea Job Engine. 
+# Ea Job API Tests
+Here you will find some tests for the Ea Job Engine API. 
 
 ## Create a new API smoke test
 - Add the json payload you are sending for PUT operations into the `smoke/payloads` directory.

@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"ea-job-engine/config"
-	"ea-job-engine/logger"
-	"ea-job-engine/routes"
+	"ea-job-api/config"
+	"ea-job-api/logger"
+	"ea-job-api/routes"
 )
 
 func main() {

@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"ea-job-engine/handlers"
-	"ea-job-engine/metrics"
+	"ea-job-api/handlers"
+	"ea-job-api/metrics"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -25,9 +25,7 @@ func RegisterRoutes() *gin.Engine {
 	// jobs routes
 	jobs := router.Group("/api/v1/jobs")
 	{
-		jobs.GET("", handlers.HandleGetAllJobs)      // List all jobs
-		jobs.POST("", handlers.HandleCreateJob)      // Create new job
-		jobs.GET("/:user_id", handlers.HandleGetJob) // Get job by ID
+		jobs.POST("", handlers.HandleCreateJob) // Create new job
 
 	}
 

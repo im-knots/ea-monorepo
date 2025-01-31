@@ -24,7 +24,7 @@ locals {
     "ea-agent-manager" = "../../../ea-platform/ea-agent-manager/chart"
     "ea-ainu-manager"  = "../../../ea-platform/ea-ainu-manager/chart"
     "ea-frontend"      = "../../../ea-platform/ea-frontend/chart"
-    "ea-job-engine"    = "../../../ea-platform/ea-job-engine/chart"
+    "ea-job-api"       = "../../../ea-platform/ea-job-api/chart"
   }
 
   eru_apps = {

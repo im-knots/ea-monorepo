@@ -56,9 +56,9 @@ k8s_port_forward() {
     nohup kubectl port-forward deployment/ea-agent-manager 8083:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
     echo "Port-forwarding for ea-agent-manager on port 8083 started."
 
-    # Port-forward ea-job-engine
-    nohup kubectl port-forward deployment/ea-job-engine 8084:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-job-engine on port 8084 started."
+    # Port-forward ea-job-api
+    nohup kubectl port-forward deployment/ea-job-api 8084:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for ea-job-api on port 8084 started."
 
     # Port-forward ea-ainu-engine
     nohup kubectl port-forward deployment/ea-ainu-manager 8085:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &

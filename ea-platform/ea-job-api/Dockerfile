@@ -15,7 +15,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN go build -o ea-job-engine .
+RUN go build -o ea-job-api .
 
 # Use a minimal Alpine image to run the built application
 FROM alpine:latest
@@ -24,9 +24,9 @@ FROM alpine:latest
 WORKDIR /app
 
 # Copy the built application binary from the builder stage
-COPY --from=builder /app/ea-job-engine .
+COPY --from=builder /app/ea-job-api .
 
 # Expose port 8080
 EXPOSE 8080
 
-CMD ["./ea-job-engine"]
+CMD ["./ea-job-api"]

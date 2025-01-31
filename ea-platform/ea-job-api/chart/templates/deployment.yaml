@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "ea-job-engine.fullname" . }}
+  name: {{ include "ea-job-api.fullname" . }}
   labels:
-    {{- include "ea-job-engine.labels" . | nindent 4 }}
+    {{- include "ea-job-api.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
   {{- end }}
   selector:
     matchLabels:
-      {{- include "ea-job-engine.selectorLabels" . | nindent 6 }}
+      {{- include "ea-job-api.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -18,7 +18,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "ea-job-engine.labels" . | nindent 8 }}
+        {{- include "ea-job-api.labels" . | nindent 8 }}
         {{- with .Values.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -27,7 +27,7 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "ea-job-engine.serviceAccountName" . }}
+      serviceAccountName: {{ include "ea-job-api.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
@@ -61,7 +61,7 @@ spec:
             - name: {{ $key | quote }}
               valueFrom:
                 secretKeyRef:
-                  name: ea-job-engine-secrets
+                  name: ea-job-api-secrets
                   key: {{ $key | quote }}
             {{- end }}
             {{- end }}

@@ -1,9 +1,9 @@
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: {{ include "ea-job-engine.fullname" . }}-pdb
+  name: {{ include "ea-job-api.fullname" . }}-pdb
   labels:
-    app: {{ include "ea-job-engine.name" . }}
+    app: {{ include "ea-job-api.name" . }}
 spec:
   minAvailable: 
     {{- if .Values.pdb.minAvailable }}
@@ -19,4 +19,4 @@ spec:
     {{- end }}
   selector:
     matchLabels:
-      {{- include "ea-job-engine.selectorLabels" . | nindent 6 }}
+      {{- include "ea-job-api.selectorLabels" . | nindent 6 }}
