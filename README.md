@@ -20,6 +20,15 @@ Core features of the Ea Platform are:
 - Terraform to deploy infrastructure and Eru Labs services to GCP
 - Documentation diagrams managed as code for the whole of Eru Labs
 
+## Quick local development for one service
+If you want to develop something locally for one service without standing up the whole platform you can start up a mongodb server with:
+```bash
+docker-compose up
+```
+and then start your service from its app folder with:
+```bash
+go run main.go
+```
 
 ## Run everything locally with minikube
 Some services (ea-job-engine) require kubernetes specifically for their operator patterns. Therefore we need a local kubernetes cluster for development. Minikube is the best bet. 
