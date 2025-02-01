@@ -16,3 +16,11 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
+/* Dark theme styles */
+body.dark {
+  --bg-color: #1a202c;
+  --text-color: #e2e8f0;
+  --border-color: #2d3748;
+  --accent-color: #f56565;
+}
