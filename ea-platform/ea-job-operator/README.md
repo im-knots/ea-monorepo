@@ -62,37 +62,10 @@ Structured logs are emitted in JSON format and can be collected using `kubectl l
 kubectl logs -f deployment/ea-job-operator -n ea-platform
 ```
 
+## TODO improve scaling
+Right now this works pretty well for 100s of jobs in a short period of time. If we want to go to millions of jobs a min we will need a more sophisticated mecahnism to allow actual pod performance improvements when we scale out the number of operator pods. 
 
-## Load testing - pre informer model
-This initial test is with the strictly polling method that has since been reworked
-Assume Happy Path only with no orphan creation due to crashing operator pods.
-
-With CleanOrphans disabled we run 1000 job submissions in a short time
-
-```bash
-eru-labs-monorepo/ea-platform/ea-job-api/tests$ for i in {1..1000}; do ./smoke/create-job.sh; done
-```
-
-Goal is to observe the time it takes 3 pods of the operator to process 1000 AgentJobs. Then rerun with higher number of pods and observe if there is a linear relationship between processing time or if we get deminishing returns from k8s API saturation. 
-
-### Test 1
-Operator pod count: 3
-Test start time: 9:00:30 PM 
-Job submission completes: 9:01:00 PM
-AgentJob complete time: 9:07:45 PM
-
-## Load testing - post informer model
-This initial test is with the k8s informer implementation
-
-
-```bash
-eru-labs-monorepo/ea-platform/ea-job-api/tests$ for i in {1..1000}; do ./smoke/create-job.sh; done
-```
-
-Goal is to observe the time it takes 3 pods of the operator to process 1000 AgentJobs. Then rerun with higher number of pods and observe if there is a linear relationship between processing time or if we get deminishing returns from k8s API saturation. 
-
-### Test 1
-Operator pod count: 3
-Test start time: 10:35:00 AM 
-Job submission completes: 10:35:30 AM
-AgentJob complete time: 10:41:00 AM
+Today how each operator loop picks up work they just step all over eachother causing update conflict errors. We can fix these with these approaches together probably. 
+Its fine for now though. 
+- job sharding for multi pod performance improvement
+- implement kubernetes finalizers for job cleanup
