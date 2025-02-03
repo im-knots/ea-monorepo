@@ -31,10 +31,10 @@ JOB_OPERATOR -> ETCD: Marks AgentJob as inactive
 ETCD -> AGENT_OPERATOR: Operator sees inactive AgentJob
 AGENT_OPERATOR -> AGENT_DB: Operator adds AgentJob to user's Job array as Inactive
 ETCD -> JOB_OPERATOR: Operator sees inactive AgentJob
+JOB_OPERATOR -> ETCD: Marks AgentJob as executing
 JOB_OPERATOR -> JOB_EXECUTOR : Execute AgentJob CR
 ETCD -> AGENT_OPERATOR: Operator sees executing AgentJob
 AGENT_OPERATOR -> AGENT_DB: Operator adds AgentJob to user's Job array as Active
-JOB_OPERATOR -> ETCD: Marks AgentJob as executing
 ETCD -> JOB_OPERATOR: Operator sees executor job is complete
 JOB_OPERATOR -> ETCD: Marks AgentJob as complete
 ETCD -> AGENT_OPERATOR: Operator sees complete AgentJob
