@@ -46,7 +46,7 @@ I have created a helper script to easily set up the entire platform in a local c
 ### Start up Eru Labs components locally with helm and minikube
 ```bash
 minikube delete # Clean up previous minikube setups
-minikube start --driver=docker
+minikube start --driver=docker --extra-config=kubelet.max-pods=1000 #set a large single node cluster for ease of use, allow lots of pods
 minikube addons enable registry
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development

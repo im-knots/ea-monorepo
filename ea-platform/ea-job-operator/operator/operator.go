@@ -6,7 +6,6 @@ import (
 	"ea-job-operator/logger"
 	"time"
 
-	"golang.org/x/exp/rand"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,9 +32,10 @@ const namespace = "ea-platform" // Namespace where jobs exist
 
 // Workqueues to throttle updates and avoid API spam
 var (
-	jobQueue       = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
-	inactiveQueue  = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
-	completedQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter()) // ✅ Added queue for completed jobs
+	newAgentJobQueue       = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	inactiveAgentJobQueue  = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	completedJobQueue      = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	completedAgentJobQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 )
 
 // StartOperators initializes informers and starts watching resources
@@ -82,7 +82,12 @@ func StartOperators(stopCh <-chan struct{}) {
 
 	if cfg.FeatureCompletedJobs == "true" {
 		go watchCompletedJobs(k8sFactory, dynamicClient, stopCh) // Pass the correct factory
-		go processCompletedQueue(dynamicClient, stopCh)          // Worker for completed jobs
+		go processCompletedQueue(dynamicClient, clientset)       // Worker for completed jobs
+	}
+
+	if cfg.FeatureCompletedAgentJobs == "true" { //  NEW: Watch & clean up completed AgentJobs
+		go watchCompletedAgentJobs(dynamicFactory, stopCh)
+		go processCompletedAgentJobQueue(dynamicClient, stopCh)
 	}
 
 	// Start and sync factories
@@ -114,12 +119,12 @@ func watchNewAgentJobs(factory dynamicinformer.DynamicSharedInformerFactory, sto
 				return
 			}
 
-			jobName := job.GetName()
+			// jobName := job.GetName()
 			status, found, _ := unstructured.NestedString(job.Object, "status", "state")
 
 			if !found || status == "" {
-				logger.Slog.Info("Queuing job update", "job", jobName)
-				jobQueue.Add(job) // Add to queue instead of updating immediately
+				// logger.Slog.Info("Queuing job update", "job", jobName)
+				newAgentJobQueue.Add(job) // Add to queue instead of updating immediately
 			}
 		},
 	})
@@ -143,12 +148,12 @@ func watchInactiveAgentJobs(factory dynamicinformer.DynamicSharedInformerFactory
 				return
 			}
 
-			jobName := job.GetName()
+			// jobName := job.GetName()
 			status, _, _ := unstructured.NestedString(job.Object, "status", "state")
 
 			if status == "inactive" {
-				logger.Slog.Info("Queuing inactive job for execution", "job", jobName)
-				inactiveQueue.Add(job) // Add to queue instead of executing immediately
+				// logger.Slog.Info("Queuing inactive job for execution", "job", jobName)
+				inactiveAgentJobQueue.Add(job) // Add to queue instead of executing immediately
 			}
 		},
 	})
@@ -171,11 +176,39 @@ func watchCompletedJobs(factory informers.SharedInformerFactory, dynamicClient d
 				return
 			}
 
-			jobName := job.Name
+			// jobName := job.Name
 
 			if job.Status.Succeeded > 0 {
-				logger.Slog.Info("Queuing completed Kubernetes Job for processing", "job", jobName)
-				completedQueue.Add(job)
+				// logger.Slog.Info("Queuing completed Kubernetes Job for processing", "job", jobName)
+				completedJobQueue.Add(job)
+			}
+		},
+	})
+
+	informer.Run(stopCh)
+}
+
+// watchCompletedAgentJobs detects completed AgentJobs and queues them for deletion after 1 minute
+func watchCompletedAgentJobs(factory dynamicinformer.DynamicSharedInformerFactory, stopCh <-chan struct{}) {
+	logger.Slog.Info("Starting Completed AgentJob Cleanup Informer")
+
+	informer := factory.ForResource(agentJobGVR).Informer()
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(_, newObj interface{}) {
+			job, ok := newObj.(*unstructured.Unstructured)
+			if !ok {
+				logger.Slog.Error("Failed to parse AgentJob object")
+				return
+			}
+
+			// jobName := job.GetName()
+			status, _, _ := unstructured.NestedString(job.Object, "status", "state")
+
+			// If job is completed, queue it for deletion
+			if status == "completed" {
+				// logger.Slog.Info("Queuing completed AgentJob for cleanup", "job", jobName)
+				completedAgentJobQueue.Add(job)
 			}
 		},
 	})
@@ -187,102 +220,233 @@ func watchCompletedJobs(factory informers.SharedInformerFactory, dynamicClient d
 // PROCESS QUEUE FUNCTIONS
 //
 
-// processNewJobQueue processes the job queue asynchronously
 func processNewJobQueue(dynamicClient dynamic.Interface, stopCh <-chan struct{}) {
 	for {
-		item, shutdown := jobQueue.Get()
-		if shutdown {
-			return
+		// Ensure queue isn't empty
+		if newAgentJobQueue.Len() == 0 {
+			time.Sleep(500 * time.Millisecond) // Avoid excessive busy looping
+			continue
 		}
 
-		job := item.(*unstructured.Unstructured)
-		jobName := job.GetName()
+		// Randomly select a batch size (up to 10 jobs)
+		// TODO: make this selection of 10 randomized so update conflicts across multiple pods is less likey
+		batchSize := min(10, newAgentJobQueue.Len())
 
-		go func() {
-			defer jobQueue.Done(job)
-			updateAgentJobStatus(dynamicClient, job, jobName, "inactive", "Job detected but not started yet")
-		}()
+		// Process jobs directly from the queue without removing everything first
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := newAgentJobQueue.Get()
+			if shutdown {
+				return
+			}
+
+			job := item.(*unstructured.Unstructured)
+			jobName := job.GetName()
+
+			go func() {
+				defer newAgentJobQueue.Done(job) //  Mark as processed
+
+				err := updateAgentJobStatus(dynamicClient, job, jobName, "inactive", "Job detected but not started yet")
+				if err != nil {
+					logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
+				}
+			}()
+		}
 	}
 }
 
-// processInactiveQueue processes the inactive job queue and spawns Kubernetes Jobs
 func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes.Clientset, stopCh <-chan struct{}) {
 	for {
-		item, shutdown := inactiveQueue.Get()
-		if shutdown {
-			return
+		// Ensure queue isn't empty
+		if inactiveAgentJobQueue.Len() == 0 {
+			time.Sleep(500 * time.Millisecond)
+			continue
 		}
 
-		job := item.(*unstructured.Unstructured)
-		jobName := job.GetName()
+		// Select a batch size (up to 10 jobs)
+		batchSize := min(10, inactiveAgentJobQueue.Len())
 
-		go func() {
-			defer inactiveQueue.Done(job)
-
-			// Update AgentJob status
-			updateAgentJobStatus(dynamicClient, job, jobName, "executing", "Job is now executing")
-
-			// Create Kubernetes Job
-			k8sJob := &batchv1.Job{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      jobName,
-					Namespace: namespace,
-				},
-				Spec: batchv1.JobSpec{
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							RestartPolicy: corev1.RestartPolicyNever,
-							Containers: []corev1.Container{{
-								Name:    "executor",
-								Image:   "busybox",
-								Command: []string{"sh", "-c", "echo 'hello world'"},
-							}},
-						},
-					},
-				},
-			}
-
-			_, err := clientset.BatchV1().Jobs(namespace).Create(context.TODO(), k8sJob, metav1.CreateOptions{})
-			if err != nil {
-				logger.Slog.Error("Failed to create Kubernetes Job", "job", jobName, "error", err)
+		// Process jobs directly from the queue
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := inactiveAgentJobQueue.Get()
+			if shutdown {
 				return
 			}
 
-			logger.Slog.Info("Successfully created Kubernetes Job", "job", jobName)
-		}()
+			job := item.(*unstructured.Unstructured)
+			jobName := job.GetName()
+
+			go func() {
+				defer inactiveAgentJobQueue.Done(job) //  Mark as processed
+
+				// Update AgentJob status
+				err := updateAgentJobStatus(dynamicClient, job, jobName, "executing", "Job is now executing")
+				if err != nil {
+					logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
+					return
+				}
+
+				// Create Kubernetes Job
+				k8sJob := &batchv1.Job{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      jobName,
+						Namespace: namespace,
+					},
+					Spec: batchv1.JobSpec{
+						Template: corev1.PodTemplateSpec{
+							Spec: corev1.PodSpec{
+								RestartPolicy: corev1.RestartPolicyNever,
+								Containers: []corev1.Container{{
+									Name:            "executor",
+									Image:           "busybox",
+									Command:         []string{"sh", "-c", "echo 'hello world'"},
+									ImagePullPolicy: corev1.PullIfNotPresent,
+								}},
+							},
+						},
+					},
+				}
+
+				_, err = clientset.BatchV1().Jobs(namespace).Create(context.TODO(), k8sJob, metav1.CreateOptions{})
+				if err != nil {
+					if apierrors.IsAlreadyExists(err) {
+						return //  Ignore already exists errors
+					}
+					logger.Slog.Error("Failed to create Kubernetes Job", "job", jobName, "error", err)
+				}
+			}()
+		}
 	}
 }
 
-// processCompletedQueue now properly looks up the AgentJob
-func processCompletedQueue(dynamicClient dynamic.Interface, stopCh <-chan struct{}) {
+// processCompletedQueue now selects a randomized batch of completed Kubernetes Jobs to reduce conflicts
+func processCompletedQueue(dynamicClient dynamic.Interface, clientset *kubernetes.Clientset) {
 	for {
-		item, shutdown := completedQueue.Get()
-		if shutdown {
-			return
+		// Ensure queue isn't empty
+		if completedJobQueue.Len() == 0 {
+			time.Sleep(500 * time.Millisecond)
+			continue
 		}
 
-		k8sJob := item.(*batchv1.Job)
-		jobName := k8sJob.Name
+		// Select a batch size (up to 10 jobs)
+		batchSize := min(10, completedJobQueue.Len())
 
-		go func() {
-			defer completedQueue.Done(k8sJob)
-
-			// ✅ Look up the associated AgentJob before updating
-			agentJob, err := findAgentJobByK8sJob(dynamicClient, jobName)
-			if err != nil {
-				logger.Slog.Error("Failed to find AgentJob for Kubernetes Job", "job", jobName, "error", err)
+		// Process jobs directly from the queue
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := completedJobQueue.Get()
+			if shutdown {
 				return
 			}
 
-			// ✅ Ensure agentJob is non-nil
-			if agentJob == nil {
-				logger.Slog.Error("AgentJob not found for Kubernetes Job", "job", jobName)
+			k8sJob := item.(*batchv1.Job)
+			jobName := k8sJob.Name
+
+			go func() {
+				defer completedJobQueue.Done(k8sJob) //  Mark as processed
+
+				// Look up the associated AgentJob
+				agentJob, err := findAgentJobByK8sJob(dynamicClient, jobName)
+				if err != nil {
+					logger.Slog.Error("Failed to find AgentJob for Kubernetes Job", "job", jobName, "error", err)
+					return
+				}
+
+				if agentJob == nil {
+					logger.Slog.Error("AgentJob not found for Kubernetes Job", "job", jobName)
+					return
+				}
+
+				// Update associated AgentJob status
+				err = updateAgentJobStatus(dynamicClient, agentJob, agentJob.GetName(), "completed", "Kubernetes Job execution successful")
+				if err != nil {
+					logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
+					return
+				}
+
+				// Delete the Kubernetes Job
+				deletePolicy := metav1.DeletePropagationBackground
+				err = clientset.BatchV1().Jobs(namespace).Delete(
+					context.TODO(),
+					jobName,
+					metav1.DeleteOptions{PropagationPolicy: &deletePolicy},
+				)
+
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						return //  Ignore not found errors
+					}
+					logger.Slog.Error("Failed to delete Kubernetes Job", "job", jobName, "error", err)
+				}
+			}()
+		}
+	}
+}
+
+// processCompletedAgentJobQueue now processes a randomized batch of completed AgentJobs
+func processCompletedAgentJobQueue(dynamicClient dynamic.Interface, stopCh <-chan struct{}) {
+	cfg := config.LoadConfig()
+
+	for {
+		// Ensure queue isn't empty
+		if completedAgentJobQueue.Len() == 0 {
+			time.Sleep(500 * time.Millisecond) // Prevent excessive CPU usage
+			continue
+		}
+
+		// Determine batch size (up to 10 jobs, or fewer if the queue is small)
+		batchSize := min(10, completedAgentJobQueue.Len())
+
+		// Process jobs directly from the queue
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := completedAgentJobQueue.Get()
+			if shutdown {
 				return
 			}
 
-			// ✅ Update associated AgentJob status
-			updateAgentJobStatus(dynamicClient, agentJob, agentJob.GetName(), "completed", "Kubernetes Job execution successful")
-		}()
+			job := item.(*unstructured.Unstructured)
+			jobName := job.GetName()
+
+			go func() {
+				defer completedAgentJobQueue.Done(job) //  Mark as processed
+
+				// Fetch cleanup grace period from config
+				gracePeriodMinutes := cfg.CompletedCleanupGracePeriod
+				gracePeriodDuration := time.Duration(gracePeriodMinutes) * time.Minute
+
+				// Only delete if the AgentJob has exceeded the grace period
+				creationTimestamp := job.GetCreationTimestamp()
+				if gracePeriodMinutes > 0 && time.Since(creationTimestamp.Time) < gracePeriodDuration {
+					logger.Slog.Info("Skipping deletion, AgentJob is within grace period",
+						"job", jobName, "grace_period", gracePeriodMinutes)
+					completedAgentJobQueue.AddAfter(job, 30*time.Second) // Requeue after 30s
+					return
+				}
+
+				// Attempt to delete the AgentJob
+				err := dynamicClient.Resource(agentJobGVR).Namespace(namespace).Delete(
+					context.TODO(),
+					jobName,
+					metav1.DeleteOptions{},
+				)
+				if err != nil {
+					//  Silently ignore "not found" errors (assuming another pod already handled it)
+					if apierrors.IsNotFound(err) {
+						return
+					}
+
+					logger.Slog.Error("Failed to delete completed AgentJob",
+						"job", jobName, "error", err)
+
+					// If error is due to conflict, requeue it for retry
+					if apierrors.IsConflict(err) {
+						completedAgentJobQueue.AddAfter(job, 10*time.Second)
+					}
+
+					return
+				}
+
+				logger.Slog.Info("Successfully deleted completed AgentJob", "job", jobName)
+			}()
+		}
 	}
 }
 
@@ -290,48 +454,38 @@ func processCompletedQueue(dynamicClient dynamic.Interface, stopCh <-chan struct
 // HELPER FUNCTIONS
 //
 
-// updateAgentJobStatus updates an AgentJob's status with exponential backoff
-func updateAgentJobStatus(dynamicClient dynamic.Interface, job *unstructured.Unstructured, jobName, state, message string) {
-	baseDelay := 100 * time.Millisecond // Start with 100ms
-	maxDelay := 2 * time.Second         // Maximum backoff delay
+// updateAgentJobStatus updates an AgentJob's status
+func updateAgentJobStatus(dynamicClient dynamic.Interface, job *unstructured.Unstructured, jobName, state, message string) error {
+	updatedJob := job.DeepCopy()
 
-	for retries := 0; retries < 5; retries++ {
-		updatedJob := job.DeepCopy()
+	// Modify only the status field
+	err := unstructured.SetNestedMap(updatedJob.Object, map[string]interface{}{
+		"state":   state,
+		"message": message,
+	}, "status")
 
-		// Modify only the status field
-		err := unstructured.SetNestedMap(updatedJob.Object, map[string]interface{}{
-			"state":   state,
-			"message": message,
-		}, "status")
-
-		if err != nil {
-			logger.Slog.Error("Failed to set status field in AgentJob", "job", jobName, "error", err)
-			return
-		}
-
-		// Update the job status in Kubernetes
-		_, err = dynamicClient.Resource(agentJobGVR).Namespace(namespace).
-			UpdateStatus(context.TODO(), updatedJob, metav1.UpdateOptions{})
-
-		if err == nil {
-			logger.Slog.Info("Successfully updated job status", "job", jobName, "state", state)
-			return
-		}
-
-		if apierrors.IsConflict(err) {
-			delay := time.Duration(rand.Intn(int(baseDelay))) + baseDelay
-			logger.Slog.Warn("Conflict detected while updating AgentJob, retrying...", "job", jobName, "retry_delay", delay)
-			time.Sleep(delay)
-			baseDelay *= 2 // Exponential backoff
-			if baseDelay > maxDelay {
-				baseDelay = maxDelay
-			}
-			continue
-		}
-
-		logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
-		return
+	if err != nil {
+		logger.Slog.Error("Failed to set status field in AgentJob", "job", jobName, "error", err)
+		return err
 	}
+
+	// Try updating the job status in Kubernetes
+	_, err = dynamicClient.Resource(agentJobGVR).Namespace(namespace).
+		UpdateStatus(context.TODO(), updatedJob, metav1.UpdateOptions{})
+
+	if err == nil {
+		logger.Slog.Info("Successfully updated job status", "job", jobName, "state", state)
+		return nil
+	}
+
+	// If there's a conflict, assume another pod already handled it and move on
+	if apierrors.IsConflict(err) {
+		logger.Slog.Warn("Conflict detected while updating AgentJob, skipping retry", "job", jobName)
+		return nil
+	}
+
+	logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
+	return err
 }
 
 // Find the AgentJob linked to a completed Kubernetes Job
