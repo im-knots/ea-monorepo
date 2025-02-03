@@ -28,7 +28,6 @@ The EA Job Operator runs multiple watch loops, each responsible for handling a s
 | `WatchInactiveAgentJobs` | Moves `inactive` jobs to `pending`, locks them, and spawns Kubernetes Jobs. |
 | `WatchCompletedJobs` | Watches Kubernetes Jobs and updates corresponding AgentJobs upon completion. |
 | `WatchCompletedAgentJobs` | Cleans up completed jobs older than a certain threshold. |
-| `WatchCleanOrphans` | Detects and resets jobs orphaned by crashed operator pods. |
 
 
 ## Configuration
@@ -42,7 +41,6 @@ Configuration is managed through environment variables:
 | `FEATURE_INACTIVE_AGENT_JOBS` | Enables `WatchInactiveAgentJobs` | `true` |
 | `FEATURE_COMPLETED_JOBS` | Enables `WatchCompletedJobs` | `true` |
 | `FEATURE_COMPLETED_AGENT_JOBS` | Enables `WatchCompletedAgentJobs` | `true` |
-| `FEATURE_CLEAN_ORPHANS` | Enables `WatchCleanOrphans` (for HA recovery) | `false` |
 
 To modify the configuration, update your deployment environment variables in `chart/values.yaml`.
 
