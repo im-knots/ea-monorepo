@@ -33,7 +33,7 @@ echo "Submitting job request to $JOB_ENGINE_URL..."
 echo "Payload: $PAYLOAD"
 
 # Send the job creation request
-RESPONSE=$(curl -v -s -X POST "$JOB_ENGINE_URL" \
+RESPONSE=$(curl -s -X POST "$JOB_ENGINE_URL" \
     -H "Content-Type: application/json" \
     --data "$PAYLOAD")
 

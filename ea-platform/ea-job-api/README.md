@@ -1,7 +1,7 @@
 # Ea Job Engine API
 
 ## Overview
-The **Ea Job Engine API** is a stateless microservice responsible for orchestrating job execution requests in the Ea platform. It handles incoming job requests, fetches the corresponding agent definitions from the Ea Agent Manager, and creates Kubernetes Custom Resources (CRs) representing the jobs. These CRs are then processed by the Ea Job Operator for execution.
+The **Ea Job Engine API** is a stateless microservice responsible for orchestrating job execution requests in the Ea platform. It handles incoming job requests, fetches the corresponding agent definitions from the Ea Agent Manager, and creates Kubernetes Custom Resources (CRs) representing the jobs. These CRs are defined as instantiations of the CRD found in the chart/crds directory. These CRs are then processed by the Ea Job Operator for execution.
 
 ## Features
 - Accepts job creation requests via HTTP API.
