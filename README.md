@@ -13,6 +13,13 @@ Core features of the Ea Platform are:
 - Leaderboards and gamification challenges for users to show off and earn more compute credits by completing challenges and gaining ranks
 - Dataset storage for users models, datasets, outputs, ect
 
+## Repo Contents
+- Eru Labs brand webpage front/backends 
+- Ea platform front/backends
+- Ainulindale Client software for various platforms
+- Terraform to deploy infrastructure and Eru Labs services to GCP
+- Documentation diagrams managed as code for the whole of Eru Labs
+
 ## Platform Design
 Each core feature of the Ea platform usually consists of one or more microservices working together to drive that feature. These are called "Ea Feature Engines". When adding a new core feature, we must implement a new Feature Engine that we can plug into the rest of the platform. Feature Engines should be designed to follow microservice design best practices around state, decoupling, and separation of concerns. 
 
@@ -45,12 +52,13 @@ Implement meshnet protocols like BATMAN on the Ainulindale clients to allow loca
 Do the SRE needful to scale this thing to millions of users
 
 
-## Contents
-- Eru Labs brand webpage front/backends 
-- Ea platform front/backends
-- Ainulindale Client software for various platforms
-- Terraform to deploy infrastructure and Eru Labs services to GCP
-- Documentation diagrams managed as code for the whole of Eru Labs
+## Ea Platform Architecture
+![Ea Platform Architecture](docs/diagrams/eru_labs.png)
+
+## Request/Response diagrams
+### Job Workflow
+![Ea Job Request/Response](docs/diagrams/job_request_response.png)
+
 
 ## Quick local development for one service
 If you want to develop something locally for one service without standing up the whole platform you can start up a mongodb server with:
@@ -94,10 +102,3 @@ Optionally, you can add a portforward line in the minikube.sh script's `k8s_port
 ### Smoke tests
 All new API services should have associates `tests/smoke` directories and simple smoke tests to either populate test data or verify API handler functionality. 
 
-
-## Ea Platform Architecture
-![Ea Platform Architecture](docs/diagrams/eru_labs.png)
-
-## Request/Response diagrams
-### Job Workflow
-![Ea Job Request/Response](docs/diagrams/job_request_response.png)
