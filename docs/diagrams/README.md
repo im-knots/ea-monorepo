@@ -1,6 +1,8 @@
 # Architecture Diagram Generator
 
-This project generates an architectural diagram using the `Diagrams` Python package.
+This project generates:
+-  An architectural diagram using the `Diagrams` Python package.
+-  Request/Response diagrams using the `plantuml` Python package.
 
 ## Prerequisites
 
@@ -19,41 +21,31 @@ This project generates an architectural diagram using the `Diagrams` Python pack
      python3 -m ensurepip --upgrade
      ```
 
-## Setup
-1. Install the Graphviz system package
+- Install the Graphviz system package
    ```bash
    sudo apt install graphviz
    ```
 
-2. Install the required dependencies in a virtual environment:
+## Setup
+1. Install the required dependencies in a virtual environment:
    ```bash
    python3 -m venv venv  # Create a virtual environment
    source venv/bin/activate  # Activate the virtual environment
    pip install -r requirements.txt  # Install dependencies
    ```
 
-3. Verify the environment is set up correctly:
-   ```bash
-   python3 --version
-   ```
-
-## Running the Script
-
-1. Activate the virtual environment if not already active:
-   ```bash
-   source venv/bin/activate
-   ```
-
 2. Run the script to generate the architecture diagram:
    ```bash
    python3 gen-arch.py
+   python3 gen-sequence.py
    ```
 
 3. The diagram will be saved as `System Architecture.png` in the current directory.
 
 ## Files
 
-- `gen-arch.py`: Python script to generate the diagram.
+- `gen-arch.py`: Python script to generate the architecture diagram.
+- `gen-sequence.py`: Python script to generate the request/response diagrams.
 - `requirements.txt`: Contains the required Python packages.
 - `README.md`: This documentation.
 

@@ -57,7 +57,10 @@ with Diagram("Eru Labs", show=False):
     with Cluster("Ainulindale Engine"):
         eaAinuUserManager = Pod("Ainu Engine User Manager")
         eaAinuDB = Storage("Ainu Engine DB")
+        eaAinuOperator = Pod("Ainu Operator")
         eaAPIGateway >> eaAinuUserManager >> eaAinuDB
+        eaAinuOperator >> eaAgentJobETCD
+        eaAinuOperator >> eaAinuDB
     
     # Ea User Engine
     # with Cluster("User Engine"):
