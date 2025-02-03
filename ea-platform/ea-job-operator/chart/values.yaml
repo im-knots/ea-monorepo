@@ -21,7 +21,7 @@ resources:
     cpu: 50m
     memory: 512Mi
 
-replicaCount: 3 # We can use 3 replicas for operator HA out of the box :D
+replicaCount: 1 # You can increase this but its not optimized yet, may impact kube API performance
 
 serviceMonitor:
   enabled: true
