@@ -37,10 +37,8 @@ This project generates:
 2. Run the script to generate the architecture diagram:
    ```bash
    python3 gen-arch.py
-   python3 gen-sequence.py
+   python3 gen-job-sequence.py
    ```
-
-3. The diagram will be saved as `System Architecture.png` in the current directory.
 
 ## Files
 

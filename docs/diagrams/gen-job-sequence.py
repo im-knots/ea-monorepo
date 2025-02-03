@@ -56,7 +56,7 @@ end
 """
 
 # Save the PlantUML script
-uml_file = "request_response.puml"
+uml_file = "job_request_response.puml"
 with open(uml_file, "w") as f:
     f.write(uml_code)
 
