@@ -36,12 +36,12 @@ with Diagram("Eru Labs", show=False):
         eaJobOperator = Pod("Job Operator")
         eaAgentJobCRD = CRD("AgentJob CRD")
         eaAgentJobETCD = ETCD("AgentJob CRs")
-        eaK8sJob = Job("K8s Job")
+        eaJobExecutor = Job("Ea Job Executor")
         eaAPIGateway >> eaJobAPI
         eaAgentJobCRD >> eaJobAPI >> eaAgentJobETCD 
         eaJobOperator >> eaAgentJobETCD
-        eaJobOperator >> eaK8sJob >> ollama
-        ollama >> eaK8sJob
+        eaJobOperator >> eaJobExecutor >> ollama
+        ollama >> eaJobExecutor
 
         # Future state
         # eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
