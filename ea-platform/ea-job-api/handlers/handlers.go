@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,6 +45,17 @@ type Edge struct {
 
 type CreateJobRequest struct {
 	AgentID string `json:"agentID"`
+}
+
+// generateRandomHash creates a random 6-character hexadecimal string
+func generateRandomHash() string {
+	b := make([]byte, 3) // 3 bytes = 6 hex characters
+	_, err := rand.Read(b)
+	if err != nil {
+		logger.Slog.Error("Failed to generate random hash", "error", err)
+		return "000000" // Fallback in case of error
+	}
+	return hex.EncodeToString(b)
 }
 
 // HandleCreateJob handles job creation requests.
@@ -103,7 +116,8 @@ func HandleCreateJob(c *gin.Context) {
 	}
 
 	// Generate a unique job name
-	jobName := fmt.Sprintf("agentjob-%s-%d", agent.ID, time.Now().Unix())
+	hash := generateRandomHash()
+	jobName := fmt.Sprintf("agentjob-%s-%s", agent.ID, hash)
 
 	// Create Kubernetes client configuration
 	k8sConfig, err := rest.InClusterConfig()

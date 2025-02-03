@@ -8,4 +8,9 @@ resource "helm_release" "app_mongodb" {
     name  = "auth.enabled"
     value = "false"
   }
+
+  # set {
+  #     name  = "persistence.storageClass"
+  #     value = "standard"
+  # }
 }

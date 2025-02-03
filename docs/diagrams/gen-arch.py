@@ -1,5 +1,7 @@
 from diagrams import Diagram, Cluster
-from diagrams.k8s.compute import Pod, Job, Cronjob, CRD
+from diagrams.k8s.compute import Pod, Job, Cronjob
+from diagrams.k8s.infra import ETCD
+from diagrams.k8s.others import CRD
 from diagrams.generic.storage import Storage
 from diagrams.generic.device import Mobile
 from diagrams.gcp.network import LoadBalancing, DNS
@@ -11,7 +13,7 @@ with Diagram("Eru Labs", show=False):
     dns = DNS("Public DNS")
     
     ainuClients = Mobile("Ainulindale Client Compute")
-    k8sCompute = Pod("Ea Platform k8s Compute")
+    ollama = Pod("Ollama Pods")
 
     # Brand www
     with Cluster("Brand WWW"):
@@ -30,11 +32,17 @@ with Diagram("Eru Labs", show=False):
     
     # Ea Job Engine
     with Cluster("Job Engine"):
-        eaJobOrchestrator = Pod("Job API")
-        eaJobInf = Job("User Inference Job")
-        eaJobTrn = Job("User Training Job")
-        eaJobAgt = Job("User Agent Job")
-        eaAPIGateway >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> k8sCompute
+        eaJobAPI = Pod("Job API")
+        eaJobOperator = Pod("Job Operator")
+        eaAgentJobCRD = CRD("AgentJob CRD")
+        eaAgentJobETCD = ETCD("AgentJob CRs")
+        eaK8sJob = Job("K8s Job")
+        eaAPIGateway >> eaJobAPI
+        eaAgentJobCRD >> eaJobAPI >> eaAgentJobETCD 
+        eaJobOperator >> eaAgentJobETCD
+        eaJobOperator >> eaK8sJob >> ollama
+        ollama >> eaK8sJob
+
         # Future state
         # eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
 
@@ -43,7 +51,7 @@ with Diagram("Eru Labs", show=False):
         eaAgentManager = Pod("Agent Manager API")
         eaAgentDB = Storage("Agent Manager DB")
         eaAPIGateway >> eaAgentManager >> eaAgentDB
-        eaJobOrchestrator >> eaAgentManager
+        eaJobAPI >> eaAgentManager
 
     # Ea Ainu Engine
     with Cluster("Ainulindale Engine"):
