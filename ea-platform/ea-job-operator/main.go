@@ -6,6 +6,9 @@ import (
 	"ea-job-operator/operator"
 	"ea-job-operator/routes"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -18,40 +21,22 @@ func main() {
 	// Initialize Gin router for metrics
 	router := routes.RegisterRoutes()
 
-	// Start the blank > Inactive Agent job watcher operator in a goroutine
-	if config.FeatureNewAgentJobs == "true" {
-		go func() {
-			operator.WatchNewAgentJobs()
-		}()
-	}
+	// Create a stop channel for informers
+	stopCh := make(chan struct{})
+	defer close(stopCh)
 
-	// Start the inactive > executing Agent job watcher operator in a goroutine
-	if config.FeatureInactiveAgentJobs == "true" {
-		go func() {
-			operator.WatchInactiveAgentJobs()
-		}()
-	}
+	go operator.StartOperators(stopCh)
 
-	// Start the executing > complete k8s job watcher operator in a goroutine
-	if config.FeatureCompletedJobs == "true" {
-		go func() {
-			operator.WatchCompletedJobs()
-		}()
-	}
+	// Handle OS signals for graceful shutdown
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	// Start the complete > deleted Agent job watcher operator in a goroutine
-	if config.FeatureCompletedAgentJobs == "true" {
-		go func() {
-			operator.WatchCompletedAgentJobs()
-		}()
-	}
-
-	// Start the orphan cleanup/unlock operator in a goroutine
-	if config.FeatureCleanOrphans == "true" {
-		go func() {
-			operator.WatchCleanOrphans()
-		}()
-	}
+	go func() {
+		<-signalChan
+		logger.Slog.Info("Received termination signal, shutting down gracefully...")
+		close(stopCh)
+		os.Exit(0)
+	}()
 
 	// Start the server
 	serverAddr := "0.0.0.0:" + config.Port

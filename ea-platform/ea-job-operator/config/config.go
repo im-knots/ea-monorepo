@@ -21,7 +21,7 @@ func LoadConfig() Config {
 		FeatureNewAgentJobs:       getEnv("FEATURE_NEW_AGENT_JOBS", "true"),
 		FeatureInactiveAgentJobs:  getEnv("FEATURE_INACTIVE_AGENT_JOBS", "true"),
 		FeatureCompletedJobs:      getEnv("FEATURE_COMPLETED_JOBS", "true"),
-		FeatureCompletedAgentJobs: getEnv("FEATURE_COMPLETED_AGENT_JOBS", "true"),
+		FeatureCompletedAgentJobs: getEnv("FEATURE_COMPLETED_AGENT_JOBS", "false"),
 		FeatureCleanOrphans:       getEnv("FEATURE_CLEAN_ORPHANS", "false"),
 	}
 }
