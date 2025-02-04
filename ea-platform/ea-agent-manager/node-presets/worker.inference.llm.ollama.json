@@ -1,7 +1,7 @@
 {
-  "id": "worker.inference.llm.ollama",
-  "type": "worker.inference.llm",
+  "type": "worker.inference.llm.ollama",
   "name": "Ollama LLM Inference",
+  "creator": "marco@erulabs.ai",
   "api": {
     "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
     "endpoint": "/api/generate",
@@ -20,7 +20,7 @@
     },
     {
       "key": "prompt",
-      "type": "text",
+      "type": "string",
       "description": "User prompt to be sent to the model.",
       "default": "Hello world"
     },
