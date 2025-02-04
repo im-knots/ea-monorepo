@@ -1,0 +1,33 @@
+{
+  "name": "ea-front",
+  "version": "1.0.0",
+  "description": "A NextJS Front-end client for all things EruLabs",
+  "scripts": {
+    "test": "jest",
+    "build": "next build",
+    "dev": "next dev --turbopack",
+    "d": "next dev",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "keywords": [],
+  "dependencies": {
+    "@mui/material": "^6.4.3",
+    "@mui/material-nextjs": "^6.4.3",
+    "next": "^15.1.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.3"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.2.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "22.13.1",
+    "@types/react": "19.0.8",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-node": "^10.9.2"
+  }
+}
