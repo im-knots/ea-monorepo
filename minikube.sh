@@ -4,6 +4,11 @@
 
 REPO_DIR=$(pwd)
 
+# Colors for terminal output
+BOLD_YELLOW="\e[1;33m"
+RESET="\e[0m"
+
+
 # Base directories containing the app folders
 BASE_DIRS=("ea-platform" "brand")
 
@@ -16,6 +21,7 @@ EA_NAMESPACE="ea-platform"
 BRAND_NAMESPACE="eru-labs-brand"
 
 build_and_push() {
+    echo -e "${BOLD_YELLOW}BUILDING LOCAL IMAGES${RESET}"
     local app_path=$1
     local app_name=$(basename "$app_path")
     
@@ -31,6 +37,7 @@ build_and_push() {
 }
 
 deploy_stack_terraform() {
+    echo -e "${BOLD_YELLOW}DEPLOYING APPS AND DEPENDENCIES TO MINIKUBE${RESET}"
     cd infra/environments/local
     terraform init
     terraform apply -auto-approve
@@ -38,7 +45,7 @@ deploy_stack_terraform() {
 }
 
 k8s_port_forward() {
-    echo "Starting port-forwarding..."
+    echo -e "${BOLD_YELLOW}STARTING PORTFORWARDS${RESET}"
 
     # Port-forward brand-frontend
     nohup kubectl port-forward deployment/brand-frontend-eru-labs-brand-frontend 8080:8080 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
@@ -82,12 +89,39 @@ k8s_port_forward() {
 }
 
 seed_test_data() {
-    echo "Seeding test data with smoke test scripts"
-    cd ea-platform/ea-agent-manager/tests
+    echo -e "${BOLD_YELLOW}SEEDING TEST DATA WITH SMOKE TEST SCRIPTS${RESET}"
+    cd ea-platform/ea-ainu-manager/tests
+    ./smoke/post-user.sh
+    cd ../../ea-agent-manager/tests
     ./smoke/post-agent.sh
     ./smoke/post-node.sh
-    cd ../../ea-ainu-manager/tests
-    ./smoke/post-user.sh
+    
+    cd $REPO_DIR
+}
+
+run_tests() {
+    echo "Running ea-ainu-manager smoke tests"
+    cd ea-platform/ea-ainu-manager/tests
+    ./smoke/get-all-users.sh
+    ./smoke/get-user.sh
+    ./smoke/post-user-device.sh
+    ./smoke/post-user-job.sh
+    ./smoke/delete-user-device.sh
+    ./smoke/delete-user-job.sh
+    ./smoke/put-user-compute-credits.sh
+
+    echo "Running ea-agent-manager smoke tests"
+    cd ../../ea-agent-manager/tests
+    ./smoke/get-all-agents.sh
+    ./smoke/get-all-nodes.sh
+    ./smoke/get-agent.sh
+    ./smoke/get-node.sh
+
+    echo "Running ea-job-api smoke tests"
+    cd ../../ea-job-api/tests
+    ./smoke/post-job.sh
+    
+    cd $REPO_DIR
 }
 
 cleanup() {
@@ -134,6 +168,7 @@ case "$1" in
         echo "Waiting some more time for port forwards to be set up before seeding data"
         sleep 5
         seed_test_data
+        run_tests
 
 
         echo "All apps processed and deployed successfully."

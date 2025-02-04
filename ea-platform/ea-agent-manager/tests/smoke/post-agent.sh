@@ -36,4 +36,4 @@ for file in "$PAYLOAD_DIR"/*create-agent*.json; do
         echo "No matching files found in $PAYLOAD_DIR."
     fi
 done
-echo "Done."
+echo ""
