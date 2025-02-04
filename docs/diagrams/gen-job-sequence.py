@@ -9,7 +9,7 @@ participant "Ea Frontend" as EA
 participant "Ea API Gateway" as GATEWAY
 participant "Job API" as JOB_API
 participant "Agent Manager API" as AGENT_API
-participant "Agent Operator" as AGENT_OPERATOR
+participant "Ainu Operator" as AINU_OPERATOR
 participant "Ainu Manager API" as AINU_API
 participant "Job Operator" as JOB_OPERATOR
 participant "Job Executor" as JOB_EXECUTOR
@@ -28,17 +28,17 @@ AGENT_API -> JOB_API: Agent Manager response with details for AgentID
 JOB_API -> ETCD: Create new AgentJob CR
 ETCD -> JOB_OPERATOR: Operator sees new AgentJob with blank status
 JOB_OPERATOR -> ETCD: Marks AgentJob as inactive
-ETCD -> AGENT_OPERATOR: Operator sees inactive AgentJob
-AGENT_OPERATOR -> AGENT_DB: Operator adds AgentJob to user's Job array as Inactive
+ETCD -> AINU_OPERATOR: Operator sees inactive AgentJob
+AINU_OPERATOR -> AINU_DB: Operator adds AgentJob to user's Job array as Inactive
 ETCD -> JOB_OPERATOR: Operator sees inactive AgentJob
 JOB_OPERATOR -> ETCD: Marks AgentJob as executing
 JOB_OPERATOR -> JOB_EXECUTOR : Execute AgentJob CR
-ETCD -> AGENT_OPERATOR: Operator sees executing AgentJob
-AGENT_OPERATOR -> AGENT_DB: Operator adds AgentJob to user's Job array as Active
+ETCD -> AINU_OPERATOR: Operator sees executing AgentJob
+AINU_OPERATOR -> AINU_DB: Operator adds AgentJob to user's Job array as Active
 ETCD -> JOB_OPERATOR: Operator sees executor job is complete
 JOB_OPERATOR -> ETCD: Marks AgentJob as complete
-ETCD -> AGENT_OPERATOR: Operator sees complete AgentJob
-AGENT_OPERATOR -> AGENT_DB: Operator adds AgentJob to user's Job array as Complete
+ETCD -> AINU_OPERATOR: Operator sees complete AgentJob
+AINU_OPERATOR -> AINU_DB: Operator adds AgentJob to user's Job array as Complete
 ETCD -> JOB_OPERATOR: Operator sees completed AgentJob
 JOB_OPERATOR -> ETCD: Cleans up completed AgentJob
 
