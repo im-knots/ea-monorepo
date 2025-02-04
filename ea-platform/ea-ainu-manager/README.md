@@ -56,7 +56,7 @@ The API operates with the following primary entities:
 ```json
 {
     "message": "User created successfully",
-    "user_id": "UUID",
+    "id": "UUID",
     "user": "John Doe",
     "create_time": "ISO 8601 datetime"
 }

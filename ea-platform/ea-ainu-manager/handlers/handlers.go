@@ -12,7 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // dbClient is the shared MongoDB client for handlers.
@@ -92,13 +91,13 @@ func HandleCreateUser(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues("/api/v1/users", "create_success", "success").Inc()
 	logger.Slog.Info("User inserted successfully", "ID", result.InsertedID)
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "user_id": result.InsertedID, "user": input.Name, "creat_time": input.CreatedTime})
+	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "id": input.ID, "user": input.Name, "creat_time": input.CreatedTime})
 }
 
 func HandleGetAllUsers(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues("/api/v1/users", "get_all_users", "request").Inc()
 
-	projection := bson.M{"name": 1, "_id": 1}
+	projection := bson.M{"name": 1, "id": 1, "_id": 0}
 	users, err := dbClient.FindRecordsWithProjection("ainuUsers", "users", bson.M{}, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues("/api/v1/users", "db_retrieval_error", "error").Inc()
@@ -147,18 +146,9 @@ func HandleAddComputeDevice(c *gin.Context) {
 	newDevice.ID = uuid.New().String()
 	newDevice.CreatedTime = time.Now()
 
-	// Convert user ID to MongoDB ObjectID
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
-		logger.Slog.Error("Invalid user ID format", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
 	// Update user record in MongoDB
 	update := bson.M{"$push": bson.M{"compute_devices": newDevice}}
-	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"_id": objectID}, update)
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"id": userID}, update)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
 		logger.Slog.Error("Failed to add compute device", "user_id", userID, "error", err)
@@ -236,15 +226,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Remove the device from compute_devices array
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		logger.Slog.Error("Invalid user ID format", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
-	filter := bson.M{"_id": objectID}
+	filter := bson.M{"id": userID}
 	update := bson.M{"$pull": bson.M{"compute_devices": bson.M{"id": deviceID}}}
 
 	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
@@ -293,18 +275,9 @@ func HandleAddJob(c *gin.Context) {
 	newJob.ID = uuid.New().String()
 	newJob.CreatedTime = time.Now()
 
-	// Convert user ID to MongoDB ObjectID
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
-		logger.Slog.Error("Invalid user ID format", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
 	// Update user record in MongoDB
 	update := bson.M{"$push": bson.M{"jobs": newJob}}
-	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"_id": objectID}, update)
+	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"id": userID}, update)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
 		logger.Slog.Error("Failed to add user Job", "user_id", userID, "error", err)
@@ -322,7 +295,11 @@ func HandleAddJob(c *gin.Context) {
 	// Success response
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
 	logger.Slog.Info("User Job added successfully", "user_id", userID, "device", newJob)
-	c.JSON(http.StatusOK, gin.H{"message": "User Job added successfully", "device": newJob})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User Job added successfully",
+		"device":  newJob,
+		"user_id": userID,
+	})
 }
 
 // HandleDeleteJob removes a job from a user's record
@@ -383,16 +360,8 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Convert userID to MongoDB ObjectID
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		logger.Slog.Error("Invalid user ID format", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
 	// Remove the job from the jobs array
-	filter := bson.M{"_id": objectID}
+	filter := bson.M{"id": userID}
 	update := bson.M{"$pull": bson.M{"jobs": bson.M{"id": jobID}}}
 
 	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
@@ -447,17 +416,8 @@ func HandleUpdateComputeCredits(c *gin.Context) {
 		return
 	}
 
-	// Convert user ID to MongoDB ObjectID
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		logger.Slog.Error("Invalid user ID format", "error", err)
-		metrics.StepCounter.WithLabelValues(path, "invalid_id", "error").Inc()
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
-		return
-	}
-
 	// Update user record with the new compute credits
-	filter := bson.M{"_id": objectID}
+	filter := bson.M{"id": userID}
 	update := bson.M{"$set": bson.M{"compute_credits": requestBody.ComputeCredits}}
 
 	result, err := dbClient.UpdateRecord("ainuUsers", "users", filter, update)
