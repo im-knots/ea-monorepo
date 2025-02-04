@@ -24,12 +24,13 @@ import (
 
 // Define structs to store agent definition after lookup
 type Agent struct {
-	ID          string `json:"_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	User        string `json:"user"`
-	Nodes       []Node `json:"nodes"`
-	Edges       []Edge `json:"edges"`
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Creator     string        `json:"creator"`
+	Description string        `json:"description"`
+	Nodes       []Node        `json:"nodes"`
+	Edges       []Edge        `json:"edges"`
+	Metadata    AgentMetadata `json:"metadata"`
 }
 
 type Node struct {
@@ -44,18 +45,14 @@ type Edge struct {
 }
 
 type CreateJobRequest struct {
-	AgentID string `json:"agentID"`
+	AgentID string `json:"agent_id"`
+	UserID  string `json:"user_id"`
 }
 
-// generateRandomHash creates a random 6-character hexadecimal string
-func generateRandomHash() string {
-	b := make([]byte, 3) // 3 bytes = 6 hex characters
-	_, err := rand.Read(b)
-	if err != nil {
-		logger.Slog.Error("Failed to generate random hash", "error", err)
-		return "000000" // Fallback in case of error
-	}
-	return hex.EncodeToString(b)
+// Metadata holds timestamps for Agents.
+type AgentMetadata struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // HandleCreateJob handles job creation requests.
@@ -154,7 +151,8 @@ func HandleCreateJob(c *gin.Context) {
 			"spec": map[string]interface{}{
 				"agentID": agent.ID,
 				"name":    agent.Name,
-				"user":    agent.User,
+				"user":    req.UserID,
+				"creator": agent.Creator,
 				"nodes":   agent.Nodes,
 				"edges":   agent.Edges,
 				"metadata": map[string]interface{}{
@@ -177,5 +175,17 @@ func HandleCreateJob(c *gin.Context) {
 	}
 
 	logger.Slog.Info("Successfully created AgentJob CR", "jobName", jobName)
-	c.JSON(http.StatusAccepted, gin.H{"status": "job created", "jobName": jobName})
+	c.JSON(http.StatusAccepted, gin.H{"status": "job created", "job_name": jobName, "user_id": req.UserID})
+}
+
+// Helper Functions
+// generateRandomHash creates a random 6-character hexadecimal string
+func generateRandomHash() string {
+	b := make([]byte, 3) // 3 bytes = 6 hex characters
+	_, err := rand.Read(b)
+	if err != nil {
+		logger.Slog.Error("Failed to generate random hash", "error", err)
+		return "000000" // Fallback in case of error
+	}
+	return hex.EncodeToString(b)
 }

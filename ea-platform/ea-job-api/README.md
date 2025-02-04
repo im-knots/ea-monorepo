@@ -22,7 +22,8 @@ Submits a new job request, which creates an `AgentJob` CR in Kubernetes.
 **Request Body:**
 ```json
 {
-  "agentID": "<AGENT_ID>"
+  "agent_id": "<AGENT_ID>",
+  "user_id": "<USER_ID>"
 }
 ```
 
@@ -30,7 +31,8 @@ Submits a new job request, which creates an `AgentJob` CR in Kubernetes.
 ```json
 {
   "status": "job created",
-  "jobName": "agentjob-<AGENT_ID>-<TIMESTAMP>"
+  "job_name": "agentjob-<AGENT_ID>-<TIMESTAMP>",
+  "user_id": "<USER_ID>"
 }
 ```
 
@@ -38,14 +40,18 @@ Submits a new job request, which creates an `AgentJob` CR in Kubernetes.
 ```sh
 curl -X POST http://localhost:8084/api/v1/jobs \
      -H "Content-Type: application/json" \
-     --data '{ "agentID": "679d1682e5fdae79d9d2fc02" }'
+     --data '{
+                "agent_id": "ecc21c86-24ee-4b36-803e-c63616325132",
+                "user_id": "e40af905-a6bf-4ef9-bb89-30c6d254afd9"
+      }'
 ```
 
 **Response Example:**
 ```json
 {
-  "status": "job created",
-  "jobName": "agentjob-679d1682e5fdae79d9d2fc02-1738348167"
+  "jobName":"agentjob-ecc21c86-24ee-4b36-803e-c63616325132-8c8db6",
+  "status":"job created",
+  "user":"e40af905-a6bf-4ef9-bb89-30c6d254afd9"
 }
 ```
 
