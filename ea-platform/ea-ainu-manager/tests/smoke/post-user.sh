@@ -12,6 +12,7 @@ for file in "$PAYLOAD_DIR"/*create-user*.json; do
         curl -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             --data-binary @"$file"
+        echo ""
     else
         echo "No matching files found in $PAYLOAD_DIR."
     fi

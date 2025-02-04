@@ -7,12 +7,12 @@ API_ENDPOINT="http://localhost:8085/api/v1/users"
 echo "Fetching all users..."
 ALL_USERS=$(curl -s "$API_ENDPOINT")
 
-# Extract the first `_id` from the response
-FIRST_USER_ID=$(echo "$ALL_USERS" | jq -r '.[0]._id')
+# Extract the first `id` from the response
+FIRST_USER_ID=$(echo "$ALL_USERS" | jq -r '.[0].id')
 
 # Check if an ID was found
 if [ -z "$FIRST_USER_ID" ] || [ "$FIRST_USER_ID" == "null" ]; then
-  echo "Error: No users found or unable to extract _id"
+  echo "Error: No users found or unable to extract id"
   exit 1
 fi
 
@@ -30,6 +30,7 @@ for file in "$PAYLOAD_DIR"/*add-job*.json; do
         curl -X POST "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             --data-binary @"$file"
+        echo ""
     else
         echo "No matching files found in $PAYLOAD_DIR."
     fi
