@@ -10,6 +10,7 @@ import (
 	"ea-agent-manager/mongo"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -51,6 +52,8 @@ type NodeDefinitionMetadata struct {
 	Description string                 `json:"description,omitempty"`
 	Tags        []string               `json:"tags,omitempty"`
 	Additional  map[string]interface{} `json:"additional,omitempty"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
 }
 
 // NodeDefinition represents the "template" for a node.
@@ -58,37 +61,17 @@ type NodeDefinition struct {
 	ID         string                 `json:"id"`
 	Type       string                 `json:"type"`
 	Name       string                 `json:"name,omitempty"`
+	Creator    string                 `json:"creator,omitempty"`
 	API        *NodeAPI               `json:"api,omitempty"`
 	Parameters []NodeParameter        `json:"parameters,omitempty"`
 	Outputs    []NodeParameter        `json:"outputs,omitempty"`
-	Metadata   NodeDefinitionMetadata `json:"metadata,omitempty"`
+	Metadata   NodeDefinitionMetadata `json:"metadata"`
 }
 
 // NodeInstance represents a reference to a node definition.
 type NodeInstance struct {
-	ID            string                 `json:"id"`
-	DefinitionRef string                 `json:"definition_ref"`
-	Parameters    map[string]interface{} `json:"parameters,omitempty"`
-}
-
-// MultiString allows a field to be either a single string or an array of strings.
-type MultiString []string
-
-// UnmarshalJSON for MultiString allows handling single strings as arrays.
-func (m *MultiString) UnmarshalJSON(data []byte) error {
-	var single string
-	if err := json.Unmarshal(data, &single); err == nil {
-		*m = []string{single}
-		return nil
-	}
-
-	var multiple []string
-	if err := json.Unmarshal(data, &multiple); err == nil {
-		*m = multiple
-		return nil
-	}
-
-	return json.Unmarshal(data, m)
+	Type       string                 `json:"type"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
 }
 
 // Edge represents a connection between nodes in an agent workflow.
@@ -105,8 +88,9 @@ type Metadata struct {
 
 // Agent represents an AI workflow with interconnected nodes.
 type Agent struct {
+	ID          string         `json:"id"`
 	Name        string         `json:"name"`
-	User        string         `json:"user"`
+	Creator     string         `json:"creator"`
 	Description string         `json:"description"`
 	Nodes       []NodeInstance `json:"nodes"`
 	Edges       []Edge         `json:"edges"`
@@ -132,26 +116,29 @@ func HandleCreateNodeDef(c *gin.Context) {
 		return
 	}
 
+	input.ID = uuid.New().String()
+	input.Metadata = NodeDefinitionMetadata{CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
+
 	metrics.StepCounter.WithLabelValues(path, "valid_request_body", "success").Inc()
 	result, err := dbClient.InsertRecord("nodeDefs", "nodes", input)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert node definition", "error", err)
+		logger.Slog.Error("Failed to insert node definition", "mongo_id", result.InsertedID, "input_id", input.ID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert node definition"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
-	logger.Slog.Info("Node definition inserted successfully", "ID", result.InsertedID)
-	c.JSON(http.StatusCreated, gin.H{"message": "Node definition created", "node_id": result.InsertedID})
+	logger.Slog.Info("Node definition inserted successfully", "node_id", input.ID, "creator", input.Creator)
+	c.JSON(http.StatusCreated, gin.H{"message": "Node definition created", "node_id": input.ID, "creator": input.Creator})
 }
 
-// HandleGetAllNodeDefs retrieves all node definitions (only `id` and `name`).
+// HandleGetAllNodeDefs retrieves all node definitions.
 func HandleGetAllNodeDefs(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	projection := bson.M{"id": 1, "name": 1, "_id": 1}
+	projection := bson.M{"id": 1, "type": 1, "creator": 1, "_id": 0}
 	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", bson.M{}, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -218,18 +205,19 @@ func HandleCreateAgent(c *gin.Context) {
 		return
 	}
 
+	input.ID = uuid.New().String()
 	input.Metadata = Metadata{CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
 	result, err := dbClient.InsertRecord("userAgents", "agents", input)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert agent", "error", err)
+		logger.Slog.Error("Failed to insert agent", "mongo_id", result.InsertedID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert agent"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "create_success", "success").Inc()
-	logger.Slog.Info("Agent inserted successfully", "ID", result.InsertedID)
-	c.JSON(http.StatusCreated, gin.H{"message": "Agent created", "agent_id": result.InsertedID})
+	logger.Slog.Info("Agent inserted successfully", "ID", input.ID, "creator", input.Creator)
+	c.JSON(http.StatusCreated, gin.H{"message": "Agent created", "agent_id": input.ID, "creator": input.Creator})
 }
 
 // HandleGetAllAgents retrieves all agents with `user`, `_id`, and `name` fields.
@@ -237,7 +225,7 @@ func HandleGetAllAgents(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	projection := bson.M{"user": 1, "_id": 1, "name": 1}
+	projection := bson.M{"creator": 1, "id": 1, "name": 1, "_id": 0}
 	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", bson.M{}, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -283,4 +271,25 @@ func HandleGetAgent(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
 	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID)
 	c.JSON(http.StatusOK, agent)
+}
+
+// HELPER FUNCTIONS
+// MultiString allows a field to be either a single string or an array of strings.
+type MultiString []string
+
+// UnmarshalJSON for MultiString allows handling single strings as arrays.
+func (m *MultiString) UnmarshalJSON(data []byte) error {
+	var single string
+	if err := json.Unmarshal(data, &single); err == nil {
+		*m = []string{single}
+		return nil
+	}
+
+	var multiple []string
+	if err := json.Unmarshal(data, &multiple); err == nil {
+		*m = multiple
+		return nil
+	}
+
+	return json.Unmarshal(data, m)
 }

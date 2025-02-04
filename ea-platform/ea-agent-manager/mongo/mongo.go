@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -65,16 +64,15 @@ func (m *MongoClient) FindAllRecords(database, collection string) ([]map[string]
 	return results, nil
 }
 
-// FindRecordByID retrieves a single record by ID from a collection.
+// FindRecordByID retrieves a single record by UUID ID from a collection.
 func (m *MongoClient) FindRecordByID(database, collection, id string) (map[string]interface{}, error) {
 	coll := m.client.Database(database).Collection(collection)
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
+
+	filter := bson.M{"id": id}
+	projection := options.FindOne().SetProjection(bson.M{"_id": 0})
 
 	var result map[string]interface{}
-	if err = coll.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&result); err != nil {
+	if err := coll.FindOne(context.TODO(), filter, projection).Decode(&result); err != nil {
 		return nil, err
 	}
 	return result, nil

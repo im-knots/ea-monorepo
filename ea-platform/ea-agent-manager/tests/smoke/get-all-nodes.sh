@@ -7,4 +7,4 @@ PAYLOAD_DIR="smoke/payloads"
 API_ENDPOINT="http://localhost:8083/api/v1/nodes"
 
 curl "$API_ENDPOINT"
-
+echo ""
