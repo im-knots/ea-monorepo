@@ -126,10 +126,10 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 
 | Method | Path                     | Description                                |
 |--------|--------------------------|--------------------------------------------|
-| **GET**   | `/api/v1/nodes`          | Retrieve all nodes with their `id` and `name`. |
+| **GET**   | `/api/v1/nodes`          | Retrieve all nodes with their `id` |
 | **GET**   | `/api/v1/nodes/{id}`     | Retrieve a specific node by its `id`.      |
 | **POST**  | `/api/v1/nodes`          | Create a new node definition.             |
-| **GET**   | `/api/v1/agents`         | Retrieve all agents with their `id`, `_id`, and `name`. |
+| **GET**   | `/api/v1/agents`         | Retrieve all agents with their `id` |
 | **GET**   | `/api/v1/agents/{id}`    | Retrieve a specific agent by its `id`.    |
 | **POST**  | `/api/v1/agents`         | Create a new agent.                       |
 
@@ -142,13 +142,16 @@ Retrieve a list of all nodes.
 ```json
 [
     {
-        "id": "worker.inference.llm.ollama",
-        "name": "Ollama Worker"
+        "creator":"marco@erulabs.ai",
+        "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+        "type":"worker.inference.llm.ollama"
     },
     {
-        "id": "worker.inference.llm.openai",
-        "name": "OpenAI Worker"
-    }
+        "creator":"someuser@example.com",
+        "id":"abc12312-aaaa-bbbb-abcd-1234567890123",
+        "type":"worker.inference.llm.openai"
+    },
+
 ]
 ```
 
@@ -158,29 +161,56 @@ Retrieve a specific node definition by its `id`.
 **Response Example:**
 ```json
 {
-    "id": "worker.inference.llm.ollama",
-    "name": "Ollama Worker",
-    "type": "worker.inference.llm",
-    "api": {
-        "base_url": "http://example.com/api",
-        "endpoint": "/inference",
-        "method": "POST",
-        "headers": {
-            "Authorization": "Bearer token"
-        }
+    "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+    "name":"Ollama LLM Inference",
+    "creator":"marco@erulabs.ai",
+    "type":"worker.inference.llm.ollama",
+    "api":{
+        "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
+        "endpoint":"/api/generate",
+        "headers":{
+            "Content-Type":"application/json"
+        },
+        "method":"POST"
     },
-    "parameters": [
+    "metadata":{
+        "additional":null,
+        "createdat":"2025-02-04T17:15:57.804Z",
+        "description":"",
+        "tags":null,
+        "updatedat":"2025-02-04T17:15:57.804Z"
+    },
+    "parameters":[
         {
-            "key": "temperature",
-            "type": "float",
-            "description": "Sampling temperature for inference",
-            "default": 0.7
+            "default":"llama3.2",
+            "description":"Name of the model to use, e.g. 'llama2-7b'.",
+            "enum":["llama3.2","deepseek-r1:8b"],
+            "key":"model",
+            "type":"string"},
+        {
+            "default":"Hello world",
+            "description":"User prompt to be sent to the model.",
+            "enum":null,
+            "key":"prompt",
+            "type":"text"
+        },
+        {
+            "default":0.7,
+            "description":"Controls randomness in generation (0.0 - 1.0).",
+            "enum":null,
+            "key":"temperature",
+            "type":"number"
         }
     ],
-    "metadata": {
-        "description": "Node definition for LLM inference",
-        "tags": ["inference", "llm"]
-    }
+    "outputs":[
+        {
+            "default":"someoutput",
+            "description":"the result of the prompt",
+            "enum":["some","promptoutput"],
+            "key":"textoutput",
+            "type":"string"
+        }
+    ]
 }
 ```
 
@@ -190,37 +220,64 @@ Create a new node definition.
 **Request Body Example:**
 ```json
 {
-    "id": "worker.inference.llm.newmodel",
-    "name": "New LLM Worker",
-    "type": "worker.inference.llm",
-    "api": {
-        "base_url": "http://example.com/api",
-        "endpoint": "/newmodel",
-        "method": "POST",
-        "headers": {
-            "Authorization": "Bearer newtoken"
-        }
-    },
-    "parameters": [
-        {
-            "key": "max_tokens",
-            "type": "int",
-            "description": "Maximum number of tokens to generate",
-            "default": 256
-        }
-    ],
-    "metadata": {
-        "description": "Node definition for a new LLM model",
-        "tags": ["inference", "llm"]
+  "type": "worker.inference.llm.ollama",
+  "name": "Ollama LLM Inference",
+  "creator": "marco@erulabs.ai",
+  "api": {
+    "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
+    "endpoint": "/api/generate",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
     }
+  },
+  "parameters": [
+    {
+      "key": "model",
+      "type": "string",
+      "description": "Name of the model to use, e.g. 'llama2-7b'.",
+      "enum": ["llama3.2", "deepseek-r1:8b"],
+      "default": "llama3.2"
+    },
+    {
+      "key": "prompt",
+      "type": "string",
+      "description": "User prompt to be sent to the model.",
+      "default": "Hello world"
+    },
+    {
+      "key": "temperature",
+      "type": "number",
+      "description": "Controls randomness in generation (0.0 - 1.0).",
+      "default": 0.7
+    }
+  ],
+  "outputs": [
+    {
+      "key": "textoutput",
+      "type": "string",
+      "description": "the result of the prompt",
+      "enum": ["some", "promptoutput"],
+      "default": "someoutput"
+    }
+  ],
+  "metadata": {
+    "description": "Makes an inference call to an Ollama instance for text generation.",
+    "tags": ["worker", "llm", "ollama", "inference"],
+    "additional": {
+      "documentation_url": "https://github.com/ollama/ollama/blob/main/docs/api.md",
+      "timeout": 30
+    }
+  }
 }
 ```
 
 **Response Example:**
 ```json
 {
-    "message": "Node definition created successfully",
-    "node_id": "worker.inference.llm.newmodel"
+    "node_id":"9fb7ef94-9aba-4c8c-b085-f17b008ab9ed",
+    "creator":"marco@erulabs.ai",
+    "message":"Node definition created"  
 }
 ```
 
@@ -233,14 +290,14 @@ Retrieve a list of all agents.
 ```json
 [
     {
-        "_id": "64f0a0f7a2b1c8e3f29e0b1a",
-        "id": "agent1",
-        "name": "Agent One"
+        "creator": "marco@erulabs.ai",
+        "id": "34ef1000-d6d0-44a6-ac37-3937d42ce0e2",
+        "name": "My Sample Ollama Agent"
     },
     {
-        "_id": "64f0a0f7a2b1c8e3f29e0b1b",
-        "id": "agent2",
-        "name": "Agent Two"
+        "creator": "someuser@example.com",
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "agent 2"
     }
 ]
 ```
@@ -251,29 +308,29 @@ Retrieve a specific agent by its `id`.
 **Response Example:**
 ```json
 {
-    "_id": "64f0a0f7a2b1c8e3f29e0b1a",
-    "id": "agent1",
-    "name": "Agent One",
-    "description": "First test agent",
-    "user": "user1",
-    "nodes": [
+    "id":"25b218a7-b260-4212-9b3f-62b9ecfd43f6",
+    "name":"My Sample Ollama Agent",
+    "creator":"marco@erulabs.ai",
+    "description":"An example agent using the Ollama LLM definition.",  
+    "nodes":[
         {
-            "id": "node1",
-            "definition_ref": "worker.inference.llm.ollama",
-            "parameters": {
-                "temperature": 0.7
+            "type":"worker.inference.llm.ollama",
+            "parameters":{
+                "model":"llama2-13b",
+                "prompt":"Tell me a short story about a flying cat."
             }
-        }
-    ],
-    "edges": [
+        },
         {
-            "from": ["node1"],
-            "to": ["node2"]
+            "type":"destination.internal.text",
+            "parameters":{}
         }
     ],
-    "metadata": {
-        "created_at": "2025-01-28T00:00:00Z",
-        "updated_at": "2025-01-28T00:00:00Z"
+    "edges":[
+        {"from":["ollama"],"to":["textbox"]}
+    ],
+    "metadata":{
+        "createdat":"2025-02-04T17:56:27.169Z",
+        "updatedat":"2025-02-04T17:56:27.169Z"
     }
 }
 ```
@@ -284,32 +341,35 @@ Create a new agent.
 **Request Body Example:**
 ```json
 {
-    "id": "agent3",
-    "name": "Agent Three",
-    "description": "Third test agent",
-    "user": "user3",
-    "nodes": [
-        {
-            "id": "node1",
-            "definition_ref": "worker.inference.llm.openai",
-            "parameters": {
-                "temperature": 0.9
-            }
-        }
-    ],
-    "edges": [
-        {
-            "from": ["node1"],
-            "to": ["node2"]
-        }
-    ]
+  "name": "My Sample Ollama Agent",
+  "creator": "marco@erulabs.ai",
+  "description": "An example agent using the Ollama LLM definition.",
+  "nodes": [
+    {
+      "type": "worker.inference.llm.ollama",
+      "alias": "ollama",
+      "parameters": {
+        "model": "llama2-13b",
+        "prompt": "Tell me a short story about a flying cat."
+      }
+    },
+    {
+      "type": "destination.internal.text",
+      "alias": "textbox",
+      "parameters": {}
+    }
+  ],
+  "edges": [
+    { "from": ["ollama"],"to": ["textbox"] }
+  ]
 }
 ```
 
 **Response Example:**
 ```json
 {
-    "message": "Agent created successfully",
-    "agent_id": "agent3"
+    "agent_id":"cac871c8-5f72-4e6c-9bc8-9eb006597d31",
+    "creator":"marco@erulabs.ai",
+    "message":"Agent created"
 }
 ```

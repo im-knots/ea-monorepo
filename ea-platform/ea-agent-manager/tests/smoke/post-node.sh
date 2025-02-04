@@ -16,3 +16,4 @@ for file in "$PAYLOAD_DIR"/*create-node-def*.json; do
         echo "No matching files found in $PAYLOAD_DIR."
     fi
 done
+echo ""
