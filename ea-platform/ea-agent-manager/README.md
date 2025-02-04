@@ -222,7 +222,7 @@ Create a new node definition.
 {
   "type": "worker.inference.llm.ollama",
   "name": "Ollama LLM Inference",
-  "creator": "marco@erulabs.ai",
+  "creator": "<UUID OF CREATOR USER FROM EA-AINU-MANAGER>",
   "api": {
     "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
     "endpoint": "/api/generate",

@@ -4,7 +4,6 @@
 API_ENDPOINT="http://localhost:8083/api/v1/nodes"
 
 # Get all nodes
-echo "Fetching all nodes..."
 ALL_NODES=$(curl -s "$API_ENDPOINT")
 
 # Extract the first `_id` from the response

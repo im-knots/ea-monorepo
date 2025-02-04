@@ -4,7 +4,6 @@
 API_ENDPOINT="http://localhost:8085/api/v1/users"
 
 # Get all users
-echo "Fetching all users..."
 ALL_USERS=$(curl -s "$API_ENDPOINT")
 
 # Extract the first `id` from the response
@@ -30,6 +29,7 @@ for file in "$PAYLOAD_DIR"/*update-compute-credits*.json; do
         curl -X PUT "$API_ENDPOINT" \
             -H "Content-Type: application/json" \
             --data-binary @"$file"
+            echo ""
     else
         echo "No matching files found in $PAYLOAD_DIR."
     fi

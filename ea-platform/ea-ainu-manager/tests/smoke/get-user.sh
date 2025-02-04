@@ -4,7 +4,6 @@
 API_ENDPOINT="http://localhost:8085/api/v1/users"
 
 # Get all users
-echo "Fetching all users..."
 ALL_USERS=$(curl -s "$API_ENDPOINT")
 
 # Extract the first `_id` from the response
