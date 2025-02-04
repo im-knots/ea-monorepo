@@ -342,7 +342,7 @@ Create a new agent.
 ```json
 {
   "name": "My Sample Ollama Agent",
-  "creator": "marco@erulabs.ai",
+  "creator": "<UUID OF CREATOR USER FROM EA-AINU-MANAGER>",
   "description": "An example agent using the Ollama LLM definition.",
   "nodes": [
     {

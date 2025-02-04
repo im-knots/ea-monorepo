@@ -3,17 +3,37 @@
 # Directory containing the payload files
 PAYLOAD_DIR="smoke/payloads"
 
-# API Endpoint
-API_ENDPOINT="http://localhost:8083/api/v1/agents"
+# API Endpoints
+AGENT_ENDPOINT="http://localhost:8083/api/v1/agents"
+AINU_URL="http://localhost:8085/api/v1/users"
+
+# Fetch users from AINU manager
+AINU_RESPONSE=$(curl -s "$AINU_URL")
+
+# Extract the first user ID
+FIRST_USER_ID=$(echo "$AINU_RESPONSE" | jq -r '.[0].id')
+
+if [[ -z "$FIRST_USER_ID" || "$FIRST_USER_ID" == "null" ]]; then
+    echo "Error: Unable to fetch a valid creator ID."
+    exit 1
+fi
 
 # Iterate through matching files in the payload directory
 for file in "$PAYLOAD_DIR"/*create-agent*.json; do
     if [[ -f "$file" ]]; then
-        curl -X POST "$API_ENDPOINT" \
+        echo "Processing file: $file"
+
+        # Inject creatorID into the JSON payload
+        MODIFIED_PAYLOAD=$(jq --arg creatorID "$FIRST_USER_ID" '.creator = $creatorID' "$file")
+
+        echo "Posting payload with creatorID: $FIRST_USER_ID"
+
+        # Send the modified payload to the API
+        curl -X POST "$AGENT_ENDPOINT" \
             -H "Content-Type: application/json" \
-            --data-binary @"$file"
+            --data "$MODIFIED_PAYLOAD"
     else
         echo "No matching files found in $PAYLOAD_DIR."
     fi
 done
-echo ""
+echo "Done."
