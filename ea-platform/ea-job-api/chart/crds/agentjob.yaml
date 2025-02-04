@@ -31,6 +31,9 @@ spec:
                 user:
                   type: string
                   description: "User who initiated the job"
+                creator:
+                  type: string
+                  description: "User who created the agent"
                 nodes:
                   type: array
                   description: "List of nodes defining the workflow"

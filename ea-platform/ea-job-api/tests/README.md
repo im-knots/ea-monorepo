@@ -14,5 +14,5 @@ Here you will find some tests for the Ea Job Engine API.
 
 To generate n number of jobs with the same AgentID run the above commands with a for loop in the shell. ex 100
 ```bash
-for i in {1..100}; do ./smoke/create-job.sh; done
+for i in {1..100}; do ./smoke/post-job.sh; done
 ```
