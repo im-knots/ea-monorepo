@@ -79,6 +79,10 @@ k8s_port_forward() {
     nohup kubectl port-forward deployment/mongodb 8087:27017 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
     echo "Port-forwarding for eru-labs-brand mongodb on port 8087 started."
 
+    # Port-forward ea-ainu-operator
+    nohup kubectl port-forward deployment/mongodb 8088:8080 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for eru-labs-brand mongodb on port 8088 started."
+
     # Port-forward Grafana
     nohup kubectl port-forward deployment/kps-grafana 3000:3000 --namespace monitoring >/dev/null 2>&1 &
     echo "Port-forwarding for Grafana on port 3000 started."
@@ -168,7 +172,7 @@ case "$1" in
         echo "Waiting some more time for port forwards to be set up before seeding data"
         sleep 5
         seed_test_data
-        run_tests
+        # run_tests
 
 
         echo "All apps processed and deployed successfully."

@@ -19,19 +19,6 @@
         "last_active": "2024-12-29T10:00:00Z"
       }
     ],
-    "jobs": [
-      {
-        "job_name": "Travel Planner Agent",
-        "job_type": "Agent",
-        "status": "Active",
-        "last_active": "2024-12-29T10:00:00Z"
-      },
-      {
-        "job_name": "Stock Market Automation",
-        "job_type": "Agent",
-        "status": "Active",
-        "last_active": "2024-12-29T10:00:00Z"
-      }
-    ]
+    "jobs": []
   }
   

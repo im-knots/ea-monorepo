@@ -1,0 +1,82 @@
+image:
+  repository: localhost:5000/ea-ainu-operator
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+config:
+  GIN_MODE: release
+  PORT: 8080
+
+secrets:
+  DB_URL: mongodb://mongodb.ea-platform.svc.cluster.local
+
+resources: 
+  limits:
+    memory: 512Mi
+  requests:
+    cpu: 50m
+    memory: 512Mi
+
+replicaCount: 1 # You can increase this but its not optimized yet, may impact kube API performance
+
+serviceMonitor:
+  enabled: true
+  interval: 30s
+  scrapeTimeout: 30s
+
+pdb:
+  maxUnavailable: "50%"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+serviceAccount:
+  create: true
+  name: ea-ainu-operator
+  automount: true
+  annotations: {}
+
+rbac:
+  enabled: true
+
+podAnnotations: {}
+
+podLabels: {}
+
+service:
+  type: ClusterIP
+  port: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: brand-backend.erulabs.ai
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+
+livenessProbe:
+  httpGet:
+    path: /api/v1/metrics
+    port: http
+readinessProbe:
+  httpGet:
+    path: /api/v1/metrics
+    port: http
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

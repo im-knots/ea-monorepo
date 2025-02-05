@@ -19,18 +19,5 @@
             "last_active": "2025-01-26T14:15:00Z"
         }
     ],
-    "jobs": [
-        {
-            "job_name": "Medical Image Analysis",
-            "job_type": "Agent",
-            "status": "Running",
-            "last_active": "2025-01-26T18:00:00Z"
-        },
-        {
-            "job_name": "Natural Language Processing",
-            "job_type": "Training",
-            "status": "Queued",
-            "last_active": "2025-01-26T12:30:00Z"
-        }
-    ]
+    "jobs": []
 }

@@ -43,6 +43,18 @@ main {
   background-color: red;
 }
 
+.status-indicator.new {
+  background-color: gray;
+}
+
+.status-indicator.pending {
+  background-color: blue;
+}
+
+.status-indicator.complete {
+  background-color: green;
+}
+
 th {
   cursor: pointer;
 }

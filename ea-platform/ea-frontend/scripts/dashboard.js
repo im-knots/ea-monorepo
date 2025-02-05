@@ -1,9 +1,11 @@
 // Global Variables
 let devices = [];
 let jobs = [];
+let agents = [];
 
-// API Base URL
-const API_BASE_URL = "http://localhost:8085/api/v1";
+// API URLs
+const AINU_MANAGER_URL = "http://localhost:8085/api/v1";
+const AGENT_MANAGER_URL = "http://localhost:8083/api/v1";
 
 // Load Sidebar
 fetch('../html/sidebar.html')
@@ -27,7 +29,7 @@ fetch('../html/sidebar.html')
 const fetchFirstUserId = async () => {
     try {
         console.log("Fetching users...");
-        const response = await fetch(`${API_BASE_URL}/users`);
+        const response = await fetch(`${AINU_MANAGER_URL}/users`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -41,19 +43,53 @@ const fetchFirstUserId = async () => {
             return null;
         }
 
-        return users[0]._id;
+        return users[0].id;
     } catch (error) {
         console.error("Error fetching users:", error);
         return null;
     }
 };
 
+const fetchAgents = async (userId) => {
+    if (!userId) return [];
+  
+    try {
+        console.log(`Fetching agents for user: ${userId}`);
+        const response = await fetch(`${AGENT_MANAGER_URL}/agents`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+  
+        const userData = await response.json();
+        console.log("Full user data:", userData);  // Debugging log
+  
+        return userData.filter(agent => agent.creator === userId) || [];  // Filter agents by userId
+    } catch (error) {
+        console.error("Error fetching agents:", error);
+        return [];
+    }
+};
+
+const fetchAgentName = async (agentId) => {
+    if (!agentId) return "Unknown";
+
+    try {
+        const response = await fetch(`${AGENT_MANAGER_URL}/agents/${agentId}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        const agentData = await response.json();
+        return agentData.name || "Unknown"; // Return the agent's name
+    } catch (error) {
+        console.error(`Error fetching agent with ID ${agentId}:`, error);
+        return "Unknown";
+    }
+};
+
+
 const fetchDevices = async (userId) => {
   if (!userId) return [];
 
   try {
       console.log(`Fetching devices for user: ${userId}`);
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+      const response = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const userData = await response.json();
@@ -71,7 +107,7 @@ const fetchJobs = async (userId) => {
 
   try {
       console.log(`Fetching jobs for user: ${userId}`);
-      const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+      const response = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
       if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const userData = await response.json();
@@ -90,7 +126,7 @@ const fetchStatsAndGraphData = async (userId) => {
 
     try {
         console.log(`Fetching stats for user: ${userId}`);
-        const response = await fetch(`${API_BASE_URL}/users/${userId}`);
+        const response = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -115,6 +151,30 @@ const fetchStatsAndGraphData = async (userId) => {
     } catch (error) {
         console.error("Error fetching stats and graph data:", error);
         return {};
+    }
+};
+
+const deleteJob = async (jobId, userId) => {
+    if (!jobId || !userId) {
+        console.error("Missing jobId or userId for deletion");
+        return;
+    }
+
+    try {
+        console.log(`Deleting job with ID: ${jobId}`);
+        const response = await fetch(`${AINU_MANAGER_URL}/users/${userId}/jobs/${jobId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        console.log(`Job ${jobId} deleted successfully`);
+        
+        // Refresh job table after deletion
+        jobs = jobs.filter(job => job.id !== jobId);
+        populateJobsTable();
+    } catch (error) {
+        console.error(`Error deleting job ${jobId}:`, error);
     }
 };
 
@@ -214,36 +274,86 @@ const populateDevicesTable = () => {
   }
 };
 
-const populateJobsTable = () => {
-  const jobsTableBody = document.getElementById('jobs-table-body');
-  jobsTableBody.innerHTML = '';
 
-  if (jobs.length > 0) {
-      jobs.forEach((job) => {
-          const statusClass = job.status === "Active" ? "active" :
-                              job.status === "In Progress" ? "inprogress" :
-                              job.status === "Offline" ? "offline" : "error";
+const populateJobsTable = async (userId) => {
+    const jobsTableBody = document.getElementById('jobs-table-body');
+    jobsTableBody.innerHTML = '';
 
-          const row = `
-              <tr>
-                  <td>${job.job_name || "Unknown"}</td>
-                  <td>${job.job_type || "Unknown"}</td>
-                  <td>
-                      <span class="status-indicator ${statusClass}"></span>${job.status || "Unknown"}
-                  </td>
-                  <td>${job.last_active || "N/A"}</td>
-              </tr>
-          `;
-          jobsTableBody.innerHTML += row;
-      });
-  } else {
-      jobsTableBody.innerHTML = `
-          <tr>
-              <td colspan="5" class="text-center">No compute jobs</td>
-          </tr>
-      `;
-  }
+    if (jobs.length > 0) {
+        for (const job of jobs) {
+            const statusClass = job.status === "New" ? "new" :
+                                job.status === "Pending" ? "pending" :
+                                job.status === "Error"  ? "error" :
+                                job.status === "Complete" ? "complete" : "error";
+
+            // Fetch the agent name asynchronously
+            const agentName = await fetchAgentName(job.agent_id);
+
+            // Determine if delete button should be enabled
+            const isDeletable = job.status === "Complete" ? "" : "text-muted disabled";
+            
+            const row = `
+                <tr>
+                    <td>${job.job_name || "Unknown"}</td>
+                    <td>${job.job_type || "Unknown"}</td>
+                    <td>${job.agent_id || "Unknown"}</td>
+                    <td>${agentName || "Unknown"}</td> 
+                    <td><span class="status-indicator ${statusClass}"></span>${job.status || "Unknown"}</td>
+                    <td>${job.last_active || "N/A"}</td>
+                    <td>
+                        <i class="bi bi-trash ${isDeletable}" 
+                           role="button" 
+                           data-job-id="${job.id}" 
+                           title="Delete Job"></i>
+                    </td>
+                </tr>
+            `;
+            jobsTableBody.innerHTML += row;
+        }
+
+        // Attach click events after rendering table rows
+        document.querySelectorAll(".bi-trash").forEach(icon => {
+            if (!icon.classList.contains("text-muted")) {
+                icon.addEventListener("click", () => {
+                    const jobId = icon.getAttribute("data-job-id");
+                    deleteJob(jobId, userId);
+                });
+            }
+        });
+    } else {
+        jobsTableBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center">No compute jobs</td>
+            </tr>
+        `;
+    }
 };
+
+
+const populateAgentsTable = () => {
+    const agentsTableBody = document.getElementById('agents-table-body');
+    agentsTableBody.innerHTML = '';
+  
+    if (agents.length > 0) {
+        agents.forEach((agent) => {
+            const row = `
+                <tr>
+                    <td>${agent.name || "Unknown"}</td>
+                    <td>${agent.id || "Unknown"}</td>
+                    <td>${agent.creator|| "Unknown"}</td>
+                </tr>
+            `;
+            agentsTableBody.innerHTML += row;
+        });
+    } else {
+        agentsTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center">No Agents Found</td>
+            </tr>
+        `;
+    }
+  };
+  
 
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -255,12 +365,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   devices = await fetchDevices(userId);
   jobs = await fetchJobs(userId);
+  agents = await fetchAgents(userId);
 
   console.log("Devices Loaded:", devices);
   console.log("Jobs Loaded:", jobs);
+  console.log("Agents Loaded:", agents);
 
   populateDevicesTable();
-  populateJobsTable();
+  await populateJobsTable(userId);
+  populateAgentsTable();
   updateStatsPanel(userId);
 });
 

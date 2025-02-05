@@ -37,6 +37,7 @@ var (
 	inactiveAgentJobQueue  = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	completedJobQueue      = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	completedAgentJobQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	errorJobQueue          = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 )
 
 // StartOperators initializes informers and starts watching resources
@@ -82,8 +83,9 @@ func StartOperators(stopCh <-chan struct{}) {
 	}
 
 	if cfg.FeatureCompletedJobs == "true" {
-		go watchCompletedJobs(k8sFactory, stopCh)
+		go watchCompletedJobs(k8sFactory, dynamicClient, stopCh)
 		go processCompletedQueue(dynamicClient, clientset, stopCh)
+		go processErrorJobQueue(dynamicClient, clientset, stopCh)
 	}
 
 	if cfg.FeatureCompletedAgentJobs == "true" { //  NEW: Watch & clean up completed AgentJobs
@@ -164,7 +166,7 @@ func watchInactiveAgentJobs(factory dynamicinformer.DynamicSharedInformerFactory
 }
 
 // watchCompletedJobs detects completed Kubernetes Jobs and updates AgentJobs
-func watchCompletedJobs(factory informers.SharedInformerFactory, stopCh <-chan struct{}) {
+func watchCompletedJobs(factory informers.SharedInformerFactory, dynamicClient dynamic.Interface, stopCh <-chan struct{}) {
 	logger.Slog.Info("Starting Kubernetes Job Completion Informer")
 
 	informer := factory.Batch().V1().Jobs().Informer()
@@ -180,8 +182,14 @@ func watchCompletedJobs(factory informers.SharedInformerFactory, stopCh <-chan s
 			// jobName := job.Name
 
 			if job.Status.Succeeded > 0 {
-				// logger.Slog.Info("Queuing completed Kubernetes Job for processing", "job", jobName)
 				completedJobQueue.Add(job)
+			} else if job.Status.Active > 0 {
+				logger.Slog.Info("Job is still active, skipping error queue", "job", job.Name)
+			} else if isJobFailed(job) {
+				agentJob, err := findAgentJobByK8sJob(dynamicClient, job.Name)
+				if err == nil && agentJob != nil {
+					errorJobQueue.Add(agentJob)
+				}
 			}
 		},
 	})
@@ -431,6 +439,55 @@ func processCompletedAgentJobQueue(dynamicClient dynamic.Interface, stopCh <-cha
 	}, time.Second, stopCh) // Runs continuously while stopCh is open
 }
 
+func processErrorJobQueue(dynamicClient dynamic.Interface, clientset *kubernetes.Clientset, stopCh <-chan struct{}) {
+	wait.Until(func() {
+		if errorJobQueue.Len() == 0 {
+			return
+		}
+
+		//
+		batchSize := min(10, errorJobQueue.Len())
+
+		// Process jobs directly from the queue
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := errorJobQueue.Get()
+			if shutdown {
+				return
+			}
+
+			job := item.(*unstructured.Unstructured)
+			jobName := job.GetName()
+			k8sJob, err := findK8sJobByAgentJob(clientset, jobName)
+			if err != nil || k8sJob == nil {
+				logger.Slog.Error("Failed to find Kubernetes Job for AgentJob", "job", jobName, "error", err)
+				return
+			}
+
+			go func() {
+				defer errorJobQueue.Done(job) // Mark as processed
+
+				logger.Slog.Info("Processing errored AgentJob", "job", jobName)
+
+				// Update AgentJob status to "executing"
+				err := updateAgentJobStatus(dynamicClient, job, jobName, "error", "An error occured")
+				if err != nil {
+					logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
+					inactiveAgentJobQueue.AddAfter(job, 10*time.Second) // Retry if update fails
+					return
+				}
+
+				deletePolicy := metav1.DeletePropagationBackground
+				err = clientset.BatchV1().Jobs(namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
+				if err != nil && !apierrors.IsNotFound(err) {
+					logger.Slog.Error("Failed to delete Kubernetes Job", "job", jobName, "error", err)
+					completedJobQueue.AddAfter(k8sJob, 10*time.Second) // Retry
+				}
+
+			}()
+		}
+	}, time.Second, stopCh) // Runs continuously while stopCh is open
+}
+
 //
 // HELPER FUNCTIONS
 //
@@ -483,4 +540,32 @@ func findAgentJobByK8sJob(dynamicClient dynamic.Interface, jobName string) (*uns
 	}
 
 	return nil, nil
+}
+
+// findK8sJobByAgentJob finds the Kubernetes Job associated with an AgentJob.
+func findK8sJobByAgentJob(clientset *kubernetes.Clientset, agentJobName string) (*batchv1.Job, error) {
+	// List all Kubernetes Jobs in the namespace
+	jobList, err := clientset.BatchV1().Jobs(namespace).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Iterate over Jobs and find the one linked to the AgentJob
+	for _, job := range jobList.Items {
+		if job.Name == agentJobName {
+			return &job, nil
+		}
+	}
+
+	// No matching Kubernetes Job found
+	return nil, nil
+}
+
+func isJobFailed(job *batchv1.Job) bool {
+	for _, cond := range job.Status.Conditions {
+		if cond.Type == batchv1.JobFailed && cond.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
