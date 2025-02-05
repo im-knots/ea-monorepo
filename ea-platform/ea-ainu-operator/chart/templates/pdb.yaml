@@ -1,0 +1,22 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ea-ainu-operator.fullname" . }}-pdb
+  labels:
+    app: {{ include "ea-ainu-operator.name" . }}
+spec:
+  minAvailable: 
+    {{- if .Values.pdb.minAvailable }}
+    {{ .Values.pdb.minAvailable }}
+    {{- else }}
+    null
+    {{- end }}
+  maxUnavailable:
+    {{- if .Values.pdb.maxUnavailable }}
+    {{ .Values.pdb.maxUnavailable }}
+    {{- else }}
+    null
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ea-ainu-operator.selectorLabels" . | nindent 6 }}

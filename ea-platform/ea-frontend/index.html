@@ -183,16 +183,41 @@
         </tbody>
       </table>
     </div>  
+
+    <!-- Agents Table -->
+    <h2 class="mt-5">My Agents</h2>
+    <div class="table-responsive">
+      <table class="table table-dark table-hover">
+        <thead>
+          <tr>
+            <th scope="col" data-sort="name">Agent Name <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="id">Agent ID <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="creator">Creator <i class="bi bi-arrow-up-down"></i></th>
+          </tr>
+        </thead>
+        <tbody id="agents-table-body">
+          <!-- Rows dynamically populated via API -->
+          <tr>
+            <td colspan="4" class="text-center">No Agents found. Visit the builder or marketplace to add some!</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>  
+
+
     <!-- Jobs Table -->
-    <h2 class="mt-5">My Agents and Jobs</h2>
+    <h2 class="mt-5">My Jobs</h2>
     <div class="table-responsive">
       <table class="table table-dark table-hover">
         <thead>
           <tr>
             <th scope="col" data-sort="name">Job Name <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="type">Job Type <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="id">Agent ID <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="agentName">Agent Name <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="status">Status <i class="bi bi-arrow-up-down"></i></th>
             <th scope="col" data-sort="lastActive">Last Active <i class="bi bi-arrow-up-down"></i></th>
+            <th scope="col" data-sort="actions">Actions</th> 
           </tr>
         </thead>
         <tbody id="jobs-table-body">

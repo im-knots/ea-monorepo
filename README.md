@@ -91,10 +91,9 @@ minikube delete # Clean up previous minikube setups
 minikube start --driver=docker --extra-config=kubelet.max-pods=1000 #set a large single node cluster for ease of use, allow lots of pods
 minikube addons enable registry
 
-./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development
+./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development, seeds test data, runs smoke tests
 
 ./minikube.sh stop # delete all services from the cluster and cleans up portforwarding processes
-
 ```
 ### Adding new services
 To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
