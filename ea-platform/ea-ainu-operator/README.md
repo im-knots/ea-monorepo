@@ -1,7 +1,7 @@
 # Ea Ainulindale Operator
 
 ## Overview
-The **Ea Ainulindale Operator** (`ea-ainu-operator`) is a Kubernetes-based operator that watches for changes in **AgentJob** Custom Resources (CRs) and updates the corresponding job entries in the **ea-ainu-manager** MongoDB (`ainuUsers.users` collection). This operator ensures that job states in Kubernetes are reflected in the **ea-ainu-manager** user database to push `AgentJob` status updates to the **ea-frontend**.
+The **Ea Ainulindale Operator** (`ea-ainu-operator`) is a Kubernetes-based operator that watches for changes in **AgentJob** Custom Resources (CRs) and updates the corresponding job entries in the **ea-ainu-manager** MongoDB (`ainuUsers.users` collection). This operator ensures that job states in Kubernetes are reflected in the **ea-ainu-manager** user database to make `AgentJob` status updates available to the **ea-frontend**.
 
 ## Features
 - Watches for **new** `AgentJob` CRs and adds them to the user's job array in MongoDB as **"New"**.
