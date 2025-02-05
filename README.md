@@ -1,10 +1,21 @@
 # eru-labs-monorepo
 A monorepo for all things eru labs
 
+## Table of Contents
+- [Who we Are](#who-we-are)
+- [Core features](#core-features)
+- [Repo Contents](#repo-contents)
+- [Platform Design](#platform-design)
+- [Ea Platform Architecture](#ea-platform-architecture)
+- [Request/Response Diagrams](#requestresponse-diagrams)
+- [Quick Local Development](#quick-local-development)
+
+## Who we are
 What is Eru Labs? We are a small team of nerds working to disrupt industries by commodifying the idle compute everyone is surrounded by every day.
 
 We make this possible with the Ea Platform. A system that allows users to donate their device's idle compute time in exchange for `compute credits` they can in turn use to run their own AI agents, infrence, and training jobs. 
 
+## Core features
 Core features of the Ea Platform are:
 - The Ainulindale client software that allows users to connect their idle device compute to the Ea network in exchange for compute credits
 - A Node based AI agent/workflow builder
@@ -14,11 +25,22 @@ Core features of the Ea Platform are:
 - Dataset storage for users models, datasets, outputs, ect
 
 ## Repo Contents
-- Eru Labs brand webpage front/backends 
-- Ea platform front/backends
-- Ainulindale Client software for various platforms
-- Terraform to deploy infrastructure and Eru Labs services to GCP
-- Documentation diagrams managed as code for the whole of Eru Labs
+
+| Category | Components | Description |
+|----------|-----------|-------------|
+| **Eru Labs Brand** | [brand-frontend](brand/brand-frontend/README.md) | Frontend for the Eru Labs brand site |
+|  | [brand-backend](brand/brand-backend/README.md) | Backend for the Eru Labs brand site |
+| **Ea Platform Frontend** | [ea-frontend](ea-platform/ea-frontend/README.md) | UI for building and managing AI agents |
+| **Ea Agent Engine** | [ea-agent-manager](ea-platform/ea-agent-manager/README.md) | Manages agent + node creation and definitions |
+| **Ea Ainu Engine** | [ea-ainu-manager](ea-platform/ea-ainu-manager/README.md) | Manages user devices and agent jobs |
+|  | [ea-ainu-operator](ea-platform/ea-ainu-operator/README.md) | Operator to sync agent job status to frontend |
+| **Ea Job Engine** | [ea-job-api](ea-platform/ea-job-api/README.md) | API for job execution |
+|  | [ea-job-operator](ea-platform/ea-job-operator/README.md) | Operator to process agent jobs |
+| **Ainulindale Client Software** | [Ainulindale Clients](ainulindale-client/README.md) | Distributed compute client for AI workloads |
+| **Infrastructure & Deployment** | [infra](infra/README.md) | Terraform configurations for local and cloud deployments |
+| **Documentation** | [diagrams](docs/diagrams/README.md) | Diagrams managed as code |
+
+
 
 ## Platform Design
 Each core feature of the Ea platform usually consists of one or more microservices working together to drive that feature. These are called "Ea Feature Engines". When adding a new core feature, we must implement a new Feature Engine that we can plug into the rest of the platform. Feature Engines should be designed to follow microservice design best practices around state, decoupling, and separation of concerns. 
