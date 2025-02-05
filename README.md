@@ -52,6 +52,7 @@ Our platform will be built in multiple phases. These phases are tracked as Githu
 - ea-job-engine to execute agents
 - ea-ainu-engine to manage user devices and agent jobs for the front end
 - ea-agent-engine to manage creation of node and agent definitions
+- ea-data-engine to manage user datasets and data
 - The framework for the rest of the Ea platform engines to come
 
 ### Phase 2: Commerce Engine and Gamification
