@@ -1,0 +1,30 @@
+{
+    "type": "input.internal.text",
+    "name": "Text input box",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {},
+    "parameters": [
+      {
+        "key": "input",
+        "type": "string",
+        "description": "simple text box input",
+        "default": "some user prompt"
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "the input user prompt",
+        "enum": ["input.enum"],
+        "default": "someoutput"
+      }
+    ],
+    "metadata": {
+      "description": "A simple text box for users to enter text",
+      "tags": ["input", "internal", "text"],
+      "additional": {
+        "documentation_url": ""
+      }
+    }
+}

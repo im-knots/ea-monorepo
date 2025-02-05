@@ -25,6 +25,12 @@
       "default": "Hello world"
     },
     {
+      "key": "stream",
+      "type": "bool",
+      "description": "enable the full stream response, we have to disable this",
+      "default": false
+    },
+    {
       "key": "temperature",
       "type": "number",
       "description": "Controls randomness in generation (0.0 - 1.0).",

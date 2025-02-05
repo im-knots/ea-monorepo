@@ -78,11 +78,11 @@ module "ea_app_deployment" {
   ]
 }
 
-# module ollama {
-#   source    = "../../modules/ollama"
-#   namespace = "ea-platform"
-#   depends_on = [ module.k8s_namespace ]
-# }
+module ollama {
+  source    = "../../modules/ollama"
+  namespace = "ea-platform"
+  depends_on = [ module.k8s_namespace ]
+}
 
 module "eru_labs_brand_app_deployment" {
   for_each = local.eru_apps

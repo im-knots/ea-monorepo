@@ -4,21 +4,31 @@
   "description": "An example agent using the Ollama LLM definition.",
   "nodes": [
     {
-      "type": "worker.inference.llm.ollama",
-      "alias": "ollama",
-      "parameters": {
-        "model": "llama2-13b",
-        "prompt": "Tell me a short story about a flying cat."
-      }
+        "alias": "input",
+        "type": "input.internal.text",
+        "parameters": {
+            "input": "Tell me a short story about a flying cat."
+        }
     },
     {
-      "type": "destination.internal.text",
-      "alias": "textbox",
-      "parameters": {}
+        "alias": "ollama",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+            "model": "llama3.2",
+            "prompt": "input.input"
+        }
+    },
+    {
+        "alias": "output",
+        "type": "destination.internal.text",
+        "parameters": {
+            "input": "ollama.response"
+        }
     }
-  ],
+],
   "edges": [
-    { "from": ["ollama"],"to": ["textbox"] }
+    { "from": ["input"],"to": ["ollama"] },
+    { "from": ["ollama"],"to": ["output"] }
   ]
 }
   
