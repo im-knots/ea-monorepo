@@ -11,12 +11,5 @@
             "last_active": "2025-01-28T15:20:00Z"
         }
     ],
-    "jobs": [
-        {
-            "job_name": "AI Image Upscaler",
-            "job_type": "Inference",
-            "status": "Idle",
-            "last_active": "2025-01-27T18:45:00Z"
-        }
-    ]
+    "jobs": []
 }

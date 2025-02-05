@@ -19,18 +19,5 @@
             "last_active": "2025-01-28T07:50:00Z"
         }
     ],
-    "jobs": [
-        {
-            "job_name": "AI Drug Discovery",
-            "job_type": "Training",
-            "status": "Running",
-            "last_active": "2025-01-28T09:15:00Z"
-        },
-        {
-            "job_name": "Fraud Detection AI",
-            "job_type": "Agent",
-            "status": "Active",
-            "last_active": "2025-01-28T10:30:00Z"
-        }
-    ]
+    "jobs": []
 }

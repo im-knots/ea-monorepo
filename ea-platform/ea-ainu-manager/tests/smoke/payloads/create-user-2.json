@@ -19,18 +19,5 @@
             "last_active": "2025-01-28T09:45:00Z"
         }
     ],
-    "jobs": [
-        {
-            "job_name": "Automated Trading AI",
-            "job_type": "Agent",
-            "status": "Running",
-            "last_active": "2025-01-28T11:30:00Z"
-        },
-        {
-            "job_name": "Speech-to-Text Model",
-            "job_type": "Training",
-            "status": "Active",
-            "last_active": "2025-01-28T12:00:00Z"
-        }
-    ]
+    "jobs": []
 }
