@@ -40,10 +40,10 @@ spec:
                   items:
                     type: object
                     properties:
-                      id:
+                      alias:
                         type: string
                         description: "Node identifier"
-                      definitionRef:
+                      type:
                         type: string
                         description: "Reference to the worker type"
                       parameters:

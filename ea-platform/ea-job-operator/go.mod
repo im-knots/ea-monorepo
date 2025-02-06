@@ -6,6 +6,7 @@ toolchain go1.23.5
 
 require (
 	github.com/gin-gonic/gin v1.10.0
+	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.20.5
 	k8s.io/api v0.32.1
 	k8s.io/apimachinery v0.32.1

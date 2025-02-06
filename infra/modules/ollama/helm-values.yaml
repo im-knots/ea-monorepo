@@ -3,3 +3,17 @@ ollama:
   models:
     pull:
       - llama3.2
+    run:
+      - llama3.2
+
+autoscaling:
+  enabled: true
+
+  # -- Number of minimum replicas
+  minReplicas: 1
+
+  # -- Number of maximum replicas
+  maxReplicas: 10
+
+  # -- CPU usage to target replica
+  targetCPUUtilizationPercentage: 80

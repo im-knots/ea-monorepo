@@ -11,7 +11,8 @@ type Config struct {
 // LoadConfig initializes the configuration from environment variables.
 func LoadConfig() Config {
 	return Config{
-		AgentManagerUrl: getEnv("AGENT_MANAGER_URL", "http://localhost:8083/api/v1"),
+		// AgentManagerUrl: getEnv("AGENT_MANAGER_URL", "http://localhost:8083/api/v1"), //for local testing
+		AgentManagerUrl: getEnv("AGENT_MANAGER_URL", "http://ea-agent-manager.ea-platform.svc.cluster.local:8080/api/v1"),
 	}
 }
 
