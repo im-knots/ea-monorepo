@@ -6,6 +6,7 @@ let agents = [];
 // API URLs
 const AINU_MANAGER_URL = "http://localhost:8085/api/v1";
 const AGENT_MANAGER_URL = "http://localhost:8083/api/v1";
+const JOB_API_URL = "http://localhost:8084/api/v1";
 
 // Load Sidebar
 fetch('../html/sidebar.html')
@@ -178,6 +179,43 @@ const deleteJob = async (jobId, userId) => {
     }
 };
 
+const startAgent = async (agentId, userId) => {
+    if (!agentId || !userId) {
+        console.error("Missing agentId or userId for starting agent");
+        return;
+    }
+
+    const requestBody = {
+        agent_id: agentId,
+        user_id: userId,
+    };
+
+    try {
+        console.log(`Starting agent with ID: ${agentId}`);
+        console.log("POST Request Body:", JSON.stringify(requestBody, null, 2));  // Pretty-printed request body
+
+        const response = await fetch(`${JOB_API_URL}/jobs`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        const responseData = await response.json();  // Parse the JSON response
+
+        console.log("API Response Status:", response.status);
+        console.log("API Response Body:", JSON.stringify(responseData, null, 2));  // Pretty-printed response
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        console.log(`Agent ${agentId} started successfully`);
+    } catch (error) {
+        console.error(`Error starting agent ${agentId}:`, error);
+    }
+};
+
+
 // Update Stats Panel
 const updateStatsPanel = async (userId) => {
     const statsData = await fetchStatsAndGraphData(userId);
@@ -330,29 +368,46 @@ const populateJobsTable = async (userId) => {
 };
 
 
-const populateAgentsTable = () => {
-    const agentsTableBody = document.getElementById('agents-table-body');
-    agentsTableBody.innerHTML = '';
-  
+const populateAgentsTable = async (userId) => {
+    const agentsTableBody = document.getElementById("agents-table-body");
+    agentsTableBody.innerHTML = "";
+
     if (agents.length > 0) {
         agents.forEach((agent) => {
             const row = `
                 <tr>
                     <td>${agent.name || "Unknown"}</td>
                     <td>${agent.id || "Unknown"}</td>
-                    <td>${agent.creator|| "Unknown"}</td>
+                    <td>${agent.creator || "Unknown"}</td>
+                    <td>
+                        <button class="btn btn-dark btn-sm start-agent-btn" 
+                            data-agent-id="${agent.id}" 
+                            data-user-id="${userId}">
+                            <i class="bi bi-play-circle"></i> Start
+                        </button>
+                    </td>
                 </tr>
             `;
             agentsTableBody.innerHTML += row;
         });
+
+        // Attach event listener correctly
+        document.querySelectorAll(".start-agent-btn").forEach((button) => {
+            button.addEventListener("click", (event) => {
+                const agentId = event.currentTarget.getAttribute("data-agent-id");
+                const userId = event.currentTarget.getAttribute("data-user-id");  // Ensure this exists
+                startAgent(agentId, userId);
+            });
+        });
     } else {
         agentsTableBody.innerHTML = `
             <tr>
-                <td colspan="5" class="text-center">No Agents Found</td>
+                <td colspan="4" class="text-center">No Agents Found. Visit the builder or marketplace to add some!</td>
             </tr>
         `;
     }
-  };
+};
+
   
 
 
@@ -373,7 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   populateDevicesTable();
   await populateJobsTable(userId);
-  populateAgentsTable();
+  populateAgentsTable(userId);
   updateStatsPanel(userId);
 });
 
