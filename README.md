@@ -56,11 +56,14 @@ Our platform will be built in multiple phases. These phases are tracked as Githu
 - ea-data-engine to manage user datasets and data
 - The framework for the rest of the Ea platform engines to come
 
-### Phase 2: Commerce Engine and Gamification
+### Phase 2: Commerce Engine, Credit System, user limits and Gamification
 - ea-frontend marketplace
 - ea-frontend leaderboards, ranks, challenges
 - ea-commerce-engine for driving the marketplace
 - ea-game-engine for driving gamification
+- Implement user tiers
+- Implement limits based on tiers
+- Implement compute credits cost system for jobs
 
 ### Phase 3: Distributed Job Engine
 - ainulindale client software for linux, mac, windows, mobile, ect
