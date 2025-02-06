@@ -52,6 +52,7 @@ with Diagram("Eru Labs", show=False):
         eaAgentDB = Storage("Agent Manager DB")
         eaAPIGateway >> eaAgentManager >> eaAgentDB
         eaJobAPI >> eaAgentManager
+        eaJobExecutor >> eaAgentManager
 
     # Ea Ainu Engine
     with Cluster("Ainulindale Engine"):
