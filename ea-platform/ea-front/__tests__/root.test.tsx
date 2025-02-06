@@ -6,9 +6,9 @@ import LoginPage from '../app/login/page';
 describe('Page', () => {
   it('renders the root page', () => {
     render(<RootPage />)
-  });
+  })
 
   it('renders the login page', () => {
     render(<LoginPage />)
-  });
+  })
 })
