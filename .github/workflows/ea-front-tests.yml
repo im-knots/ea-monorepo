@@ -1,0 +1,21 @@
+name: ea-front tests
+on:
+  push:
+    paths:
+      - 'ea-platform/ea-front/**'
+
+defaults:
+  run:
+    working-directory: ./ea-platform/ea-front
+
+jobs:
+  ea-front-tests:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.2.0
+        run_install: true
+    - run: pnpm test
