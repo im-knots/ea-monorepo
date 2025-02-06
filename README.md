@@ -119,10 +119,21 @@ minikube addons enable registry
 ./minikube.sh stop # delete all services from the cluster and cleans up portforwarding processes
 ```
 ### Adding new services
-To add a new service to the startup script simple create a new directory ea-platform/app or brand/app. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
+To add a new service to the startup script simple create a new directory `<ea-platform|brand>/app`. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
 
 Optionally, you can add a portforward line in the minikube.sh script's `k8s_port_forward()` function using existing as the example. 
 
-### Smoke tests
+#### Service naming conventions
+For simplicity and ease of expansion going forward, all new services should fall under the naming convention:
+```
+<ea|brand>-<engine>-<newservice>
+```
+
+- All Ea platform services should be prefixed with `ea`, brand webpage services should be prefixed with `brand`
+- All services should belong to an existing feature engine or a new feature engine with a unique name. 
+- `<newservice>` should be short and descriptive ie. api, operator, executor, etc. 
+
+
+#### Smoke tests
 All new API services should have associates `tests/smoke` directories and simple smoke tests to either populate test data or verify API handler functionality. 
 

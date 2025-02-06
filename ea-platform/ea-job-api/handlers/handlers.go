@@ -34,9 +34,9 @@ type Agent struct {
 }
 
 type Node struct {
-	ID            string                 `json:"id"`
-	DefinitionRef string                 `json:"definition_ref"`
-	Parameters    map[string]interface{} `json:"parameters"`
+	Alias      string                 `json:"alias"`
+	Type       string                 `json:"type"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 type Edge struct {

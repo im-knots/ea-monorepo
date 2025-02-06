@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -60,6 +61,7 @@ type NodeDefinitionMetadata struct {
 type NodeDefinition struct {
 	ID         string                 `json:"id"`
 	Type       string                 `json:"type"`
+	Alias      string                 `json:"alias"`
 	Name       string                 `json:"name,omitempty"`
 	Creator    string                 `json:"creator,omitempty"`
 	API        *NodeAPI               `json:"api,omitempty"`
@@ -70,6 +72,7 @@ type NodeDefinition struct {
 
 // NodeInstance represents a reference to a node definition.
 type NodeInstance struct {
+	Alias      string                 `json:"alias,omitempty"`
 	Type       string                 `json:"type"`
 	Parameters map[string]interface{} `json:"parameters,omitempty"`
 }
@@ -203,6 +206,14 @@ func HandleCreateAgent(c *gin.Context) {
 		logger.Slog.Error("Failed to parse request body", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
 		return
+	}
+
+	// Ensure each node has an alias
+	for i, node := range input.Nodes {
+		if node.Alias == "" {
+			logger.Slog.Warn("Missing alias in node, assigning default alias", "node_type", node.Type)
+			input.Nodes[i].Alias = fmt.Sprintf("node-%d", i) // Assign a default alias if missing
+		}
 	}
 
 	input.ID = uuid.New().String()

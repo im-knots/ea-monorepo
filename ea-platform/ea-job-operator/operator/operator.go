@@ -4,8 +4,11 @@ import (
 	"context"
 	"ea-job-operator/config"
 	"ea-job-operator/logger"
+	"encoding/json"
+	"fmt"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,6 +24,74 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 )
+
+// NodeAPI describes how to call an API (base URL, endpoint, etc.).
+type NodeAPI struct {
+	BaseURL  string            `json:"base_url"`
+	Endpoint string            `json:"endpoint"`
+	Method   string            `json:"method"`
+	Headers  map[string]string `json:"headers,omitempty"`
+}
+
+// NodeParameter describes each parameter for a NodeDefinition.
+type NodeParameter struct {
+	Key         string        `json:"key"`
+	Type        string        `json:"type"`
+	Description string        `json:"description,omitempty"`
+	Default     interface{}   `json:"default,omitempty"`
+	Enum        []interface{} `json:"enum,omitempty"`
+}
+
+// NodeDefinitionMetadata holds metadata about the node definition.
+type NodeDefinitionMetadata struct {
+	Description string                 `json:"description,omitempty"`
+	Tags        []string               `json:"tags,omitempty"`
+	Additional  map[string]interface{} `json:"additional,omitempty"`
+	CreatedAt   time.Time              `json:"created_at"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+}
+
+// NodeDefinition represents the "template" for a node.
+type NodeDefinition struct {
+	ID         string                 `json:"id"`
+	Type       string                 `json:"type"`
+	Name       string                 `json:"name,omitempty"`
+	Creator    string                 `json:"creator,omitempty"`
+	API        *NodeAPI               `json:"api,omitempty"`
+	Parameters []NodeParameter        `json:"parameters,omitempty"`
+	Outputs    []NodeParameter        `json:"outputs,omitempty"`
+	Metadata   NodeDefinitionMetadata `json:"metadata"`
+}
+
+// NodeInstance represents a reference to a node definition.
+type NodeInstance struct {
+	Alias      string                 `json:"alias,omitempty"`
+	Type       string                 `json:"type"`
+	Parameters map[string]interface{} `json:"parameters,omitempty"`
+}
+
+// Edge represents a connection between nodes in an agent workflow.
+type Edge struct {
+	From MultiString `json:"from"`
+	To   MultiString `json:"to"`
+}
+
+// Metadata holds timestamps for Agents.
+type Metadata struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Agent represents an AI workflow with interconnected nodes.
+type Agent struct {
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Creator     string         `json:"creator"`
+	Description string         `json:"description"`
+	Nodes       []NodeInstance `json:"nodes"`
+	Edges       []Edge         `json:"edges"`
+	Metadata    Metadata       `json:"metadata"`
+}
 
 // AgentJob GVR
 var agentJobGVR = schema.GroupVersionResource{
@@ -271,7 +342,6 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 
 		batchSize := min(10, inactiveAgentJobQueue.Len())
 
-		// Process jobs directly from the queue
 		for i := 0; i < batchSize; i++ {
 			item, shutdown := inactiveAgentJobQueue.Get()
 			if shutdown {
@@ -282,7 +352,7 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 			jobName := job.GetName()
 
 			go func() {
-				defer inactiveAgentJobQueue.Done(job) // Mark as processed
+				defer inactiveAgentJobQueue.Done(job)
 
 				logger.Slog.Info("Processing inactive AgentJob", "job", jobName)
 
@@ -290,26 +360,105 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 				err := updateAgentJobStatus(dynamicClient, job, jobName, "executing", "Job is now executing")
 				if err != nil {
 					logger.Slog.Error("Failed to update AgentJob status", "job", jobName, "error", err)
-					inactiveAgentJobQueue.AddAfter(job, 10*time.Second) // Retry if update fails
+					inactiveAgentJobQueue.AddAfter(job, 10*time.Second)
 					return
 				}
 
-				// Create Kubernetes Job
+				// Extract the 'spec' section
+				spec, found, err := unstructured.NestedMap(job.Object, "spec")
+				if err != nil || !found {
+					logger.Slog.Error("Failed to extract spec from AgentJob", "job", jobName, "error", err)
+					return
+				}
+
+				// Decode the spec into the Agent struct
+				var agent Agent
+				if err := mapstructure.Decode(spec, &agent); err != nil {
+					logger.Slog.Error("Failed to decode Agent spec", "job", jobName, "error", err)
+					return
+				}
+
+				// Ensure all nodes have aliases
+				for i, node := range agent.Nodes {
+					if node.Alias == "" {
+						alias := fmt.Sprintf("node-%d", i)
+						logger.Slog.Warn("Missing alias in node, assigning default alias", "node_type", node.Type, "alias", alias)
+						agent.Nodes[i].Alias = alias
+					}
+				}
+
+				// Set additional metadata
+				agentID, found, err := unstructured.NestedString(job.Object, "spec", "agentID")
+				if err != nil || !found {
+					logger.Slog.Warn("Agent ID not found in job spec, defaulting to job UID", "job", jobName)
+					return
+				} else {
+					agent.ID = agentID
+				}
+				agent.Metadata.CreatedAt = job.GetCreationTimestamp().Time
+
+				// Marshal the cleaned AgentJob JSON
+				agentJobJSON, err := json.Marshal(agent)
+				if err != nil {
+					logger.Slog.Error("Failed to marshal AgentJob JSON", "job", jobName, "error", err)
+					return
+				}
+
+				// Create ConfigMap with AgentJob JSON
+				configMapName := fmt.Sprintf("%s-config", jobName)
+				configMap := &corev1.ConfigMap{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      configMapName,
+						Namespace: namespace,
+					},
+					Data: map[string]string{
+						"agentjob.json": string(agentJobJSON),
+					},
+				}
+
+				_, err = clientset.CoreV1().ConfigMaps(namespace).Create(context.TODO(), configMap, metav1.CreateOptions{})
+				if err != nil && !apierrors.IsAlreadyExists(err) {
+					logger.Slog.Error("Failed to create ConfigMap for AgentJob", "job", jobName, "error", err)
+					return
+				}
+
+				// Create Kubernetes Job for ea-job-executor
+				backoffLimit := int32(5) // Limit retries to 5
 				k8sJob := &batchv1.Job{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      jobName,
 						Namespace: namespace,
 					},
 					Spec: batchv1.JobSpec{
+						BackoffLimit: &backoffLimit,
 						Template: corev1.PodTemplateSpec{
 							Spec: corev1.PodSpec{
 								RestartPolicy: corev1.RestartPolicyNever,
 								Containers: []corev1.Container{{
 									Name:            "executor",
-									Image:           "busybox",
-									Command:         []string{"sh", "-c", "echo 'hello world'"},
+									Image:           "localhost:5000/ea-job-executor:latest",
+									Command:         []string{"/app/ea-job-executor"},
 									ImagePullPolicy: corev1.PullIfNotPresent,
+									VolumeMounts: []corev1.VolumeMount{
+										{
+											Name:      "agentjob-json",
+											MountPath: "/app/agentjob.json",
+											SubPath:   "agentjob.json",
+										},
+									},
 								}},
+								Volumes: []corev1.Volume{
+									{
+										Name: "agentjob-json",
+										VolumeSource: corev1.VolumeSource{
+											ConfigMap: &corev1.ConfigMapVolumeSource{
+												LocalObjectReference: corev1.LocalObjectReference{
+													Name: configMapName,
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -322,14 +471,14 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 						return
 					}
 					logger.Slog.Error("Failed to create Kubernetes Job", "job", jobName, "error", err)
-					inactiveAgentJobQueue.AddAfter(job, 10*time.Second) // Retry if creation fails
+					inactiveAgentJobQueue.AddAfter(job, 10*time.Second)
 					return
 				}
 
 				logger.Slog.Info("Successfully created Kubernetes Job", "job", jobName)
 			}()
 		}
-	}, time.Second, stopCh) // Runs continuously while stopCh is open
+	}, time.Second, stopCh)
 }
 
 func processCompletedQueue(dynamicClient dynamic.Interface, clientset *kubernetes.Clientset, stopCh <-chan struct{}) {
@@ -348,6 +497,7 @@ func processCompletedQueue(dynamicClient dynamic.Interface, clientset *kubernete
 
 			k8sJob := item.(*batchv1.Job)
 			jobName := k8sJob.Name
+			configMapName := fmt.Sprintf("%s-config", jobName)
 
 			go func() {
 				defer completedJobQueue.Done(k8sJob)
@@ -366,6 +516,15 @@ func processCompletedQueue(dynamicClient dynamic.Interface, clientset *kubernete
 				}
 
 				deletePolicy := metav1.DeletePropagationBackground
+
+				// Delete the associated ConfigMap
+				err = clientset.CoreV1().ConfigMaps(namespace).Delete(context.TODO(), configMapName, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
+				if err != nil && !apierrors.IsNotFound(err) {
+					logger.Slog.Error("Failed to delete ConfigMap", "configMap", configMapName, "error", err)
+				} else {
+					logger.Slog.Info("Successfully deleted ConfigMap", "configMap", configMapName)
+				}
+
 				err = clientset.BatchV1().Jobs(namespace).Delete(context.TODO(), jobName, metav1.DeleteOptions{PropagationPolicy: &deletePolicy})
 				if err != nil && !apierrors.IsNotFound(err) {
 					logger.Slog.Error("Failed to delete Kubernetes Job", "job", jobName, "error", err)
@@ -569,3 +728,6 @@ func isJobFailed(job *batchv1.Job) bool {
 	}
 	return false
 }
+
+// MultiString allows a field to be either a single string or an array of strings.
+type MultiString []string

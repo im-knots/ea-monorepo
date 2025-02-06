@@ -3,7 +3,7 @@
   "name": "Ollama LLM Inference",
   "creator": "<UUID OF CREATOR USER>",
   "api": {
-    "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
+    "base_url": "http://ollama.ea-platform.svc.cluster.local:11434",
     "endpoint": "/api/generate",
     "method": "POST",
     "headers": {
