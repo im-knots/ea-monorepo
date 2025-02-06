@@ -72,7 +72,6 @@ The executor loads configuration from config.LoadConfig(), which includes:
 -  Agent Manager URL
 -  Logging settings
 -  Execution parameters
--  Kubernetes-specific configurations for job lifecycle management
 
 ## Logging
 
@@ -92,13 +91,12 @@ logger.Slog.Info("Executing node", "nodeType", node.Type) logger.Slog.Error("Exe
 ## TODOs
 
 -  Handle Multiple Outputs:
-    -  Nodes should support returning multiple outputs that downstream nodes can reference.
+    -  multiple output nodes from a single node source. ie one ollama node outputs to 2 destinations. 
     -  Currently, each node stores only a single output.
 -  Improve Error Handling:
     -  Standardize error responses from nodes.
     -  Add retries for API-based nodes.
-  Enhance Input Merging:
-    -  Improve support for multi-input nodes that concatenate multiple outputs into a single prompt.
-  Kubernetes Optimizations:
-    -  Improve job monitoring and logging for failed executions.
+    -   Improve support for multi-input nodes that concatenate multiple outputs into a single prompt.
+    - Improve job monitoring and logging
+ 
 
