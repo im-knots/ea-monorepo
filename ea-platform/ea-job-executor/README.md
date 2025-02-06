@@ -60,10 +60,8 @@ This allows later nodes to reference outputs using placeholders (e.g., {{process
 Resolving State References
 
 **Nodes** may reference earlier outputs using double-brace syntax ({{node.outputKey}}). The function resolveStateReference() handles these lookups by parsing the reference, retrieving the stored output, and handling nested key resolution.
-Handling API-based Nodes
 
 **API-based nodes** define an endpoint and method, which are executed dynamically. The executor prepares a request payload based on node parameters, performs the API call, and stores the response in the execution state for downstream consumption.
-Processing Generic Nodes
 
 **Non-API nodes** (e.g., inputs, transformations) process data internally and pass results to the execution state, supporting input merging and computation logic.
 
