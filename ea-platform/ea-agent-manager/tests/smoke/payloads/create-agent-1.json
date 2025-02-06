@@ -1,0 +1,20 @@
+{
+    "name": "My Ollama Inference Job",
+    "creator": "<UUID OF CREATOR USER>",
+    "description": "An example agent using the Ollama LLM definition.",
+    "nodes": [
+        {
+            "alias": "ollama",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "talk to me about the future of mankind"
+            }
+        }
+    ],
+    "edges": [],
+    "metadata": {
+        "created_at": "2025-02-04T17:56:27.169Z",
+        "updated_at": "2025-02-04T17:56:27.169Z"
+    }
+}

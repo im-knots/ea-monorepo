@@ -90,6 +90,10 @@ k8s_port_forward() {
     # Port-forward Prometheus
     nohup kubectl port-forward pod/prometheus-kps-kube-prometheus-stack-prometheus-0  9090:9090 --namespace monitoring >/dev/null 2>&1 &
     echo "Port-forwarding for Prometheus on port 9090 started."
+
+    # Port-forward Ollama
+    nohup kubectl port-forward deployment/ollama  11434:11434 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
+    echo "Port-forwarding for Ollama on port 11434 started."
 }
 
 seed_test_data() {

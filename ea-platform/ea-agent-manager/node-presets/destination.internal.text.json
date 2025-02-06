@@ -1,0 +1,30 @@
+{
+    "type": "destination.internal.text",
+    "name": "Text output box",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {},
+    "parameters": [
+      {
+        "key": "input",
+        "type": "string",
+        "description": "the input",
+        "default": "some user input"
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "the output",
+        "enum": ["input.enum"],
+        "default": "someoutput"
+      }
+    ],
+    "metadata": {
+      "description": "A simple text box for users to see output text",
+      "tags": ["output", "internal", "text"],
+      "additional": {
+        "documentation_url": ""
+      }
+    }
+}

@@ -1,0 +1,46 @@
+{
+    "id": "25b218a7-b260-4212-9b3f-62b9ecfd43f6",
+    "name": "My Sample Ollama Agent",
+    "creator": "marco@erulabs.ai",
+    "description": "An example agent using the Ollama LLM definition.",
+    "nodes": [
+        {
+            "alias": "input",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "POSITIVE PROMPT: Tell me about how black holes are formed"
+            }
+        },
+        {
+            "alias": "input2",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "NEGATIVE PROMPT: But dont talk to me about space. do it in math terms"
+            }
+        },
+        {
+            "alias": "ollama",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{input.input}}"
+            }
+        },
+        {
+            "alias": "output",
+            "type": "destination.internal.text",
+            "parameters": {
+                "input": "{{ollama.response}}"
+            }
+        }
+    ],
+    "edges": [
+        { "from": ["input"],"to": ["ollama"] },
+        { "from": ["input2"],"to": ["ollama"] },
+        { "from": ["ollama"],"to": ["output"] }
+    ],
+    "metadata": {
+        "created_at": "2025-02-04T17:56:27.169Z",
+        "updated_at": "2025-02-04T17:56:27.169Z"
+    }
+}
