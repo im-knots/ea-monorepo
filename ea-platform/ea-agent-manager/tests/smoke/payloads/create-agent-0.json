@@ -1,5 +1,5 @@
 {
-  "name": "My Sample Ollama Agent",
+  "name": "My Sample Ollama Agent With one Input",
   "creator": "<UUID OF CREATOR USER>",
   "description": "An example agent using the Ollama LLM definition.",
   "nodes": [
@@ -15,14 +15,14 @@
         "type": "worker.inference.llm.ollama",
         "parameters": {
             "model": "llama3.2",
-            "prompt": "input.input"
+            "prompt": "{{input.input}}"
         }
     },
     {
         "alias": "output",
         "type": "destination.internal.text",
         "parameters": {
-            "input": "ollama.response"
+            "input": "{{ollama.response}}"
         }
     }
 ],

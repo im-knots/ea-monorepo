@@ -222,7 +222,7 @@ Create a new node definition.
 {
   "type": "worker.inference.llm.ollama",
   "name": "Ollama LLM Inference",
-  "creator": "<UUID OF CREATOR USER FROM EA-AINU-MANAGER>",
+  "creator": "<UUID OF CREATOR USER>",
   "api": {
     "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
     "endpoint": "/api/generate",
@@ -244,6 +244,12 @@ Create a new node definition.
       "type": "string",
       "description": "User prompt to be sent to the model.",
       "default": "Hello world"
+    },
+    {
+      "key": "stream",
+      "type": "bool",
+      "description": "enable the full stream response, we have to disable this",
+      "default": false
     },
     {
       "key": "temperature",

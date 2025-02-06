@@ -1,7 +1,6 @@
 {
-    "id": "25b218a7-b260-4212-9b3f-62b9ecfd43f6",
-    "name": "My Sample Ollama Agent",
-    "creator": "marco@erulabs.ai",
+    "name": "My Sample Ollama Agent with 2 inputs",
+    "creator": "<UUID OF CREATOR USER>",
     "description": "An example agent using the Ollama LLM definition.",
     "nodes": [
         {
@@ -38,9 +37,5 @@
         { "from": ["input"],"to": ["ollama"] },
         { "from": ["input2"],"to": ["ollama"] },
         { "from": ["ollama"],"to": ["output"] }
-    ],
-    "metadata": {
-        "created_at": "2025-02-04T17:56:27.169Z",
-        "updated_at": "2025-02-04T17:56:27.169Z"
-    }
+    ]
 }

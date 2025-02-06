@@ -146,11 +146,12 @@ func ExecuteAgentJob() {
 	}
 
 	// Step 4: Execute the graph
-	err = stepExecuteGraph(execGraph, nodesLib)
+	finalNodeOutput, err := stepExecuteGraph(execGraph, nodesLib)
 	if err != nil {
 		logger.Slog.Error("Execution of the graph failed", "error", err)
 		os.Exit(1)
 	} else {
+		logger.Slog.Info("Final Node Output", finalNodeOutput)
 		logger.Slog.Info("Agent job execution completed successfully")
 	}
 
@@ -167,13 +168,13 @@ func stepReadAgentJob(filePath string) (Agent, error) {
 	// Read the agent-job.json file
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return Agent{}, err
+		return Agent{}, fmt.Errorf("failed to read job file: %w", err)
 	}
 
 	// Parse the JSON content into the Agent struct
 	var job Agent
 	if err := json.Unmarshal(data, &job); err != nil {
-		return Agent{}, err // Return an empty Agent and error
+		return Agent{}, fmt.Errorf("failed to parse job JSON: %w", err) // Return an empty Agent and error
 	}
 
 	// Return the parsed Agent and no error
@@ -186,15 +187,13 @@ func stepLoadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	nodesListURL := agentManagerURL + "/nodes"
 	resp, err := http.Get(nodesListURL)
 	if err != nil {
-		logger.Slog.Error("Failed to fetch nodes list", "error", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	// Check response status
 	if resp.StatusCode != http.StatusOK {
-		logger.Slog.Error("Failed to fetch nodes list", "status", resp.Status)
-		return nil, errors.New("failed to fetch nodes list")
+		return nil, fmt.Errorf("nodes list request failed with status %d", resp.StatusCode)
 	}
 
 	// Parse response body
@@ -204,11 +203,8 @@ func stepLoadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 		Creator string `json:"creator"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&nodeSummaries); err != nil {
-		logger.Slog.Error("Failed to parse node list response", "error", err)
 		return nil, err
 	}
-
-	logger.Slog.Info("Fetched node summaries", "count", len(nodeSummaries))
 
 	// Step 2: Fetch full details for each node
 	var nodesLib NodesLibrary
@@ -216,22 +212,19 @@ func stepLoadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 		nodeDetailURL := fmt.Sprintf("%s/nodes/%s", agentManagerURL, summary.ID)
 		resp, err := http.Get(nodeDetailURL)
 		if err != nil {
-			logger.Slog.Error("Failed to fetch node details", "nodeID", summary.ID, "error", err)
-			continue // Skip this node but continue fetching others
+			return nil, err
 		}
 		defer resp.Body.Close()
 
 		// Check response status
 		if resp.StatusCode != http.StatusOK {
-			logger.Slog.Error("Failed to fetch node details", "nodeID", summary.ID, "status", resp.Status)
-			continue // Skip this node
+			return nil, fmt.Errorf("Failed to fetch node details: %d", resp.StatusCode)
 		}
 
 		// Parse full node definition
 		var nodeDef NodeDefinition
 		if err := json.NewDecoder(resp.Body).Decode(&nodeDef); err != nil {
-			logger.Slog.Error("Failed to parse node definition", "nodeID", summary.ID, "error", err)
-			continue // Skip this node
+			return nil, err
 		}
 
 		// Log retrieved node details
@@ -242,7 +235,7 @@ func stepLoadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 
 	// Final check: Ensure we have nodes
 	if len(nodesLib) == 0 {
-		return nil, errors.New("failed to fetch any valid node definitions")
+		return nil, fmt.Errorf("failed to fetch any valid node definitions")
 	}
 
 	logger.Slog.Info("Successfully loaded full node definitions", "total_nodes", len(nodesLib))
@@ -250,7 +243,6 @@ func stepLoadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	return nodesLib, nil
 }
 
-// stepBuildExecutionGraph constructs a directed execution graph from an Agent's edges.
 func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 	execGraph := ExecutionGraph{
 		Nodes:          make(map[string]NodeInstance),
@@ -259,26 +251,24 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		ExecutionOrder: []string{},
 	}
 
-	// Step 1: Create a map from alias → nodeID and store alias
 	nodeAliases := make(map[string]string) // alias -> alias mapping
 	nodeIDs := []string{}                  // Maintain original JSON node order
 
+	// Step 1: Store nodes in the graph
 	for _, node := range agent.Nodes {
-		// Use alias if available, otherwise use type-based fallback
-		nodeID := node.Type
-		if node.Alias != "" {
-			nodeID = node.Alias
+		nodeID := node.Alias
+		if nodeID == "" {
+			nodeID = node.Type
 		}
 
-		// Store alias mapping
 		nodeAliases[nodeID] = nodeID
 		execGraph.Nodes[nodeID] = node
 		execGraph.AdjList[nodeID] = []string{}
 		execGraph.Indegrees[nodeID] = 0
-		nodeIDs = append(nodeIDs, nodeID) // Preserve execution order
+		nodeIDs = append(nodeIDs, nodeID)
 	}
 
-	// Step 2: Build adjacency list using aliases
+	// Step 2: Build adjacency list and track incoming connections
 	for _, edge := range agent.Edges {
 		for _, fromAlias := range edge.From {
 			for _, toAlias := range edge.To {
@@ -289,23 +279,23 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 					execGraph.AdjList[fromID] = append(execGraph.AdjList[fromID], toID)
 					execGraph.Indegrees[toID]++
 				} else {
-					logger.Slog.Warn("Edge references unknown alias", "from", fromAlias, "to", toAlias)
+					return ExecutionGraph{}, fmt.Errorf("edge references unknown alias from %s to %s", fromAlias, toAlias)
 				}
 			}
 		}
 	}
 
-	// Step 3: Stable Topological Sorting (Respect JSON order)
+	// Step 3: Stable Topological Sorting (preserves JSON order)
 	queue := []string{}
 
-	// Nodes with no incoming edges in **original JSON order**
+	// Identify nodes with no incoming edges (roots)
 	for _, nodeID := range nodeIDs {
 		if execGraph.Indegrees[nodeID] == 0 {
 			queue = append(queue, nodeID)
 		}
 	}
 
-	// Process nodes in **stable** topological order
+	// Step 4: Process nodes in a stable topological order
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -320,53 +310,55 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		}
 	}
 
-	// Step 4: Validate Graph Completeness
+	// Step 5: Validate graph completeness (check for cycles)
 	if len(execGraph.ExecutionOrder) != len(execGraph.Nodes) {
 		return ExecutionGraph{}, errors.New("cyclic dependency detected in execution graph")
 	}
 
 	logger.Slog.Info("Execution order determined", "ExecutionOrder", execGraph.ExecutionOrder)
-
 	return execGraph, nil
 }
 
 // stepExecuteGraph executes the graph in order.
-func stepExecuteGraph(execGraph ExecutionGraph, nodesLib NodesLibrary) error {
+func stepExecuteGraph(execGraph ExecutionGraph, nodesLib NodesLibrary) (interface{}, error) {
 	state := ExecutionState{Results: make(map[string]interface{})}
 
-	logger.Slog.Info("Executing graph nodes in order", "execution_order", execGraph.ExecutionOrder)
+	var finalNodeOutput interface{} // Declare finalNodeOutput
 
 	for _, nodeType := range execGraph.ExecutionOrder {
 		node, exists := execGraph.Nodes[nodeType]
 		if !exists {
-			logger.Slog.Error("Node type not found in execution graph", "nodeType", nodeType)
-			return errors.New("node type not found in execution graph")
+			return nil, fmt.Errorf("Node type not found in execution graph %s", nodeType)
 		}
 
 		logger.Slog.Info("Executing node", "nodeType", nodeType)
 
 		nodeDef, err := findNodeDefinition(node.Type, nodesLib)
 		if err != nil {
-			logger.Slog.Error("Failed to find node definition", "nodeType", node.Type, "error", err)
-			return err
+			return nil, err
 		}
 
-		logger.Slog.Info("Found node definition", "nodeType", node.Type, "definition", nodeDef)
+		logger.Slog.Debug("Found node definition", "nodeType", node.Type, "definition", nodeDef)
 
 		result, err := executeNode(node, nodeDef, &state)
 		if err != nil {
-			logger.Slog.Error("Execution failed for node", "nodeType", nodeType, "error", err)
-			return err
+			return nil, err
 		}
 
 		// Store results of the node execution
 		state.Results[nodeType] = result
+		logger.Slog.Info("Successfully executed node", "nodeType", nodeType)
+		logger.Slog.Debug("Successfully executed node", "nodeType", nodeType, "result", result)
 
-		logger.Slog.Info("Successfully executed node", "nodeType", nodeType, "result", result)
+		// Store the result of the final node
+		if nodeType == execGraph.ExecutionOrder[len(execGraph.ExecutionOrder)-1] {
+			finalNodeOutput = result
+			logger.Slog.Info("Final node output stored", "nodeAlias", node.Alias, "result", finalNodeOutput)
+		}
 	}
 
 	logger.Slog.Info("Graph execution completed successfully")
-	return nil
+	return finalNodeOutput, nil
 }
 
 //
@@ -375,14 +367,27 @@ func stepExecuteGraph(execGraph ExecutionGraph, nodesLib NodesLibrary) error {
 
 // executeNode determines the node type and delegates execution accordingly.
 func executeNode(node NodeInstance, nodeDef NodeDefinition, state *ExecutionState) (interface{}, error) {
-	// Inject inputs from upstream nodes if referenced
-	node.Parameters = injectInputsFromState(node.Parameters, state)
+	// Only merge inputs for nodes that actually need it
+	node = mergeInputsForNode(node, nodeDef, state)
+
+	// Inject values into parameters from execution state
+	for key, value := range node.Parameters {
+		if strVal, ok := value.(string); ok && strings.Contains(strVal, "{{") {
+			resolvedVal, exists, err := resolveStateReference(strVal, state)
+			if err != nil {
+				logger.Slog.Error("Failed to resolve reference", "key", key, "value", strVal, "error", err)
+				return nil, err
+			} else if exists {
+				node.Parameters[key] = resolvedVal
+				logger.Slog.Info("Resolved reference for parameter", "key", key, "value", resolvedVal)
+			}
+		}
+	}
 
 	// Validate and populate parameters
 	validatedParams, err := validateAndFillParameters(node.Parameters, nodeDef.Parameters)
 	if err != nil {
-		logger.Slog.Error("Parameter validation failed", "nodeType", node.Type, "error", err)
-		os.Exit(1) // Stop execution if parameters are invalid
+		return nil, err
 	}
 	node.Parameters = validatedParams
 
@@ -392,7 +397,6 @@ func executeNode(node NodeInstance, nodeDef NodeDefinition, state *ExecutionStat
 		logger.Slog.Info("Executing API Node", "nodeType", node.Type)
 		result, err = executeAPINode(node, nodeDef)
 	} else {
-		// Fallback: Execute generic node
 		logger.Slog.Info("Executing Generic Node", "nodeType", node.Type)
 		result, err = executeGenericNode(node, nodeDef, state)
 	}
@@ -403,7 +407,9 @@ func executeNode(node NodeInstance, nodeDef NodeDefinition, state *ExecutionStat
 
 	// Store outputs in execution state for downstream nodes
 	state.Results[node.Alias] = result
-	logger.Slog.Info("Stored node result in execution state", "nodeAlias", node.Alias, "result", result)
+	logger.Slog.Debug("Execution state after storing result", "state", state.Results)
+
+	logger.Slog.Debug("Stored node result in execution state", "nodeAlias", node.Alias, "result", result)
 
 	return result, nil
 }
@@ -413,7 +419,6 @@ func executeAPINode(node NodeInstance, nodeDef NodeDefinition) (interface{}, err
 	url := nodeDef.API.BaseURL + nodeDef.API.Endpoint
 	bodyData, err := json.Marshal(node.Parameters)
 	if err != nil {
-		logger.Slog.Error("Failed to marshal parameters", "error", err)
 		return nil, err
 	}
 
@@ -421,7 +426,6 @@ func executeAPINode(node NodeInstance, nodeDef NodeDefinition) (interface{}, err
 
 	req, err := http.NewRequest(nodeDef.API.Method, url, bytes.NewBuffer(bodyData))
 	if err != nil {
-		logger.Slog.Error("Failed to create request", "error", err)
 		return nil, err
 	}
 
@@ -432,23 +436,25 @@ func executeAPINode(node NodeInstance, nodeDef NodeDefinition) (interface{}, err
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Slog.Error("API request failed", "error", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	responseData, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Slog.Error("Failed to read response", "error", err)
 		return nil, err
 	}
+
+	// Log the full response body
+	logger.Slog.Info("Received API Response", "nodeType", node.Type, "RawResponse", string(responseData))
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(responseData, &result); err != nil {
-		logger.Slog.Error("Failed to parse response JSON", "error", err)
 		return nil, err
 	}
 
+	// Store the full API response so it can be referenced dynamically
+	logger.Slog.Info("Storing full API response under node alias", "nodeAlias", node.Alias, "response", result)
 	return result, nil
 }
 
@@ -497,11 +503,10 @@ func (m *MultiString) UnmarshalJSON(data []byte) error {
 func findNodeDefinition(nodeType string, nodesLib NodesLibrary) (NodeDefinition, error) {
 	for _, node := range nodesLib {
 		if node.Type == nodeType {
-			logger.Slog.Info("Found node definition", "nodeType", nodeType, "nodeDef", node)
+			logger.Slog.Debug("Found node definition", "nodeType", nodeType, "nodeDef", node)
 			return node, nil
 		}
 	}
-	logger.Slog.Error("Node definition not found for type", "nodeType", nodeType)
 	return NodeDefinition{}, fmt.Errorf("node definition not found for type %s", nodeType)
 }
 
@@ -536,30 +541,35 @@ func validateAndFillParameters(providedParams map[string]interface{}, paramDefs 
 }
 
 // injectInputsFromState replaces placeholders in parameters with values from execution state.
-func injectInputsFromState(parameters map[string]interface{}, state *ExecutionState) map[string]interface{} {
+func injectInputsFromState(parameters map[string]interface{}, state *ExecutionState) (map[string]interface{}, error) {
 	updatedParams := make(map[string]interface{})
 
 	for key, value := range parameters {
-		// Check if value is a string reference (e.g., "response.Result")
+		// Check if value is a string reference (e.g., "{{response.Result}}")
 		if strVal, ok := value.(string); ok {
-			if resolvedValue, exists := resolveStateReference(strVal, state); exists {
-				updatedParams[key] = resolvedValue
-				logger.Slog.Info("Injected value from execution state", "paramKey", key, "value", resolvedValue)
-				continue
+			if strings.HasPrefix(strVal, "{{") && strings.HasSuffix(strVal, "}}") {
+				trimmedRef := strings.TrimPrefix(strings.TrimSuffix(strVal, "}}"), "{{")
+				resolvedValue, exists, err := resolveStateReference(trimmedRef, state)
+				if err != nil {
+					return nil, err
+				} else if exists {
+					updatedParams[key] = resolvedValue
+					logger.Slog.Info("Injected value from execution state", "paramKey", key, "value", resolvedValue)
+					continue
+				}
 			}
 		}
 		// Otherwise, keep the original parameter
 		updatedParams[key] = value
 	}
 
-	return updatedParams
+	return updatedParams, nil
 }
 
-// resolveStateReference fetches a nested value from execution state using dot notation.
-func resolveStateReference(reference string, state *ExecutionState) (interface{}, bool) {
-	parts := strings.Split(reference, ".")
+func resolveStateReference(reference string, state *ExecutionState) (interface{}, bool, error) {
+	parts := strings.Split(strings.Trim(reference, "{}"), ".")
 	if len(parts) < 2 {
-		return nil, false
+		return nil, false, fmt.Errorf("Invalid reference format: %s", reference)
 	}
 
 	nodeAlias, keys := parts[0], parts[1:]
@@ -568,15 +578,26 @@ func resolveStateReference(reference string, state *ExecutionState) (interface{}
 	nodeResult, exists := state.Results[nodeAlias]
 	if !exists {
 		logger.Slog.Warn("Failed to resolve state reference: node not found", "reference", reference)
-		return nil, false
+		logger.Slog.Warn("Current execution state", "state", state.Results)
+		return nil, false, fmt.Errorf("Failed to resolve state reference: node not found. Reference: %s", reference)
 	}
 
-	// Recursively traverse the result map
-	value, found := getNestedValue(nodeResult, keys)
+	// Ensure nodeResult is a map before extracting keys
+	nodeMap, ok := nodeResult.(map[string]interface{})
+	if !ok {
+		logger.Slog.Warn("Node result is not a map", "nodeAlias", nodeAlias, "actualType", fmt.Sprintf("%T", nodeResult))
+		return nil, false, fmt.Errorf("Node result is not a map: %T", nodeResult)
+	}
+
+	// Recursively retrieve the nested value
+	value, found := getNestedValue(nodeMap, keys)
 	if !found {
 		logger.Slog.Warn("Failed to resolve state reference: key not found", "reference", reference)
+		return nil, false, fmt.Errorf("Failed to resolve state reference: key not found. Reference: %s", reference)
 	}
-	return value, found
+
+	logger.Slog.Info("Successfully resolved reference", "reference", reference, "value", value)
+	return value, true, nil
 }
 
 // getNestedValue recursively retrieves a nested value from a JSON-like map.
@@ -587,7 +608,7 @@ func getNestedValue(data interface{}, keys []string) (interface{}, bool) {
 
 	currentKey := keys[0]
 
-	// Ensure the data is a map[string]interface{} before traversing deeper
+	// Ensure the data is a map[string]interface{} before accessing deeper keys
 	if nestedMap, ok := data.(map[string]interface{}); ok {
 		if nextValue, exists := nestedMap[currentKey]; exists {
 			return getNestedValue(nextValue, keys[1:]) // Recurse deeper
@@ -595,4 +616,48 @@ func getNestedValue(data interface{}, keys []string) (interface{}, bool) {
 	}
 
 	return nil, false
+}
+
+func mergeInputsForNode(targetNode NodeInstance, nodeDef NodeDefinition, state *ExecutionState) NodeInstance {
+	// Ensure the node actually expects a "prompt"
+	hasPrompt := false
+	for _, param := range nodeDef.Parameters {
+		if param.Key == "prompt" {
+			hasPrompt = true
+			break
+		}
+	}
+
+	// If the node does not expect "prompt", return as-is
+	if !hasPrompt {
+		logger.Slog.Debug("Skipping input merge for node without 'prompt' parameter", "nodeAlias", targetNode.Alias)
+		return targetNode
+	}
+
+	var mergedInputs []string
+	logger.Slog.Info("Checking for inputs to merge for node", "nodeAlias", targetNode.Alias)
+
+	for source, result := range state.Results {
+		// Ensure the result is a map with an "input" key
+		if inputMap, ok := result.(map[string]interface{}); ok {
+			if userInput, found := inputMap["input"].(string); found {
+				// Only merge the actual user input text, not the placeholder
+				mergedInputs = append(mergedInputs, userInput)
+				logger.Slog.Debug("Appending user input from source", "source", source, "value", userInput)
+			} else {
+				logger.Slog.Warn("Source input does not contain a string", "source", source, "value", inputMap)
+			}
+		} else {
+			logger.Slog.Warn("Unexpected input format", "source", source, "value", result)
+		}
+	}
+
+	// Join all user inputs into a single prompt
+	if len(mergedInputs) > 0 {
+		finalPrompt := strings.Join(mergedInputs, " ")
+		targetNode.Parameters["prompt"] = finalPrompt
+		logger.Slog.Info("Merged inputs for node", "nodeAlias", targetNode.Alias, "mergedPrompt", finalPrompt)
+	}
+
+	return targetNode
 }
