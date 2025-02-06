@@ -13,7 +13,7 @@ A monorepo for all things eru labs
 ## Who we are
 What is Eru Labs? We are a small team of nerds working to disrupt industries by commodifying the idle compute everyone is surrounded by every day.
 
-We make this possible with the Ea Platform. A system that allows users to donate their device's idle compute time in exchange for `compute credits` they can in turn use to run their own AI agents, infrence, and training jobs. 
+We make this possible with the **Ea Platform**. A system that allows users to donate their device's idle compute time in exchange for `compute credits` they can in turn use to run their own AI agents, infrence, and training jobs. 
 
 ## Core features
 Core features of the Ea Platform are:
