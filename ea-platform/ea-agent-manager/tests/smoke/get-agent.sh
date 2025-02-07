@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8083/api/v1/agents"
+API_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/agents"
 
 # Get all agents
 ALL_AGENTS=$(curl -s "$API_ENDPOINT")

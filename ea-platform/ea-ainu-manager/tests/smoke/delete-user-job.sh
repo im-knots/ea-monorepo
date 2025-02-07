@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8085/api/v1/users"
+API_ENDPOINT="http://ainu-manager.ea.erulabs.local/api/v1/users"
 
 # Get all users
 ALL_USERS=$(curl -s "$API_ENDPOINT")

@@ -4,7 +4,7 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8085/api/v1/users"
+API_ENDPOINT="http://ainu-manager.ea.erulabs.local/api/v1/users"
 
 # Iterate through matching files in the payload directory
 for file in "$PAYLOAD_DIR"/*create-user*.json; do

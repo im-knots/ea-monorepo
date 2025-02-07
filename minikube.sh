@@ -44,33 +44,65 @@ deploy_stack_terraform() {
     cd $REPO_DIR
 }
 
+k8s_ingress_dns() {
+    MINIKUBE_IP=$(minikube ip)
+    echo "I need sudo permissions to update your /etc/hosts file"
+
+    HOST_ENTRIES=(
+        "agent-manager.ea.erulabs.local"
+        "ainu-manager.ea.erulabs.local"
+        "ea.erulabs.local"
+        "job-api.ea.erulabs.local"
+        "backend.erulabs.local"
+        "erulabs.local"
+        "ollama.ea.erulabs.local"
+        "grafana.erulabs.local"
+        "prometheus.erulabs.local"
+    )
+
+    for HOSTNAME in "${HOST_ENTRIES[@]}"; do
+        # Check if the exact IP and hostname pair exists
+        if ! grep -q "^$MINIKUBE_IP[[:space:]]\+$HOSTNAME\$" /etc/hosts; then
+            echo "$MINIKUBE_IP $HOSTNAME" | sudo tee -a /etc/hosts > /dev/null
+            echo "Added $HOSTNAME to /etc/hosts"
+        else
+            echo "$HOSTNAME already exists in /etc/hosts, skipping..."
+        fi
+    done
+}
+
+remove_k8s_ingress_dns() {
+    MINIKUBE_IP=$(minikube ip)
+    echo "I need sudo permissions to remove entries from your /etc/hosts file"
+
+    HOST_ENTRIES=(
+        "agent-manager.ea.erulabs.local"
+        "ainu-manager.ea.erulabs.local"
+        "ea.erulabs.local"
+        "job-api.ea.erulabs.local"
+        "backend.erulabs.local"
+        "erulabs.local"
+        "ollama.ea.erulabs.local"
+        "grafana.erulabs.local"
+        "prometheus.erulabs.local"
+    )
+
+    for HOSTNAME in "${HOST_ENTRIES[@]}"; do
+        # Check if the exact IP and hostname pair exists
+        if grep -q "^$MINIKUBE_IP[[:space:]]\+$HOSTNAME\$" /etc/hosts; then
+            # Remove the matching line
+            sudo sed -i.bak "/^$MINIKUBE_IP[[:space:]]\+$HOSTNAME$/d" /etc/hosts
+            echo "Removed $HOSTNAME from /etc/hosts"
+        else
+            echo "$HOSTNAME not found in /etc/hosts, skipping..."
+        fi
+    done
+}
+
+
+
 k8s_port_forward() {
     echo -e "${BOLD_YELLOW}STARTING PORTFORWARDS${RESET}"
-
-    # Port-forward brand-frontend
-    nohup kubectl port-forward deployment/brand-frontend-eru-labs-brand-frontend 8080:8080 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for brand-frontend on port 8080 started."
-
-    # Port-forward brand-backend
-    nohup kubectl port-forward deployment/brand-backend-eru-labs-brand-backend 8081:8080 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for brand-backend on port 8081 started."
-
-    # Port-forward ea-frontend
-    nohup kubectl port-forward deployment/ea-frontend 8082:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-frontend on port 8082 started."
-
-    # Port-forward ea-agent-manager
-    nohup kubectl port-forward deployment/ea-agent-manager 8083:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-agent-manager on port 8083 started."
-
-    # Port-forward ea-job-api
-    nohup kubectl port-forward deployment/ea-job-api 8084:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-job-api on port 8084 started."
-
-    # Port-forward ea-ainu-engine
-    nohup kubectl port-forward deployment/ea-ainu-manager 8085:8080 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for ea-ainu-manager on port 8085 started."
-
     # Port-forward ea-platform mongodb
     nohup kubectl port-forward deployment/mongodb 8086:27017 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
     echo "Port-forwarding for ea-platform mongodb on port 8086 started."
@@ -78,22 +110,6 @@ k8s_port_forward() {
     # Port-forward eru-labs-brand mongodb
     nohup kubectl port-forward deployment/mongodb 8087:27017 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
     echo "Port-forwarding for eru-labs-brand mongodb on port 8087 started."
-
-    # Port-forward ea-ainu-operator
-    nohup kubectl port-forward deployment/mongodb 8088:8080 --namespace $BRAND_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for eru-labs-brand mongodb on port 8088 started."
-
-    # Port-forward Grafana
-    nohup kubectl port-forward deployment/kps-grafana 3000:3000 --namespace monitoring >/dev/null 2>&1 &
-    echo "Port-forwarding for Grafana on port 3000 started."
-
-    # Port-forward Prometheus
-    nohup kubectl port-forward pod/prometheus-kps-kube-prometheus-stack-prometheus-0  9090:9090 --namespace monitoring >/dev/null 2>&1 &
-    echo "Port-forwarding for Prometheus on port 9090 started."
-
-    # Port-forward Ollama
-    nohup kubectl port-forward deployment/ollama  11434:11434 --namespace $EA_NAMESPACE >/dev/null 2>&1 &
-    echo "Port-forwarding for Ollama on port 11434 started."
 }
 
 seed_test_data() {
@@ -136,6 +152,7 @@ cleanup() {
     echo "Cleaning up all kubectl port-forward processes..."
     # Find all kubectl port-forward processes and kill them
     pkill -f "kubectl port-forward"
+    remove_k8s_ingress_dns
     echo "Port-forwarding processes stopped."
     pwd
     cd infra/environments/local
@@ -148,6 +165,9 @@ cleanup() {
 # Main Script
 case "$1" in
     start)
+        minikube addons enable ingress
+        # minikube addons enable ingress-dns // we could do this but hosts file is more universal than resolvconf
+        minikube addons enable registry
         eval $(minikube docker-env)
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
@@ -170,13 +190,10 @@ case "$1" in
 
         deploy_stack_terraform
 
-        echo "Waiting some time for services to be ready before starting portforwarding"
-        sleep 10
+        k8s_ingress_dns
         k8s_port_forward
-        echo "Waiting some more time for port forwards to be set up before seeding data"
-        sleep 5
         seed_test_data
-        # run_tests
+        run_tests
 
 
         echo "All apps processed and deployed successfully."

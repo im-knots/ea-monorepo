@@ -3,25 +3,25 @@ prometheus:
   prometheusSpec:
     scrapeInterval: 30s
     evaluationInterval: 30s
-
-    # Allow scraping other namespaces https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#prometheusioscrape
     podMonitorSelectorNilUsesHelmValues: false
     serviceMonitorSelectorNilUsesHelmValues: false
     logFormat: json
     ruleSelector:
       matchLabels:
         prometheus_rule: "1"
-
-  ## Configure pod disruption budgets for Prometheus
-  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
-  ## This configuration is immutable once created and will require the PDB to be deleted to be changed
-  ## https://github.com/kubernetes/kubernetes/issues/45398
-  ##
   podDisruptionBudget:
     enabled: true
     minAvailable: 1
     maxUnavailable: ""
-
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    annotations: {}
+    labels: {}
+    hosts:
+      - prometheus.erulabs.local
+    paths:
+      - /
 
 defaultRules:
   labels:
@@ -103,13 +103,16 @@ grafana:
     - netsage-sankey-panel
     - yesoreyeram-boomtheme-panel
     - yesoreyeram-infinity-datasource 2.5.0
-
-  ## Configure pod disruption budgets for Alertmanager
-  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget
-  ## This configuration is immutable once created and will require the PDB to be deleted to be changed
-  ## https://github.com/kubernetes/kubernetes/issues/45398
-  ##
   podDisruptionBudget:
     enabled: true
     minAvailable: 1
     maxUnavailable: ""
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    annotations: {}
+    labels: {}
+    hosts:
+      - grafana.erulabs.local
+    paths:
+      - /

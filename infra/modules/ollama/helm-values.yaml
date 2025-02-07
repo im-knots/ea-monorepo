@@ -8,12 +8,17 @@ ollama:
 
 autoscaling:
   enabled: true
-
-  # -- Number of minimum replicas
   minReplicas: 1
-
-  # -- Number of maximum replicas
   maxReplicas: 10
-
-  # -- CPU usage to target replica
   targetCPUUtilizationPercentage: 80
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: ollama.ea.erulabs.local
+      paths:
+        - path: /
+          pathType: Prefix

@@ -4,8 +4,8 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoints
-AGENT_ENDPOINT="http://localhost:8083/api/v1/agents"
-AINU_URL="http://localhost:8085/api/v1/users"
+AGENT_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/agents"
+AINU_URL="http://ainu-manager.ea.erulabs.local/api/v1/users"
 
 # Fetch users from AINU manager
 AINU_RESPONSE=$(curl -s "$AINU_URL")
