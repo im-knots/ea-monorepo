@@ -1,0 +1,115 @@
+/* Main Area */
+main {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    padding: 20px;
+    transition: background-color 0.3s ease;
+}
+
+/* Agent Tile Styles */
+.agent-tile {
+    background-color: #444444; /* Lighter background for better contrast */
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
+    height: 100%;
+    color: #f0f0f0; /* Text color for better readability */
+}
+
+.agent-tile:hover {
+    transform: scale(1.03);
+}
+
+.btn-dark {
+    width: 100%;
+}
+
+.node-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.node-list li {
+    background-color: #5a5a5a;
+    margin: 5px 0;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+/* Carousel Container */
+.carousel-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 20px;
+    padding-bottom: 10px;
+    scrollbar-width: thin;
+}
+
+.carousel-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+.carousel-container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+}
+
+/* List View Styles */
+.list-group-item {
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+    background-color: #303030;
+}
+
+.details-row {
+    display: none;
+    background-color: #383838;
+    padding: 10px;
+    border-radius: 5px;
+    color: #ffffff;
+}
+
+/* Status Bubbles */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  
+  .status-indicator.active {
+    background-color: green;
+  }
+  
+  .status-indicator.offline {
+    background-color: gray;
+  }
+  
+  .status-indicator.inprogress {
+    background-color: orange;
+  }
+  
+  .status-indicator.error {
+    background-color: red;
+  }
+  
+  .status-indicator.new {
+    background-color: gray;
+  }
+  
+  .status-indicator.pending {
+    background-color: blue;
+  }
+  
+  .status-indicator.complete {
+    background-color: green;
+  }
+  
