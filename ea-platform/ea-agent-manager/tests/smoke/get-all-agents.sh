@@ -4,7 +4,7 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8083/api/v1/agents"
+API_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/agents"
 
 curl "$API_ENDPOINT"
 echo ""

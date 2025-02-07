@@ -53,11 +53,11 @@ service:
   port: 8080
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: true
+  className: "nginx"
   annotations: {}
   hosts:
-    - host: ea.dev.erulabs.ai
+    - host: ea.erulabs.local
       paths:
         - path: /
           pathType: ImplementationSpecific

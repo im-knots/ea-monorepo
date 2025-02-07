@@ -116,12 +116,26 @@ I have created a helper script to easily set up the entire platform in a local c
 ```bash
 minikube delete # Clean up previous minikube setups
 minikube start --driver=docker --extra-config=kubelet.max-pods=1000 #set a large single node cluster for ease of use, allow lots of pods
-minikube addons enable registry
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development, seeds test data, runs smoke tests
 
 ./minikube.sh stop # delete all services from the cluster and cleans up portforwarding processes
 ```
+The script will update your /etc/hosts file and these domains should be avialable to you
+
+| Domain | Description | 
+|----------|-----------|
+| agent-manager.ea.erulabs.local | The ea-agent-manager API |
+| ainu-manager.ea.erulabs.local | The ea-ainu-manager API |
+| job-api.ea.erulabs.local | The ea-job-api |
+| ollama.ea.erulabs.local | The internal LLM provider for the Ea Platform |
+| ea.erulabs.local | The ea-frontend |
+| backend.erulabs.local | The brand-backend for the Eru Labs brand webpage |
+| erulabs.local | The brand-frontend Eru Labs brand webpage |
+| grafana.erulabs.local | Grafana for visualizing system metric and log data |
+| prometheus.erulabs.local | Prometheus for checking metrics and alerting rules |
+
+
 ### Adding new services
 To add a new service to the startup script simple create a new directory `<ea-platform|brand>/app`. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
 

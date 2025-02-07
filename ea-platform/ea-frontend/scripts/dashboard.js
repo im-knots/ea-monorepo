@@ -4,9 +4,9 @@ let jobs = [];
 let agents = [];
 
 // API URLs
-const AINU_MANAGER_URL = "http://localhost:8085/api/v1";
-const AGENT_MANAGER_URL = "http://localhost:8083/api/v1";
-const JOB_API_URL = "http://localhost:8084/api/v1";
+const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+const AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1";
+const JOB_API_URL = "http://job-api.ea.erulabs.local/api/v1";
 
 // Load Sidebar
 fetch('../html/sidebar.html')

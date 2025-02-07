@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8085/api/v1/users"
+API_ENDPOINT="http://ainu-manager.ea.erulabs.local/api/v1/users"
 
 # Get all users
 ALL_USERS=$(curl -s "$API_ENDPOINT")
@@ -21,7 +21,7 @@ echo "First user id: $FIRST_USER_ID"
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://localhost:8085/api/v1/users/$FIRST_USER_ID/devices"
+API_ENDPOINT="http://ainu-manager.ea.erulabs.local/api/v1/users/$FIRST_USER_ID/devices"
 
 # Iterate through matching files in the payload directory
 for file in "$PAYLOAD_DIR"/*add-device*.json; do

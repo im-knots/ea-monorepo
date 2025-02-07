@@ -57,11 +57,11 @@ service:
   port: 8080
 
 ingress:
-  enabled: false
-  className: ""
+  enabled: false # no external calls coming into an api so we can leave disabled
+  className: "nginx"
   annotations: {}
   hosts:
-    - host: brand-backend.erulabs.ai
+    - host: ainu-operator.ea.erulabs.local
       paths:
         - path: /
           pathType: ImplementationSpecific
