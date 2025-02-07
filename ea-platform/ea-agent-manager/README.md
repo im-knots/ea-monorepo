@@ -320,6 +320,7 @@ Retrieve a specific agent by its `id`.
     "description":"An example agent using the Ollama LLM definition.",  
     "nodes":[
         {
+            "alias": "ollama",
             "type":"worker.inference.llm.ollama",
             "parameters":{
                 "model":"llama2-13b",
@@ -327,8 +328,11 @@ Retrieve a specific agent by its `id`.
             }
         },
         {
+            "alias": "textbox",
             "type":"destination.internal.text",
-            "parameters":{}
+            "parameters":{
+              "input": "{{ollama.response}}"
+            }
         }
     ],
     "edges":[
