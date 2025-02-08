@@ -135,85 +135,6 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 
 ### Nodes
 
-#### `GET /api/v1/nodes`
-Retrieve a list of all nodes.
-
-**Response Example:**
-```json
-[
-    {
-        "creator":"marco@erulabs.ai",
-        "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
-        "type":"worker.inference.llm.ollama"
-    },
-    {
-        "creator":"someuser@example.com",
-        "id":"abc12312-aaaa-bbbb-abcd-1234567890123",
-        "type":"worker.inference.llm.openai"
-    },
-
-]
-```
-
-#### `GET /api/v1/nodes/{id}`
-Retrieve a specific node definition by its `id`.
-
-**Response Example:**
-```json
-{
-    "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
-    "name":"Ollama LLM Inference",
-    "creator":"marco@erulabs.ai",
-    "type":"worker.inference.llm.ollama",
-    "api":{
-        "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
-        "endpoint":"/api/generate",
-        "headers":{
-            "Content-Type":"application/json"
-        },
-        "method":"POST"
-    },
-    "metadata":{
-        "additional":null,
-        "createdat":"2025-02-04T17:15:57.804Z",
-        "description":"",
-        "tags":null,
-        "updatedat":"2025-02-04T17:15:57.804Z"
-    },
-    "parameters":[
-        {
-            "default":"llama3.2",
-            "description":"Name of the model to use, e.g. 'llama2-7b'.",
-            "enum":["llama3.2","deepseek-r1:8b"],
-            "key":"model",
-            "type":"string"},
-        {
-            "default":"Hello world",
-            "description":"User prompt to be sent to the model.",
-            "enum":null,
-            "key":"prompt",
-            "type":"text"
-        },
-        {
-            "default":0.7,
-            "description":"Controls randomness in generation (0.0 - 1.0).",
-            "enum":null,
-            "key":"temperature",
-            "type":"number"
-        }
-    ],
-    "outputs":[
-        {
-            "default":"someoutput",
-            "description":"the result of the prompt",
-            "enum":["some","promptoutput"],
-            "key":"textoutput",
-            "type":"string"
-        }
-    ]
-}
-```
-
 #### `POST /api/v1/nodes`
 Create a new node definition.
 
@@ -278,6 +199,91 @@ Create a new node definition.
 }
 ```
 
+---
+
+#### `GET /api/v1/nodes`
+Retrieve a list of all nodes.
+
+**Response Example:**
+```json
+[
+    {
+        "creator":"marco@erulabs.ai",
+        "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+        "type":"worker.inference.llm.ollama"
+    },
+    {
+        "creator":"someuser@example.com",
+        "id":"abc12312-aaaa-bbbb-abcd-1234567890123",
+        "type":"worker.inference.llm.openai"
+    },
+
+]
+```
+---
+
+#### `GET /api/v1/nodes/{id}`
+Retrieve a specific node definition by its `id`.
+
+**Response Example:**
+```json
+{
+    "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+    "name":"Ollama LLM Inference",
+    "creator":"marco@erulabs.ai",
+    "type":"worker.inference.llm.ollama",
+    "api":{
+        "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
+        "endpoint":"/api/generate",
+        "headers":{
+            "Content-Type":"application/json"
+        },
+        "method":"POST"
+    },
+    "metadata":{
+        "additional":null,
+        "createdat":"2025-02-04T17:15:57.804Z",
+        "description":"",
+        "tags":null,
+        "updatedat":"2025-02-04T17:15:57.804Z"
+    },
+    "parameters":[
+        {
+            "default":"llama3.2",
+            "description":"Name of the model to use, e.g. 'llama2-7b'.",
+            "enum":["llama3.2","deepseek-r1:8b"],
+            "key":"model",
+            "type":"string"},
+        {
+            "default":"Hello world",
+            "description":"User prompt to be sent to the model.",
+            "enum":null,
+            "key":"prompt",
+            "type":"text"
+        },
+        {
+            "default":0.7,
+            "description":"Controls randomness in generation (0.0 - 1.0).",
+            "enum":null,
+            "key":"temperature",
+            "type":"number"
+        }
+    ],
+    "outputs":[
+        {
+            "default":"someoutput",
+            "description":"the result of the prompt",
+            "enum":["some","promptoutput"],
+            "key":"textoutput",
+            "type":"string"
+        }
+    ]
+}
+```
+
+---
+
+
 **Response Example:**
 ```json
 {
@@ -287,63 +293,26 @@ Create a new node definition.
 }
 ```
 
-### Agents
 
-#### `GET /api/v1/agents`
-Retrieve a list of all agents.
+#### `DELETE /api/v1/nodes/{id}`
+Delete a specific node definition by its `id`.
 
-**Response Example:**
-```json
-[
-    {
-        "creator": "marco@erulabs.ai",
-        "id": "34ef1000-d6d0-44a6-ac37-3937d42ce0e2",
-        "name": "My Sample Ollama Agent"
-    },
-    {
-        "creator": "someuser@example.com",
-        "id": "00000000-0000-0000-0000-000000000000",
-        "name": "agent 2"
-    }
-]
-```
-
-#### `GET /api/v1/agents/{id}`
-Retrieve a specific agent by its `id`.
-
-**Response Example:**
+**Response Example (Success):**
 ```json
 {
-    "id":"25b218a7-b260-4212-9b3f-62b9ecfd43f6",
-    "name":"My Sample Ollama Agent",
-    "creator":"marco@erulabs.ai",
-    "description":"An example agent using the Ollama LLM definition.",  
-    "nodes":[
-        {
-            "alias": "ollama",
-            "type":"worker.inference.llm.ollama",
-            "parameters":{
-                "model":"llama2-13b",
-                "prompt":"Tell me a short story about a flying cat."
-            }
-        },
-        {
-            "alias": "textbox",
-            "type":"destination.internal.text",
-            "parameters":{
-              "input": "{{ollama.response}}"
-            }
-        }
-    ],
-    "edges":[
-        {"from":["ollama"],"to":["textbox"]}
-    ],
-    "metadata":{
-        "createdat":"2025-02-04T17:56:27.169Z",
-        "updatedat":"2025-02-04T17:56:27.169Z"
-    }
+    "message": "Node definition deleted successfully",
+    "node_id": "c6520f08-ea04-4899-aeab-672cc01ff500"
 }
 ```
+
+**Response Example (Not Found):**
+```json
+{
+    "error": "Node definition not found"
+}
+```
+
+### Agents
 
 #### `POST /api/v1/agents`
 Create a new agent.
@@ -383,3 +352,85 @@ Create a new agent.
     "message":"Agent created"
 }
 ```
+
+---
+
+
+#### `GET /api/v1/agents`
+Retrieve a list of all agents.
+
+**Response Example:**
+```json
+[
+    {
+        "creator": "marco@erulabs.ai",
+        "id": "34ef1000-d6d0-44a6-ac37-3937d42ce0e2",
+        "name": "My Sample Ollama Agent"
+    },
+    {
+        "creator": "someuser@example.com",
+        "id": "00000000-0000-0000-0000-000000000000",
+        "name": "agent 2"
+    }
+]
+```
+
+---
+
+#### `GET /api/v1/agents/{id}`
+Retrieve a specific agent by its `id`.
+
+**Response Example:**
+```json
+{
+    "id":"25b218a7-b260-4212-9b3f-62b9ecfd43f6",
+    "name":"My Sample Ollama Agent",
+    "creator":"marco@erulabs.ai",
+    "description":"An example agent using the Ollama LLM definition.",  
+    "nodes":[
+        {
+            "alias": "ollama",
+            "type":"worker.inference.llm.ollama",
+            "parameters":{
+                "model":"llama2-13b",
+                "prompt":"Tell me a short story about a flying cat."
+            }
+        },
+        {
+            "alias": "textbox",
+            "type":"destination.internal.text",
+            "parameters":{
+              "input": "{{ollama.response}}"
+            }
+        }
+    ],
+    "edges":[
+        {"from":["ollama"],"to":["textbox"]}
+    ],
+    "metadata":{
+        "createdat":"2025-02-04T17:56:27.169Z",
+        "updatedat":"2025-02-04T17:56:27.169Z"
+    }
+}
+```
+
+---
+
+#### `DELETE /api/v1/agents/{id}`
+Delete a specific agent by its `id`.
+
+**Response Example (Success):**
+```json
+{
+    "message": "Agent deleted successfully",
+    "agent_id": "34ef1000-d6d0-44a6-ac37-3937d42ce0e2"
+}
+```
+
+**Response Example (Not Found):**
+```json
+{
+    "error": "Agent not found"
+}
+```
+---
