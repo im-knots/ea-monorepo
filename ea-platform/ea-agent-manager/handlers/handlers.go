@@ -189,6 +189,41 @@ func HandleGetNodeDef(c *gin.Context) {
 	c.JSON(http.StatusOK, nodeDef)
 }
 
+// HandleDeleteNode deletes a node definition by ID.
+func HandleDeleteNodeDef(c *gin.Context) {
+	path := c.FullPath()
+	nodeID := c.Param("node_id")
+
+	if nodeID == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing node definition ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing node definition ID"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Deleting node definition", "node_id", nodeID)
+
+	deleteResult, err := dbClient.DeleteRecordByID("nodeDefs", "nodes", nodeID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_deletion_error", "error").Inc()
+		logger.Slog.Error("Failed to delete node definition", "node_id", nodeID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete node definition"})
+		return
+	}
+
+	if deleteResult.DeletedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "node_not_found", "error").Inc()
+		logger.Slog.Warn("Node definition not found", "node_id", nodeID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node definition not found"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
+	logger.Slog.Info("Node definition deleted successfully", "node_id", nodeID)
+	c.JSON(http.StatusOK, gin.H{"message": "Node definition deleted successfully", "node_id": nodeID})
+}
+
 //-----------------------------------------------------------------------------
 // Agent Handlers
 //-----------------------------------------------------------------------------
@@ -282,6 +317,41 @@ func HandleGetAgent(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
 	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID)
 	c.JSON(http.StatusOK, agent)
+}
+
+// HandleDeleteAgent deletes an agent by ID.
+func HandleDeleteAgent(c *gin.Context) {
+	path := c.FullPath()
+	agentID := c.Param("agent_id")
+
+	if agentID == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing agent ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing agent ID"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Deleting agent", "agent_id", agentID)
+
+	deleteResult, err := dbClient.DeleteRecordByID("userAgents", "agents", agentID)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_deletion_error", "error").Inc()
+		logger.Slog.Error("Failed to delete agent", "agent_id", agentID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete agent"})
+		return
+	}
+
+	if deleteResult.DeletedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
+		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
+	logger.Slog.Info("Agent deleted successfully", "agent_id", agentID)
+	c.JSON(http.StatusOK, gin.H{"message": "Agent deleted successfully", "agent_id": agentID})
 }
 
 // HELPER FUNCTIONS

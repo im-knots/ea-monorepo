@@ -17,6 +17,12 @@ fetch('../html/sidebar.html')
         document.body.appendChild(script);
     });
 
+// Delay helper function
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Track active refresh intervals for each agent
+const jobRefreshIntervals = {};
+
 // Fetch first user ID
 const fetchFirstUserId = async () => {
     try {
@@ -53,6 +59,25 @@ const fetchAgentDetails = async (agentId) => {
         console.error(`Error fetching details for agent ${agentId}:`, error);
         return null;
     }
+};
+
+// Helper function to create the JSON editor
+const createJsonWindow = (agentDetails) => {
+    return `
+        <pre class="json-editor" style="
+            background-color:rgb(0, 0, 0); 
+            color:rgb(85, 255, 0); 
+            padding: 10px; 
+            border-radius: 5px; 
+            font-family: 'Courier New', monospace; 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            overflow-y: auto;
+            margin: 0;
+        ">
+${JSON.stringify(agentDetails, null, 4)}
+        </pre>
+    `;
 };
 
 // Delete agent function
@@ -92,27 +117,29 @@ const fetchJobs = async (agentId, userId) => {
     }
 };
 
-// Helper function to create the JSON editor
-const createAgentEditor = (agentDetails) => {
-    return `
-        <pre class="json-editor" style="
-            background-color:rgb(0, 0, 0); 
-            color:rgb(85, 255, 0); 
-            padding: 10px; 
-            border-radius: 5px; 
-            font-family: 'Courier New', monospace; 
-            white-space: pre-wrap; 
-            word-wrap: break-word; 
-            overflow-y: auto;
-            margin: 0;
-        ">
-${JSON.stringify(agentDetails, null, 4)}
-        </pre>
-    `;
+const deleteJob = async (jobId, userId, agentId) => {
+    if (!jobId || !userId) {
+        console.error("Missing jobId or userId for deletion");
+        return;
+    }
+
+    try {
+        console.log(`Deleting job with ID: ${jobId}`);
+        const response = await fetch(`${AINU_MANAGER_URL}/users/${userId}/jobs/${jobId}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+        console.log(`Job ${jobId} deleted successfully`);
+
+        // Pass agentId and userId correctly
+        await populateAgentsJobTable(agentId, userId);
+    } catch (error) {
+        console.error(`Error deleting job ${jobId}:`, error);
+    }
 };
 
-
-// Start agent function
 const startAgent = async (agentId, userId) => {
     if (!agentId || !userId) {
         console.error("Missing agentId or userId");
@@ -131,11 +158,83 @@ const startAgent = async (agentId, userId) => {
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
         console.log(`Agent ${agentId} started successfully`);
+
+        await delay(2000); // Brief delay before the first refresh to allow job to show up on the platform and get picked up by the ea-ainu-operator
+        await populateAgentsJobTable(agentId, userId); // Trigger initial refresh
     } catch (error) {
         console.error(`Error starting agent ${agentId}:`, error);
     }
 };
-  
+
+
+const populateAgentsJobTable = async (agentId, userId) => {
+    const jobDetails = await fetchJobs(agentId, userId);
+    const jobsTableBody = document.querySelector(`.job-rows[data-agent-id="${agentId}"]`);
+    const jobCountElement = document.querySelector(`.job-count[data-agent-id="${agentId}"]`);
+
+    if (!jobsTableBody) return;
+
+    const jobRows = jobDetails.map(job => {
+        const statusClass = job.status === "New" ? "new" :
+                            job.status === "Pending" ? "pending" :
+                            job.status === "Executing" ? "executing" :
+                            job.status === "Error" ? "error" :
+                            job.status === "Complete" ? "complete" : "unknown";
+
+        const isDeletable = job.status === "Complete" ? "" : "disabled";
+
+        return `
+            <tr>
+                <td>${job.agent_id}</td>
+                <td>${job.created_time}</td>
+                <td>${job.last_active || "N/A"}</td>
+                <td>
+                    <span class="status-indicator ${statusClass}"></span>
+                    ${job.status || "Unknown"}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger delete-job-btn" 
+                            data-job-id="${job.id}" 
+                            data-agent-id="${agentId}"
+                            title="Delete Job"
+                            ${isDeletable}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    jobsTableBody.innerHTML = jobRows || '<tr><td colspan="5" class="text-center">No jobs found for this agent.</td></tr>';
+
+    if (jobCountElement) {
+        jobCountElement.textContent = jobDetails.length;
+    }
+
+    // Reattach delete button event listeners
+    jobsTableBody.querySelectorAll(".delete-job-btn").forEach(icon => {
+        icon.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const jobId = icon.getAttribute("data-job-id");
+            deleteJob(jobId, userId, agentId);
+        });
+    });
+
+    // Auto-refresh logic: If any job is not "Complete", continue refreshing every 2 seconds
+    const hasPendingJobs = jobDetails.some(job => job.status !== "Complete");
+
+    if (hasPendingJobs && !jobRefreshIntervals[agentId]) {
+        jobRefreshIntervals[agentId] = setInterval(() => {
+            populateAgentsJobTable(agentId, userId);
+        }, 5000);
+    }
+
+    // Stop refreshing if all jobs are complete
+    if (!hasPendingJobs && jobRefreshIntervals[agentId]) {
+        clearInterval(jobRefreshIntervals[agentId]);
+        delete jobRefreshIntervals[agentId];
+    }
+};
 
 // Populate Agents in Grid View
 const populateAgentsGrid = async () => {
@@ -270,17 +369,28 @@ const populateAgentsTable = async () => {
                                 job.status === "Error" ? "error" :
                                 job.status === "Complete" ? "complete" : "unknown";
         
+            // Determine if delete button should be enabled inside the loop
+            const isDeletable = job.status === "Complete" ? "" : "disabled";
+        
             return `
-                <tr>
-                    <td>${job.agent_id}</td>
-                    <td>${job.created_time}</td>
-                    <td>${job.last_active || "N/A"}</td>
-                    <td>
-                        <span class="status-indicator ${statusClass}"></span>
-                        ${job.status || "Unknown"}
-                    </td>
-                </tr>
-            `;
+            <tr>
+                <td>${job.agent_id}</td>
+                <td>${job.created_time}</td>
+                <td>${job.last_active || "N/A"}</td>
+                <td>
+                    <span class="status-indicator ${statusClass}"></span>
+                    ${job.status || "Unknown"}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger delete-job-btn" 
+                            data-job-id="${job.id}" 
+                            title="Delete Job"
+                            ${isDeletable}>
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
         }).join('');
 
         const detailsRow = document.createElement("tr");
@@ -300,20 +410,23 @@ const populateAgentsTable = async () => {
                             <th>Created Time</th>
                             <th>Last Active</th>
                             <th>Status</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${jobRows || '<tr><td colspan="3" class="text-center">No jobs found for this agent.</td></tr>'}
+                    <tbody class="job-rows" data-agent-id="${agent.id}">
+                        ${jobRows || '<tr><td colspan="5" class="text-center">No jobs found for this agent.</td></tr>'}
                     </tbody>
                 </table>
             </td>
             <td colspan="2">
-                ${createAgentEditor(details)}
+                ${createJsonWindow(details)}
             </td>
         `;
 
         tableBody.appendChild(row);
         tableBody.appendChild(detailsRow);
+
+        populateAgentsJobTable(agent.id, userId);
 
         // Toggle details on row click
         row.addEventListener("click", (event) => {
@@ -347,13 +460,25 @@ const populateAgentsTable = async () => {
         });
 
         // Delete agent button event listener
-        row.querySelector(".delete-agent-btn").addEventListener("click", (event) => {
-            event.stopPropagation(); // Prevent triggering the row click event
-            deleteAgent(agent.id, userId);
+        detailsRow.querySelectorAll(".delete-job-btn").forEach(icon => {
+            icon.addEventListener("click", (event) => {
+                event.stopPropagation();
+                const jobId = icon.getAttribute("data-job-id");
+                const agentId = icon.getAttribute("data-agent-id");  // Get the correct agent ID
+                deleteJob(jobId, userId, agentId);                   // Pass agentId correctly
+            });
+        });
+
+        // Attach click events for job delete buttons
+        detailsRow.querySelectorAll(".delete-job-btn").forEach(icon => {
+            icon.addEventListener("click", (event) => {
+                event.stopPropagation(); // Prevent collapsing the row when clicking the delete button
+                const jobId = icon.getAttribute("data-job-id");
+                deleteJob(jobId, userId);
+            });
         });
     }
 };
-
 
 
 // Initialize on page load
