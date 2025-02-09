@@ -38,16 +38,20 @@ const fetchFirstUserId = async () => {
 
 // Fetch agents belonging to the user
 const fetchAgents = async (userId) => {
+    console.log("Fetching agents for userId:", userId); // Add this line
     try {
-        const response = await fetch(`${AGENT_MANAGER_URL}/agents`);
+        const response = await fetch(`${AGENT_MANAGER_URL}/agents?creator_id=${userId}`);
+        console.log("Request URL:", response.url); // Log the actual URL being called
         if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
         const agents = await response.json();
-        return agents.filter(agent => agent.creator === userId);
+        console.log("Fetched agents:", agents); // Log the response for inspection
+        return agents;
     } catch (error) {
         console.error("Error fetching agents:", error);
         return [];
     }
 };
+
 
 // Fetch detailed agent data
 const fetchAgentDetails = async (agentId) => {
