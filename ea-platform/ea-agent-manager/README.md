@@ -202,22 +202,25 @@ Create a new node definition.
 ---
 
 #### `GET /api/v1/nodes`
-Retrieve a list of all nodes.
+Retrieve a list of all nodes. Use the `creator_id` query parameter to filter by creator.
+
+**Request Example:**
+- All nodes: `/api/v1/nodes`
+- Nodes by creator: `/api/v1/nodes?creator_id=<SOME CREATOR UUID>`
 
 **Response Example:**
 ```json
 [
     {
-        "creator":"marco@erulabs.ai",
-        "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+        "creator":"<SOME CREATOR UUID>",
+        "id":"<SOME NODE UUID>",
         "type":"worker.inference.llm.ollama"
     },
     {
-        "creator":"someuser@example.com",
-        "id":"abc12312-aaaa-bbbb-abcd-1234567890123",
+        "creator":"<SOME CREATOR UUID>",
+        "id":"<SOME NODE UUID>",
         "type":"worker.inference.llm.openai"
-    },
-
+    }
 ]
 ```
 ---
@@ -230,7 +233,7 @@ Retrieve a specific node definition by its `id`.
 {
     "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
     "name":"Ollama LLM Inference",
-    "creator":"marco@erulabs.ai",
+    "creator":"<SOME CREATOR UUID>",
     "type":"worker.inference.llm.ollama",
     "api":{
         "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
@@ -288,7 +291,7 @@ Retrieve a specific node definition by its `id`.
 ```json
 {
     "node_id":"9fb7ef94-9aba-4c8c-b085-f17b008ab9ed",
-    "creator":"marco@erulabs.ai",
+    "creator":"<SOME CREATOR UUID>",
     "message":"Node definition created"  
 }
 ```
@@ -348,7 +351,7 @@ Create a new agent.
 ```json
 {
     "agent_id":"cac871c8-5f72-4e6c-9bc8-9eb006597d31",
-    "creator":"marco@erulabs.ai",
+    "creator":"<SOME CREATOR UUID>",
     "message":"Agent created"
 }
 ```
@@ -357,7 +360,11 @@ Create a new agent.
 
 
 #### `GET /api/v1/agents`
-Retrieve a list of all agents.
+Retrieve a list of all agents. Use the `creator_id` query parameter to filter by creator.
+
+**Request Example:**
+- All agents: `/api/v1/agents`
+- Agents by creator: `/api/v1/agents?creator_id=<SOME CREATOR UUID>`
 
 **Response Example:**
 ```json

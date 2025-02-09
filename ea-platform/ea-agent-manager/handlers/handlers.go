@@ -141,8 +141,14 @@ func HandleGetAllNodeDefs(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
+	creatorID := c.Query("creator_id")
+	filter := bson.M{}
+	if creatorID != "" {
+		filter["creator"] = creatorID
+	}
+
 	projection := bson.M{"id": 1, "type": 1, "creator": 1, "_id": 0}
-	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", bson.M{}, projection)
+	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", filter, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve node definitions", "error", err)
@@ -266,13 +272,19 @@ func HandleCreateAgent(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Agent created", "agent_id": input.ID, "creator": input.Creator})
 }
 
-// HandleGetAllAgents retrieves all agents with `user`, `_id`, and `name` fields.
+// HandleGetAllAgents retrieves all agents.
 func HandleGetAllAgents(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
+	creatorID := c.Query("creator_id")
+	filter := bson.M{}
+	if creatorID != "" {
+		filter["creator"] = creatorID
+	}
+
 	projection := bson.M{"creator": 1, "id": 1, "name": 1, "_id": 0}
-	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", bson.M{}, projection)
+	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", filter, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve agents", "error", err)
