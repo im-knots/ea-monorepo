@@ -548,10 +548,14 @@ function updateJsonSidebar() {
     const agentDescription = "An example agent using the Ollama LLM definition.";
 
     // Collect all nodes
-    const nodes = Array.from(svgCanvas.querySelectorAll("g")).map((nodeGroup, index) => {
+    const nodes = Array.from(svgCanvas.querySelectorAll("g")).map((nodeGroup) => {
         const rect = nodeGroup.querySelector("rect");
-        const alias = `node${index + 1}`; // Dynamic alias
-        nodeGroup.dataset.alias = alias;  // Store alias for connection reference
+        
+        // Get the alias from the alias input box
+        const aliasInput = nodeGroup.querySelector("foreignObject input");
+        const alias = aliasInput ? aliasInput.value : `node${Date.now()}`;
+        
+        nodeGroup.dataset.alias = alias;  // Ensure the alias is stored for reference
 
         const type = nodeGroup.querySelectorAll("text")[1]?.textContent || "unknown.type";
 
