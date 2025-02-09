@@ -17,7 +17,19 @@
 
     <!-- Main Content -->
     <main class="flex-grow-1 d-flex flex-column position-relative">
-        <h1 class="mb-4 text-center">Agent Builder</h1>
+        <div class="d-flex align-items-center justify-content-between p-3">
+            <!-- Title -->
+            <h1 class="mb-0 text-white">Agent Builder</h1>
+        
+            <!-- Agent Name Input Box -->
+            <input 
+                type="text" 
+                id="agentNameInput" 
+                class="form-control form-control-md bg-dark text-white border-light ms-3"
+                placeholder="Enter Agent Name..."
+                style="max-width: 300px;"  <!-- Optional: Control the width -->
+            />
+        </div>
 
         <svg id="svgCanvas" class="svg-canvas"></svg>
 
@@ -37,7 +49,7 @@
             </div>
             <div class="offcanvas-body d-flex flex-column p-2">
                 <textarea id="jsonEditor" class="form-control bg-black text-success flex-grow-1" placeholder="Enter JSON here..."></textarea>
-                <button class="btn btn-success mt-2 w-100" onclick="saveJson()">Save Changes</button>
+                <button class="btn btn-outline-light mt-2 w-100" onclick="saveJson()">Save Changes</button>
             </div>
         </div>
 
@@ -63,6 +75,43 @@
         </div>
     </main>
   </div>
+
+  <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+        <div class="modal-header border-0">
+            <h5 class="modal-title" id="successModalLabel">✅ Agent Saved Successfully</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+            <p>Your agent has been saved successfully!</p>
+        </div>
+        <div class="modal-footer border-0">
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="goToAgentManagerBtn">Go to Agent Manager</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+        <div class="modal-header border-0">
+            <h5 class="modal-title" id="errorModalLabel">❌ Error Saving Agent</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+            <p id="errorMessage">An unexpected error occurred. Please try again.</p>
+        </div>
+        <div class="modal-footer border-0">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+    </div>
 
   <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>

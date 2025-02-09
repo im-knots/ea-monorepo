@@ -123,17 +123,58 @@ const startAgent = async (agentId, userId) => {
     }
 };
 
+function showModal(isSuccess, message = "") {
+    if (isSuccess) {
+        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    } else {
+        document.getElementById('errorMessage').textContent = message || "An unexpected error occurred.";
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+    }
+}
+
+
 function saveJson() {
     const jsonEditor = document.getElementById("jsonEditor");
+    const agentName = document.getElementById("agentNameInput").value;
+
     try {
         const jsonData = JSON.parse(jsonEditor.value);
-        console.log("JSON saved:", jsonData);
-        alert("JSON saved successfully!");
+
+        if (!jsonData.name) {
+            jsonData.name = agentName || "Untitled Agent";
+        }
+
+        fetch(`${AGENT_MANAGER_URL}/agents`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(jsonData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to save agent: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Agent saved successfully:", data);
+            showModal(true); // Show success modal
+        })
+        .catch(error => {
+            console.error("Error saving agent:", error);
+            showModal(false, `❌ Error saving agent: ${error.message}`); // Show error modal with message
+        });
+
     } catch (error) {
-        alert("Invalid JSON format!");
+        showModal(false, "❌ Invalid JSON format!");
         console.error("Invalid JSON:", error);
     }
 }
+
+document.getElementById("goToAgentManagerBtn").addEventListener("click", function() {
+    window.location.href = "/html/agentmanager.html"; // Update this path as needed
+});
 
 // Fetch all nodes created by the user
 async function getNodes(userId) {
@@ -543,24 +584,19 @@ function drawSVGGrid() {
     }
 }
 
-function updateJsonSidebar() {
-    const agentName = "My Sample Ollama Agent With One Input";
+function updateJsonSidebar(agentName = null) {
+    const defaultAgentName = "My Sample Ollama Agent";
     const agentDescription = "An example agent using the Ollama LLM definition.";
 
-    // Collect all nodes
     const nodes = Array.from(svgCanvas.querySelectorAll("g")).map((nodeGroup) => {
-        const rect = nodeGroup.querySelector("rect");
-        
-        // Get the alias from the alias input box
         const aliasInput = nodeGroup.querySelector("foreignObject input");
         const alias = aliasInput ? aliasInput.value : `node${Date.now()}`;
-        
-        nodeGroup.dataset.alias = alias;  // Ensure the alias is stored for reference
+
+        nodeGroup.dataset.alias = alias;
 
         const type = nodeGroup.querySelectorAll("text")[1]?.textContent || "unknown.type";
-
-        // Collect parameters
         const params = {};
+
         nodeGroup.querySelectorAll("foreignObject").forEach((fo) => {
             const inputElement = fo.querySelector("input, select");
             const key = fo.previousSibling?.textContent || "param";
@@ -568,7 +604,9 @@ function updateJsonSidebar() {
                 ? inputElement.checked 
                 : inputElement?.value || "";
 
-            params[key] = value;
+            if (key !== alias && key !== type && key.toLowerCase() !== "alias" && key.toLowerCase() !== "type") {
+                params[key] = value;
+            }
         });
 
         return {
@@ -578,27 +616,19 @@ function updateJsonSidebar() {
         };
     });
 
-    // Collect edges based on connections
-    const edges = connections.map(conn => {
-        const fromAlias = conn.source.dataset.alias;
-        const toAlias = conn.target.dataset.alias;
+    const edges = connections.map(conn => ({
+        from: [conn.source.dataset.alias],
+        to: [conn.target.dataset.alias]
+    }));
 
-        return {
-            from: [fromAlias],
-            to: [toAlias]
-        };
-    });
-
-    // Assemble final JSON structure
     const agentPayload = {
-        name: agentName,
+        name: agentName || document.getElementById("agentNameInput").value || defaultAgentName,
         creator: userId,
         description: agentDescription,
         nodes,
         edges
     };
 
-    // Update the JSON editor panel
     const jsonEditor = document.getElementById("jsonEditor");
     if (jsonEditor) {
         jsonEditor.textContent = JSON.stringify(agentPayload, null, 4);
@@ -616,4 +646,10 @@ window.addEventListener("keydown", (e) => {
         updateJsonSidebar();
         selectedSourceNode = null; // Deselect after deletion
     }
+});
+
+// Agent Name Input Handler
+document.getElementById("agentNameInput").addEventListener("input", (event) => {
+    const agentName = event.target.value;
+    updateJsonSidebar(agentName);  // Pass the updated name to the function
 });
