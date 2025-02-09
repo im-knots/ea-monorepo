@@ -120,7 +120,8 @@ func HandleCreateNodeDef(c *gin.Context) {
 	}
 
 	input.ID = uuid.New().String()
-	input.Metadata = NodeDefinitionMetadata{CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
+	input.Metadata.CreatedAt = time.Now().UTC()
+	input.Metadata.UpdatedAt = time.Now().UTC()
 
 	metrics.StepCounter.WithLabelValues(path, "valid_request_body", "success").Inc()
 	result, err := dbClient.InsertRecord("nodeDefs", "nodes", input)

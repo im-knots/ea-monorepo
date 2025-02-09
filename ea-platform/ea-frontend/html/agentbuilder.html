@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ea Platform - Agent Builder</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/agentbuilder.css">
+</head>
+<body>
+  <div class="d-flex" style="height: 100vh;">
+    <!-- Sidebar -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 d-flex flex-column position-relative">
+        <div class="d-flex align-items-center justify-content-between p-3">
+            <!-- Title -->
+            <h1 class="mb-0 text-white">Agent Builder</h1>
+        
+            <!-- Agent Name Input Box -->
+            <input 
+                type="text" 
+                id="agentNameInput" 
+                class="form-control form-control-md bg-dark text-white border-light ms-3"
+                placeholder="Enter Agent Name..."
+                style="max-width: 300px;"  <!-- Optional: Control the width -->
+            />
+        </div>
+
+        <svg id="svgCanvas" class="svg-canvas"></svg>
+
+        <!-- JSON Editor Toggle Button -->
+        <button class="btn btn-outline-light position-absolute top-0 end-0 m-3" 
+                type="button" data-bs-toggle="offcanvas" 
+                data-bs-target="#jsonEditorPanel" 
+                aria-controls="jsonEditorPanel" 
+                aria-expanded="false">
+            <i class="bi bi-code-slash"></i> JSON Editor
+        </button>
+
+        <!-- JSON Editor Sidebar -->
+        <div class="offcanvas offcanvas-end bg-dark text-white" tabindex="-1" id="jsonEditorPanel" aria-labelledby="jsonEditorLabel" data-bs-backdrop="false" data-bs-scroll="true">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title">JSON Editor</h5>
+            </div>
+            <div class="offcanvas-body d-flex flex-column p-2">
+                <textarea id="jsonEditor" class="form-control bg-black text-success flex-grow-1" placeholder="Enter JSON here..."></textarea>
+                <button class="btn btn-outline-light mt-2 w-100" onclick="saveJson()">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- Bottom Bar Toggle Button -->
+        <button class="btn btn-outline-light position-absolute bottom-0 start-0 m-3 ms-sidebar"
+                type="button" data-bs-toggle="collapse" 
+                data-bs-target="#bottomBar" 
+                aria-controls="bottomBar" 
+                aria-expanded="false">
+            <i class="bi bi-grid-3x3-gap"></i> Node Library
+        </button>
+
+        <!-- Collapsible Bottom Bar -->
+        <div class="collapse bg-dark text-white position-absolute bottom-0 w-100 node-library" id="bottomBar">
+            <div class="container py-3">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title">Node Library</h5>
+                </div>
+                <div class="row" id="nodeGrid">
+                    <!-- Node tiles will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+    </main>
+  </div>
+
+  <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+        <div class="modal-header border-0">
+            <h5 class="modal-title" id="successModalLabel">✅ Agent Saved Successfully</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+            <p>Your agent has been saved successfully!</p>
+        </div>
+        <div class="modal-footer border-0">
+            <button type="button" class="btn btn-success" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="goToAgentManagerBtn">Go to Agent Manager</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light">
+        <div class="modal-header border-0">
+            <h5 class="modal-title" id="errorModalLabel">❌ Error Saving Agent</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+            <p id="errorMessage">An unexpected error occurred. Please try again.</p>
+        </div>
+        <div class="modal-footer border-0">
+            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+        </div>
+        </div>
+    </div>
+    </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../scripts/agentbuilder.js"></script>
+</body>
+</html>

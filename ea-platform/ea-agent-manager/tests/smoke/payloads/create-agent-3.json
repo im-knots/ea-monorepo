@@ -1,0 +1,112 @@
+{
+    "name": "More Complex with multiple ais",
+    "creator": "<SOME USER UUID>",
+    "description": "An example agent i originally created with the agent builder",
+    "edges": [
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "llama"
+            ]
+        },
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "llama-2"
+            ]
+        },
+        {
+            "from": [
+                "llama"
+            ],
+            "to": [
+                "llama-response"
+            ]
+        },
+        {
+            "from": [
+                "llama-2"
+            ],
+            "to": [
+                "llama-2-response"
+            ]
+        },
+        {
+            "from": [
+                "llama-response"
+            ],
+            "to": [
+                "compare"
+            ]
+        },
+        {
+            "from": [
+                "llama-2-response"
+            ],
+            "to": [
+                "compare"
+            ]
+        }
+    ],
+    "metadata": {
+        "createdat": "2025-02-09T07:33:49.479Z",
+        "updatedat": "2025-02-09T07:33:49.479Z"
+    },
+    "nodes": [
+        {
+            "alias": "llama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            },
+            "type": "worker.inference.llm.ollama"
+        },
+        {
+            "alias": "in",
+            "parameters": {
+                "input": "tell me a story about space"
+            },
+            "type": "input.internal.text"
+        },
+        {
+            "alias": "llama-2",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            },
+            "type": "worker.inference.llm.ollama"
+        },
+        {
+            "alias": "llama-response",
+            "parameters": {
+                "input": "{{llama.response}}"
+            },
+            "type": "input.internal.text"
+        },
+        {
+            "alias": "llama-2-response",
+            "parameters": {
+                "input": "{{llama-2.response}}"
+            },
+            "type": "input.internal.text"
+        },
+        {
+            "alias": "compare",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{llama-response.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            },
+            "type": "worker.inference.llm.ollama"
+        }
+    ]
+}

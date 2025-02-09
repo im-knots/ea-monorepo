@@ -84,22 +84,44 @@ ${JSON.stringify(agentDetails, null, 4)}
     `;
 };
 
-// Delete agent function
-const deleteAgent = async (agentId) => {
+const deleteAgent = async (agentId, userId) => {
     try {
+        console.log(`Attempting to delete agent ID: ${agentId}, User ID: ${userId}`);
+
         const response = await fetch(`${AGENT_MANAGER_URL}/agents/${agentId}`, {
-            method: "DELETE"
+            method: "DELETE",
         });
 
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        console.log(`Agent ${agentId} deleted successfully`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error Response: ${errorText}`);
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-        // Refresh the agent list after deletion
-        populateAgentsTable();
+        console.log(`✅ Agent ${agentId} deleted successfully`);
+        await populateAgentsTable();  // Refresh the agent list after deletion
     } catch (error) {
-        console.error(`Error deleting agent ${agentId}:`, error);
+        console.error(`❌ Error deleting agent ${agentId}:`, error);
     }
 };
+
+// Attach Event Listeners (like delete-job-btn)
+const attachAgentDeleteListeners = () => {
+    document.querySelectorAll(".delete-agent-btn").forEach(button => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation(); // Prevent triggering other click handlers
+
+            const agentId = button.getAttribute("data-agent-id");
+            const userId = button.getAttribute("data-user-id");
+
+            console.log(`🗑️ Delete button clicked for Agent ID: ${agentId}`); // Debug log
+
+            deleteAgent(agentId, userId);
+
+        });
+    });
+};
+
 
 const fetchJobs = async (agentId, userId) => {
     if (!userId) return [];
@@ -279,7 +301,9 @@ const populateAgentsGrid = async () => {
                     <button class="btn btn-sm btn-primary w-50 modify-agent-btn" data-agent-id="${agent.id}" data-user-id="${userId}">
                         <i class="bi bi-pencil-square"></i> Modify
                     </button>
-                    <button class="btn btn-sm btn-danger w-50 delete-agent-btn" data-agent-id="${agent.id}">
+                    <button class="btn btn-sm btn-danger w-50 delete-agent-btn" 
+                            data-agent-id="${agent.id}" 
+                            data-user-id="${userId}">
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
@@ -306,18 +330,6 @@ const populateAgentsGrid = async () => {
             modifyAgent(agentId, userId);
         });
     });
-
-    // Attach event listeners for "Delete Agent" buttons
-    document.querySelectorAll(".delete-agent-btn").forEach(button => {
-        button.addEventListener("click", (event) => {
-            const agentId = event.currentTarget.getAttribute("data-agent-id");
-            const userId = event.currentTarget.getAttribute("data-user-id");
-            deleteAgent(agentId, userId);
-        });
-    });
-    
-
-
 };
 
 // Populate Agents in List View (Collapsible Rows)
@@ -360,7 +372,9 @@ const populateAgentsTable = async () => {
                     <button class="btn btn-sm btn-primary w-50 modify-agent-btn" data-agent-id="${agent.id}" data-user-id="${userId}">
                         <i class="bi bi-pencil-square"></i> Modify
                     </button>
-                    <button class="btn btn-sm btn-danger w-50 delete-agent-btn" data-agent-id="${agent.id}">
+                    <button class="btn btn-sm btn-danger w-50 delete-agent-btn" 
+                            data-agent-id="${agent.id}" 
+                            data-user-id="${userId}"> <!-- Add this -->
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </div>
@@ -431,6 +445,7 @@ const populateAgentsTable = async () => {
         tableBody.appendChild(detailsRow);
 
         populateAgentsJobTable(agent.id, userId);
+        attachAgentDeleteListeners(); 
 
         // Toggle details on row click
         row.addEventListener("click", (event) => {
@@ -502,5 +517,24 @@ document.addEventListener('DOMContentLoaded', () => {
         agentsContainer.classList.remove('carousel-container');
         agentsContainer.classList.add('list-group');
         populateAgentsTable();
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 DOM fully loaded');
+    
+        document.addEventListener('click', (event) => {
+            console.log('🔍 Click detected:', event.target);  // Log every click
+    
+            const deleteButton = event.target.closest('.delete-agent-btn');
+            if (deleteButton) {
+                console.log('✅ Delete button clicked:', deleteButton);
+    
+                const agentId = deleteButton.getAttribute('data-agent-id');
+                const userId = deleteButton.getAttribute('data-user-id');
+
+                deleteAgent(agentId, userId);
+
+            }
+        });
     });
 });
