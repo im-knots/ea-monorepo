@@ -108,3 +108,67 @@ button[data-bs-target="#jsonEditorPanel"][aria-expanded="false"] i {
     height: 100%;
     background-color: #1e1e1e;
 }
+
+.svg-input, .svg-select {
+    width: 100%;
+    height: 35px;                      /* Larger input height */
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #ffffff;         /* White borders for inputs */
+    padding: 5px;
+    font-size: 14px;                   /* Slightly larger font */
+    box-sizing: border-box;
+    outline: none;
+    border-radius: 4px;
+    margin-bottom: 5px;                /* Extra spacing between elements */
+}
+
+.svg-input:focus, .svg-select:focus {
+    border-color: #00ffff;             /* Bright cyan on focus */
+    box-shadow: 0 0 5px #00ffff;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;                       /* Wider toggle */
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: 0.4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #00ff00;         /* Bright green when toggled */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
