@@ -107,6 +107,7 @@ button[data-bs-target="#jsonEditorPanel"][aria-expanded="false"] i {
     width: 100%;
     height: 100%;
     background-color: #1e1e1e;
+    z-index: 1;
 }
 
 .svg-input, .svg-select {
@@ -171,4 +172,8 @@ input:checked + .slider {
 
 input:checked + .slider:before {
     transform: translateX(26px);
+}
+
+foreignObject {
+    pointer-events: all; /* Allow interaction with form elements inside SVG */
 }

@@ -3,6 +3,8 @@ const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
 const AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1";
 const JOB_API_URL = "http://job-api.ea.erulabs.local/api/v1";
 
+let userId = null;
+
 // Load Sidebar
 fetch('../html/sidebar.html')
     .then(response => response.text())
@@ -169,6 +171,26 @@ async function fetchNodeDetails(nodes) {
     return detailedNodes;
 }
 
+function deleteNode(nodeGroup) {
+    // Remove all connections linked to this node
+    connections
+        .filter(conn => conn.source === nodeGroup || conn.target === nodeGroup)
+        .forEach(conn => {
+            svgCanvas.removeChild(conn.arrow);
+        });
+
+    // Filter out the deleted connections from the connections array
+    const remainingConnections = connections.filter(
+        conn => conn.source !== nodeGroup && conn.target !== nodeGroup
+    );
+    connections.length = 0;
+    connections.push(...remainingConnections);
+
+    // Remove the node itself
+    svgCanvas.removeChild(nodeGroup);
+}
+
+
 // Populate the Node Grid with detailed node information
 function populateNodeGrid(nodes) {
     const nodeGrid = document.getElementById("nodeGrid");
@@ -193,7 +215,7 @@ function populateNodeGrid(nodes) {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const userId = await fetchFirstUserId();
+    userId = await fetchFirstUserId();
     if (userId) {
         getNodes(userId);
     }
@@ -202,7 +224,69 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Select the SVG canvas
 const svgCanvas = document.getElementById('svgCanvas');
 
-// Function to add a node to the SVG canvas
+let selectedSourceNode = null;
+const connections = []; 
+
+// Function to draw an arrow between two nodes
+function drawArrow(source, target) {
+    const arrow = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    arrow.setAttribute("stroke", "#ffffff");
+    arrow.setAttribute("stroke-width", "2");
+    arrow.setAttribute("marker-end", "url(#arrowhead)");
+
+    svgCanvas.insertBefore(arrow, svgCanvas.firstChild); // Draw below nodes
+
+    connections.push({ source, target, arrow });  // New: Track the connection
+
+    updateArrowPosition(source, target, arrow);   // New: Initial positioning
+}
+
+function updateArrowPosition(source, target, arrow) {
+    const sourceRect = source.querySelector("rect");
+    const targetRect = target.querySelector("rect");
+
+    // Get position from the "transform" attribute
+    const [sourceX, sourceY] = source
+        .getAttribute("transform")
+        .match(/-?\d+(\.\d+)?/g)
+        .map(Number);
+
+    const [targetX, targetY] = target
+        .getAttribute("transform")
+        .match(/-?\d+(\.\d+)?/g)
+        .map(Number);
+
+    const startX = sourceX + parseFloat(sourceRect.getAttribute("width"));
+    const startY = sourceY + parseFloat(sourceRect.getAttribute("height")) / 2;
+
+    const endX = targetX;
+    const endY = targetY + parseFloat(targetRect.getAttribute("height")) / 2;
+
+    arrow.setAttribute("x1", startX);
+    arrow.setAttribute("y1", startY);
+    arrow.setAttribute("x2", endX);
+    arrow.setAttribute("y2", endY);
+}
+// Add marker for arrowheads
+const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+marker.setAttribute("id", "arrowhead");
+marker.setAttribute("markerWidth", "10");
+marker.setAttribute("markerHeight", "7");
+marker.setAttribute("refX", "10");
+marker.setAttribute("refY", "3.5");
+marker.setAttribute("orient", "auto");
+marker.setAttribute("markerUnits", "strokeWidth");
+
+const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+arrowPath.setAttribute("d", "M0,0 L10,3.5 L0,7 Z");
+arrowPath.setAttribute("fill", "#00ff00");
+marker.appendChild(arrowPath);
+
+const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+defs.appendChild(marker);
+svgCanvas.appendChild(defs);
+
+// Add a node to the canvas
 function addNodeToCanvas(node) {
     const nodeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
     const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -212,54 +296,80 @@ function addNodeToCanvas(node) {
     let posX = 50 + Math.random() * 200;
     let posY = 50 + Math.random() * 200;
 
-    const baseHeight = 80;
-    const paramHeight = (node.parameters?.length || 0) * 70;  // Increased parameter spacing
-    const totalHeight = baseHeight + paramHeight + 30;        // Additional padding
+    const nodeWidth = 240;
+    const padding = 15;
+    let currentY = padding;
 
-    rect.setAttribute("x", posX);
-    rect.setAttribute("y", posY);
-    rect.setAttribute("width", 240);                          // Slightly wider for content
-    rect.setAttribute("height", totalHeight);
+    nodeGroup.setAttribute("transform", `translate(${posX}, ${posY})`);
+
+    rect.setAttribute("width", nodeWidth);
     rect.setAttribute("rx", 10);
     rect.setAttribute("ry", 10);
     rect.setAttribute("fill", "#2d2d2d");
-    rect.setAttribute("stroke", "#ffffff");                   // Changed to white border
+    rect.setAttribute("stroke", "#ffffff");
     rect.setAttribute("stroke-width", "2");
     rect.style.cursor = "move";
+    nodeGroup.appendChild(rect);
 
-    nameText.setAttribute("x", posX + 120);
-    nameText.setAttribute("y", posY + 25);
+    nameText.setAttribute("x", nodeWidth / 2);
+    nameText.setAttribute("y", currentY + 20);
     nameText.setAttribute("fill", "#ffffff");
-    nameText.setAttribute("font-size", "14px");
+    nameText.setAttribute("font-size", "16px");
     nameText.setAttribute("text-anchor", "middle");
     nameText.textContent = node.name || "Unnamed Node";
+    nodeGroup.appendChild(nameText);
+    currentY += 35;
 
-    typeText.setAttribute("x", posX + 120);
-    typeText.setAttribute("y", posY + 45);
+    typeText.setAttribute("x", nodeWidth / 2);
+    typeText.setAttribute("y", currentY);
     typeText.setAttribute("fill", "#aaaaaa");
-    typeText.setAttribute("font-size", "12px");
+    typeText.setAttribute("font-size", "13px");
     typeText.setAttribute("text-anchor", "middle");
     typeText.textContent = node.type || "Unknown Type";
-
-    nodeGroup.appendChild(rect);
-    nodeGroup.appendChild(nameText);
     nodeGroup.appendChild(typeText);
+    currentY += 30;
+
+    const aliasFO = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+    aliasFO.setAttribute("x", padding);
+    aliasFO.setAttribute("y", currentY);
+    aliasFO.setAttribute("width", nodeWidth - 2 * padding);
+    aliasFO.setAttribute("height", 40);
+
+    const aliasInput = document.createElement("input");
+    aliasInput.setAttribute("type", "text");
+    aliasInput.classList.add("svg-input");
+    aliasInput.style.padding = "8px";
+    aliasInput.style.width = "100%";
+    aliasInput.value = node.alias || `node${Date.now()}`;
+
+    aliasInput.addEventListener("input", () => {
+        nodeGroup.dataset.alias = aliasInput.value;
+        updateJsonSidebar();
+    });
+
+    aliasFO.appendChild(aliasInput);
+    nodeGroup.appendChild(aliasFO);
+    nodeGroup.dataset.alias = aliasInput.value;
+
+    currentY += 50;
 
     if (node.parameters) {
-        node.parameters.forEach((param, index) => {
+        node.parameters.forEach((param) => {
             const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            label.setAttribute("x", posX + 10);
-            label.setAttribute("y", posY + 75 + (index * 70));
+            label.setAttribute("x", padding);
+            label.setAttribute("y", currentY);
             label.setAttribute("fill", "#ffffff");
-            label.setAttribute("font-size", "12px");
+            label.setAttribute("font-size", "13px");
             label.textContent = param.key;
             nodeGroup.appendChild(label);
 
+            currentY += 20;
+
             const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-            foreignObject.setAttribute("x", posX + 10);
-            foreignObject.setAttribute("y", posY + 85 + (index * 70));  // Increased spacing
-            foreignObject.setAttribute("width", 220);
-            foreignObject.setAttribute("height", 40);
+            foreignObject.setAttribute("x", padding);
+            foreignObject.setAttribute("y", currentY);
+            foreignObject.setAttribute("width", nodeWidth - 2 * padding);
+            foreignObject.setAttribute("height", 45);
 
             if (param.type === "bool") {
                 const toggleContainer = document.createElement("label");
@@ -268,6 +378,8 @@ function addNodeToCanvas(node) {
                 const input = document.createElement("input");
                 input.setAttribute("type", "checkbox");
                 input.checked = param.default || false;
+
+                input.addEventListener("change", updateJsonSidebar);
 
                 const slider = document.createElement("span");
                 slider.classList.add("slider");
@@ -278,6 +390,7 @@ function addNodeToCanvas(node) {
             } else if (param.enum) {
                 const select = document.createElement("select");
                 select.classList.add("svg-select");
+                select.style.padding = "6px";
 
                 param.enum.forEach(optionValue => {
                     const option = document.createElement("option");
@@ -289,61 +402,85 @@ function addNodeToCanvas(node) {
                     select.appendChild(option);
                 });
 
+                select.addEventListener("change", updateJsonSidebar);
                 foreignObject.appendChild(select);
             } else {
                 const input = document.createElement("input");
                 input.setAttribute("type", "text");
                 input.setAttribute("value", param.default || "");
                 input.classList.add("svg-input");
+                input.style.padding = "8px";
+                input.style.width = "100%";
+
+                input.addEventListener("input", updateJsonSidebar);
                 foreignObject.appendChild(input);
             }
 
             nodeGroup.appendChild(foreignObject);
+            currentY += 55;
         });
     }
+
+    rect.setAttribute("height", currentY + padding);
 
     svgCanvas.appendChild(nodeGroup);
 
     // Dragging functionality
     let isDragging = false;
-    let offsetX, offsetY;
+    let startX, startY;
 
     nodeGroup.addEventListener("mousedown", (e) => {
         if (e.target.tagName !== "INPUT" && e.target.tagName !== "SELECT" && e.target.tagName !== "LABEL") {
             isDragging = true;
-            const rectBounds = nodeGroup.getBoundingClientRect();
-            offsetX = e.clientX - rectBounds.left;
-            offsetY = e.clientY - rectBounds.top;
+            startX = e.clientX;
+            startY = e.clientY;
         }
     });
 
     window.addEventListener("mousemove", (e) => {
         if (isDragging) {
-            const mouseX = e.clientX - svgCanvas.getBoundingClientRect().left;
-            const mouseY = e.clientY - svgCanvas.getBoundingClientRect().top;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
 
-            rect.setAttribute("x", mouseX - offsetX);
-            rect.setAttribute("y", mouseY - offsetY);
-            nameText.setAttribute("x", mouseX - offsetX + 120);
-            nameText.setAttribute("y", mouseY - offsetY + 25);
-            typeText.setAttribute("x", mouseX - offsetX + 120);
-            typeText.setAttribute("y", mouseY - offsetY + 45);
+            posX += dx;
+            posY += dy;
 
-            nodeGroup.querySelectorAll("foreignObject").forEach((fo, idx) => {
-                fo.setAttribute("x", mouseX - offsetX + 10);
-                fo.setAttribute("y", mouseY - offsetY + 85 + (idx * 70));
-            });
-            nodeGroup.querySelectorAll("text").forEach((textEl, idx) => {
-                if (idx > 1) {
-                    textEl.setAttribute("x", mouseX - offsetX + 10);
-                    textEl.setAttribute("y", mouseY - offsetY + 75 + ((idx - 2) * 70));
+            nodeGroup.setAttribute("transform", `translate(${posX}, ${posY})`);
+
+            connections.forEach(({ source, target, arrow }) => {
+                if (source === nodeGroup || target === nodeGroup) {
+                    updateArrowPosition(source, target, arrow);
                 }
             });
+
+            startX = e.clientX;
+            startY = e.clientY;
+
+            updateJsonSidebar(); // Trigger JSON update on node move
         }
     });
 
     window.addEventListener("mouseup", () => {
         isDragging = false;
+    });
+
+    // Double-click to select as source node
+    nodeGroup.addEventListener("dblclick", () => {
+        if (selectedSourceNode) {
+            selectedSourceNode.querySelector("rect").setAttribute("stroke", "#ffffff");
+        }
+        selectedSourceNode = nodeGroup;
+        rect.setAttribute("stroke", "#00ff00");
+    });
+
+    // Single-click to select as target node and draw arrow
+    nodeGroup.addEventListener("click", () => {
+        if (selectedSourceNode && selectedSourceNode !== nodeGroup) {
+            drawArrow(selectedSourceNode, nodeGroup);
+            updateJsonSidebar();
+            selectedSourceNode.querySelector("rect").setAttribute("stroke", "#ffffff");
+            selectedSourceNode = null;
+        }
     });
 }
 
@@ -366,6 +503,7 @@ function populateNodeGrid(nodes) {
         // Attach click event to add the node to the canvas
         nodeTile.onclick = () => {
             addNodeToCanvas(node);
+            updateJsonSidebar();
         };
 
         nodeGrid.appendChild(nodeTile);
@@ -405,6 +543,73 @@ function drawSVGGrid() {
     }
 }
 
+function updateJsonSidebar() {
+    const agentName = "My Sample Ollama Agent With One Input";
+    const agentDescription = "An example agent using the Ollama LLM definition.";
+
+    // Collect all nodes
+    const nodes = Array.from(svgCanvas.querySelectorAll("g")).map((nodeGroup, index) => {
+        const rect = nodeGroup.querySelector("rect");
+        const alias = `node${index + 1}`; // Dynamic alias
+        nodeGroup.dataset.alias = alias;  // Store alias for connection reference
+
+        const type = nodeGroup.querySelectorAll("text")[1]?.textContent || "unknown.type";
+
+        // Collect parameters
+        const params = {};
+        nodeGroup.querySelectorAll("foreignObject").forEach((fo) => {
+            const inputElement = fo.querySelector("input, select");
+            const key = fo.previousSibling?.textContent || "param";
+            const value = inputElement?.type === "checkbox" 
+                ? inputElement.checked 
+                : inputElement?.value || "";
+
+            params[key] = value;
+        });
+
+        return {
+            alias,
+            type,
+            parameters: params
+        };
+    });
+
+    // Collect edges based on connections
+    const edges = connections.map(conn => {
+        const fromAlias = conn.source.dataset.alias;
+        const toAlias = conn.target.dataset.alias;
+
+        return {
+            from: [fromAlias],
+            to: [toAlias]
+        };
+    });
+
+    // Assemble final JSON structure
+    const agentPayload = {
+        name: agentName,
+        creator: userId,
+        description: agentDescription,
+        nodes,
+        edges
+    };
+
+    // Update the JSON editor panel
+    const jsonEditor = document.getElementById("jsonEditor");
+    if (jsonEditor) {
+        jsonEditor.textContent = JSON.stringify(agentPayload, null, 4);
+    }
+}
+
+
 // Redraw grid on resize
 window.addEventListener('resize', drawSVGGrid);
 drawSVGGrid();
+
+window.addEventListener("keydown", (e) => {
+    if ((e.key === "Backspace" || e.key === "Delete") && selectedSourceNode) {
+        deleteNode(selectedSourceNode);
+        updateJsonSidebar();
+        selectedSourceNode = null; // Deselect after deletion
+    }
+});
