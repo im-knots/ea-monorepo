@@ -11,7 +11,7 @@ export default function SideNav() {
         href="/"
       >
         <Box className="w-32 text-white md:w-40">
-          <Image src={'/logo.png'} alt="eru-logo" width={500} height={500} />
+          <Image src={'/logo.png'} alt="eru-logo" width={500} height={500} priority={true} />
         </Box>
       </Link>
       <Box className="flex grow flex-row justify-between space-x-2 md:flex-col md:space-x-0 md:space-y-2">

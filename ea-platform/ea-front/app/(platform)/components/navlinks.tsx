@@ -36,7 +36,6 @@ export default function NavLinks() {
     <Box>
       {links.map((link) => {
         const LinkIcon = link.icon;
-        console.log(`${pathname} === ${link.href}`);
         return (
           <Link
             key={link.name}
