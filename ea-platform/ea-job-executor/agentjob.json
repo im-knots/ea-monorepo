@@ -1,10 +1,10 @@
 {
     "name": "color picker",
-    "creator": "<SOME USER UUID>",
-    "description": "An example agent using multiple AIs to pick a color",
+    "creator": "1f4df0fa-655a-4ac6-b4bf-590abd6a4b5b",
+    "description": "An example agent using the Ollama LLM definition.",
     "nodes": [
         {
-            "alias": "color2",
+            "alias": "color1",
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
@@ -14,7 +14,7 @@
             }
         },
         {
-            "alias": "color1",
+            "alias": "color2",
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
@@ -27,28 +27,28 @@
             "alias": "in",
             "type": "input.internal.text",
             "parameters": {
-                "input": "pick a color and output nothing but the color name in english"
+                "input": "pick a color and only output that color name and nothing else"
             }
         },
         {
-            "alias": "picker-prompt",
+            "alias": "color1-response",
             "type": "input.internal.text",
             "parameters": {
-                "input": "//USER PROMPT: Pick one of these colors and tell me why you picked it END USER PROMPT"
+                "input": "{{color1.response}}"
             }
         },
         {
-            "alias": "color2-out",
+            "alias": "color2-response",
             "type": "input.internal.text",
             "parameters": {
                 "input": "{{color2.response}}"
             }
         },
         {
-            "alias": "color1-out",
+            "alias": "picker-prompt",
             "type": "input.internal.text",
             "parameters": {
-                "input": "{{color1.response}}"
+                "input": "//prompt: Pick one of these colors and tell me why//"
             }
         },
         {
@@ -59,13 +59,6 @@
                 "prompt": "{{picker-prompt.input}}",
                 "stream": false,
                 "temperature": "0.7"
-            }
-        },
-        {
-            "alias": "out",
-            "type": "destination.internal.text",
-            "parameters": {
-                "input": "{{picker.response}}"
             }
         }
     ],
@@ -80,18 +73,26 @@
         },
         {
             "from": [
-                "color1"
+                "in"
             ],
             "to": [
-                "color1-out"
+                "color2"
             ]
         },
         {
             "from": [
-                "color1-out"
+                "color1"
             ],
             "to": [
-                "picker"
+                "color1-response"
+            ]
+        },
+        {
+            "from": [
+                "color2"
+            ],
+            "to": [
+                "color2-response"
             ]
         },
         {
@@ -104,7 +105,7 @@
         },
         {
             "from": [
-                "color2-out"
+                "color1-response"
             ],
             "to": [
                 "picker"
@@ -112,26 +113,10 @@
         },
         {
             "from": [
+                "color2-response"
+            ],
+            "to": [
                 "picker"
-            ],
-            "to": [
-                "out"
-            ]
-        },
-        {
-            "from": [
-                "in"
-            ],
-            "to": [
-                "color2"
-            ]
-        },
-        {
-            "from": [
-                "color2"
-            ],
-            "to": [
-                "color2-out"
             ]
         }
     ]

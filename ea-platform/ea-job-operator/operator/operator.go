@@ -78,8 +78,9 @@ type Edge struct {
 
 // Metadata holds timestamps for Agents.
 type Metadata struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	AgentJobID string    `json:"agent_job_id"`
 }
 
 // Agent represents an AI workflow with interconnected nodes.
@@ -109,6 +110,7 @@ var (
 	completedJobQueue      = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	completedAgentJobQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	errorJobQueue          = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	nodeStatusQueue        = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 )
 
 // StartOperators initializes informers and starts watching resources
@@ -162,6 +164,11 @@ func StartOperators(stopCh <-chan struct{}) {
 	if cfg.FeatureCompletedAgentJobs == "true" { //  NEW: Watch & clean up completed AgentJobs
 		go watchCompletedAgentJobs(dynamicFactory, stopCh)
 		go processCompletedAgentJobQueue(dynamicClient, stopCh)
+	}
+
+	if cfg.FeatureNodeStatusUpdates == "true" {
+		go watchNodeStatus(k8sFactory, stopCh)
+		go processNodeStatusQueue(dynamicClient, stopCh)
 	}
 
 	// Start and sync factories
@@ -296,6 +303,29 @@ func watchCompletedAgentJobs(factory dynamicinformer.DynamicSharedInformerFactor
 	informer.Run(stopCh)
 }
 
+func watchNodeStatus(factory informers.SharedInformerFactory, stopCh <-chan struct{}) {
+	logger.Slog.Info("Starting Node Status Event Informer")
+
+	eventInformer := factory.Core().V1().Events().Informer()
+
+	eventInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			event, ok := obj.(*corev1.Event)
+			if !ok {
+				logger.Slog.Error("Failed to parse Event object")
+				return
+			}
+
+			if event.Reason == "NodeStatusUpdate" {
+				logger.Slog.Info("Detected Node Status Update", "event", event.Name)
+				nodeStatusQueue.Add(event)
+			}
+		},
+	})
+
+	eventInformer.Run(stopCh)
+}
+
 //
 // PROCESS QUEUE FUNCTIONS
 //
@@ -395,7 +425,18 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 				} else {
 					agent.ID = agentID
 				}
+
+				agentJobID, found, err := unstructured.NestedString(job.Object, "metadata", "name")
+				if err != nil || !found {
+					logger.Slog.Warn("AgentJob ID not found in metadata, defaulting to job name", "job", jobName)
+					agentJobID = jobName // Fallback to jobName if not found
+				}
+
 				agent.Metadata.CreatedAt = job.GetCreationTimestamp().Time
+				agent.Metadata.UpdatedAt = time.Now()
+
+				// Add AgentJob ID to metadata
+				agent.Metadata.AgentJobID = agentJobID
 
 				// Marshal the cleaned AgentJob JSON
 				agentJobJSON, err := json.Marshal(agent)
@@ -433,7 +474,8 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 						BackoffLimit: &backoffLimit,
 						Template: corev1.PodTemplateSpec{
 							Spec: corev1.PodSpec{
-								RestartPolicy: corev1.RestartPolicyNever,
+								ServiceAccountName: "ea-job-executor-sa",
+								RestartPolicy:      corev1.RestartPolicyNever,
 								Containers: []corev1.Container{{
 									Name:            "executor",
 									Image:           "localhost:5000/ea-job-executor:latest",
@@ -647,6 +689,72 @@ func processErrorJobQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 	}, time.Second, stopCh) // Runs continuously while stopCh is open
 }
 
+func processNodeStatusQueue(dynamicClient dynamic.Interface, stopCh <-chan struct{}) {
+	wait.Until(func() {
+		for {
+			item, shutdown := nodeStatusQueue.Get()
+			if shutdown {
+				return
+			}
+
+			event := item.(*corev1.Event)
+			jobID := event.InvolvedObject.Name
+
+			nodeAlias := event.Annotations["nodeAlias"]
+			status := event.Annotations["status"]
+			outputJSON := event.Annotations["output"]
+
+			var output map[string]interface{}
+			if err := json.Unmarshal([]byte(outputJSON), &output); err != nil {
+				fmt.Printf("Failed to unmarshal output JSON: %v\n", err)
+				nodeStatusQueue.Done(event)
+				continue
+			}
+
+			agentJob, err := dynamicClient.Resource(agentJobGVR).Namespace(namespace).Get(context.TODO(), jobID, metav1.GetOptions{})
+			if err != nil {
+				fmt.Printf("Failed to get AgentJob: %v\n", err)
+				nodeStatusQueue.Done(event)
+				continue
+			}
+
+			nodeStatus := map[string]interface{}{
+				"alias":       nodeAlias,
+				"status":      status,
+				"output":      output,
+				"lastUpdated": time.Now().Format(time.RFC3339),
+			}
+
+			existingNodes, _, _ := unstructured.NestedSlice(agentJob.Object, "status", "nodes")
+			found := false
+			for i, n := range existingNodes {
+				node := n.(map[string]interface{})
+				if node["alias"] == nodeAlias {
+					existingNodes[i] = nodeStatus
+					found = true
+					break
+				}
+			}
+			if !found {
+				existingNodes = append(existingNodes, nodeStatus)
+			}
+
+			if err := unstructured.SetNestedSlice(agentJob.Object, existingNodes, "status", "nodes"); err != nil {
+				fmt.Printf("Failed to set node status: %v\n", err)
+				nodeStatusQueue.Done(event)
+				continue
+			}
+
+			_, err = dynamicClient.Resource(agentJobGVR).Namespace(namespace).UpdateStatus(context.TODO(), agentJob, metav1.UpdateOptions{})
+			if err != nil {
+				fmt.Printf("Failed to update AgentJob status: %v\n", err)
+			}
+
+			nodeStatusQueue.Done(event)
+		}
+	}, time.Second, stopCh)
+}
+
 //
 // HELPER FUNCTIONS
 //
@@ -655,13 +763,18 @@ func processErrorJobQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 func updateAgentJobStatus(dynamicClient dynamic.Interface, job *unstructured.Unstructured, jobName, state, message string) error {
 	updatedJob := job.DeepCopy()
 
-	// Modify only the status field
-	err := unstructured.SetNestedMap(updatedJob.Object, map[string]interface{}{
-		"state":   state,
-		"message": message,
-	}, "status")
+	// Get existing status to preserve node status updates
+	existingStatus, found, err := unstructured.NestedMap(updatedJob.Object, "status")
+	if err != nil || !found {
+		existingStatus = make(map[string]interface{}) // Initialize if not found
+	}
 
-	if err != nil {
+	// Merge the new status fields without overwriting existing data
+	existingStatus["state"] = state
+	existingStatus["message"] = message
+
+	// Apply the merged status back to the object
+	if err := unstructured.SetNestedMap(updatedJob.Object, existingStatus, "status"); err != nil {
 		logger.Slog.Error("Failed to set status field in AgentJob", "job", jobName, "error", err)
 		return err
 	}
@@ -675,7 +788,7 @@ func updateAgentJobStatus(dynamicClient dynamic.Interface, job *unstructured.Uns
 		return nil
 	}
 
-	// If there's a conflict, assume another pod already handled it and move on
+	// Handle conflict errors gracefully
 	if apierrors.IsConflict(err) {
 		logger.Slog.Warn("Conflict detected while updating AgentJob, skipping retry", "job", jobName)
 		return nil

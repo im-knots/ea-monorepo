@@ -2,17 +2,24 @@ package executor
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"ea-job-executor/config"
 	"ea-job-executor/logger"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 //
@@ -34,8 +41,9 @@ type Edge struct {
 
 // Metadata holds timestamps for Agents.
 type Metadata struct {
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	AgentJobID string    `json:"agent_job_id"`
 }
 
 // Agent represents an AI workflow with interconnected nodes.
@@ -146,7 +154,7 @@ func ExecuteAgentJob() {
 	}
 
 	// Step 4: Execute the graph
-	finalNodeOutput, err := stepExecuteGraph(execGraph, nodesLib)
+	finalNodeOutput, err := stepExecuteGraph(job.Metadata.AgentJobID, execGraph, nodesLib)
 	if err != nil {
 		logger.Slog.Error("Execution of the graph failed", "error", err)
 		os.Exit(1)
@@ -251,8 +259,8 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		ExecutionOrder: []string{},
 	}
 
-	nodeAliases := make(map[string]string) // alias -> alias mapping
-	nodeIDs := []string{}                  // Maintain original JSON node order
+	nodeAliases := make(map[string]string)
+	nodeIDs := []string{}
 
 	// Step 1: Store nodes in the graph
 	for _, node := range agent.Nodes {
@@ -268,7 +276,7 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		nodeIDs = append(nodeIDs, nodeID)
 	}
 
-	// Step 2: Build adjacency list and track incoming connections
+	// Step 2: Add explicit edges from the agent definition
 	for _, edge := range agent.Edges {
 		for _, fromAlias := range edge.From {
 			for _, toAlias := range edge.To {
@@ -285,17 +293,26 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		}
 	}
 
-	// Step 3: Stable Topological Sorting (preserves JSON order)
-	queue := []string{}
+	// Step 3: Add implicit and transitive dependencies
+	for _, node := range agent.Nodes {
+		dependencies := extractDependencies(node.Parameters, execGraph.Nodes)
+		for _, dep := range dependencies {
+			if _, exists := execGraph.Nodes[dep]; exists {
+				// Add transitive edge
+				execGraph.AdjList[dep] = append(execGraph.AdjList[dep], node.Alias)
+				execGraph.Indegrees[node.Alias]++
+			}
+		}
+	}
 
-	// Identify nodes with no incoming edges (roots)
+	// Step 4: Stable Topological Sorting
+	queue := []string{}
 	for _, nodeID := range nodeIDs {
 		if execGraph.Indegrees[nodeID] == 0 {
 			queue = append(queue, nodeID)
 		}
 	}
 
-	// Step 4: Process nodes in a stable topological order
 	for len(queue) > 0 {
 		current := queue[0]
 		queue = queue[1:]
@@ -310,7 +327,7 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 		}
 	}
 
-	// Step 5: Validate graph completeness (check for cycles)
+	// Step 5: Validate
 	if len(execGraph.ExecutionOrder) != len(execGraph.Nodes) {
 		return ExecutionGraph{}, errors.New("cyclic dependency detected in execution graph")
 	}
@@ -320,40 +337,57 @@ func stepBuildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 }
 
 // stepExecuteGraph executes the graph in order.
-func stepExecuteGraph(execGraph ExecutionGraph, nodesLib NodesLibrary) (interface{}, error) {
+func stepExecuteGraph(agentJobID string, execGraph ExecutionGraph, nodesLib NodesLibrary) (interface{}, error) {
 	state := ExecutionState{Results: make(map[string]interface{})}
+	executedNodes := make(map[string]bool)
+	var finalNodeOutput interface{}
 
-	var finalNodeOutput interface{} // Declare finalNodeOutput
+	for len(executedNodes) < len(execGraph.ExecutionOrder) {
+		progressMade := false
 
-	for _, nodeType := range execGraph.ExecutionOrder {
-		node, exists := execGraph.Nodes[nodeType]
-		if !exists {
-			return nil, fmt.Errorf("Node type not found in execution graph %s", nodeType)
+		for _, nodeType := range execGraph.ExecutionOrder {
+			if executedNodes[nodeType] {
+				continue // Skip already executed nodes
+			}
+
+			node := execGraph.Nodes[nodeType]
+			nodeDef, err := findNodeDefinition(node.Type, nodesLib)
+			if err != nil {
+				return nil, err
+			}
+
+			// Check if dependencies are resolved
+			if !dependenciesResolved(node, &state) {
+				continue
+			}
+
+			// Merge inputs just-in-time
+			node = mergeInputsForNode(node, nodeDef, &state, execGraph)
+			resolvedParams, _ := injectInputsFromState(node.Parameters, &state)
+			node.Parameters = resolvedParams
+
+			// Execute the node
+			result, err := executeNode(agentJobID, node, nodeDef, &state, execGraph)
+			if err != nil {
+				return nil, err
+			}
+
+			// Store results
+			state.Results[nodeType] = result
+			executedNodes[nodeType] = true
+			progressMade = true
+
+			logger.Slog.Info("Successfully executed node", "nodeType", nodeType)
+
+			// Store final output
+			if nodeType == execGraph.ExecutionOrder[len(execGraph.ExecutionOrder)-1] {
+				finalNodeOutput = result
+			}
 		}
 
-		logger.Slog.Info("Executing node", "nodeType", nodeType)
-
-		nodeDef, err := findNodeDefinition(node.Type, nodesLib)
-		if err != nil {
-			return nil, err
-		}
-
-		logger.Slog.Debug("Found node definition", "nodeType", node.Type, "definition", nodeDef)
-
-		result, err := executeNode(node, nodeDef, &state)
-		if err != nil {
-			return nil, err
-		}
-
-		// Store results of the node execution
-		state.Results[nodeType] = result
-		logger.Slog.Info("Successfully executed node", "nodeType", nodeType)
-		logger.Slog.Debug("Successfully executed node", "nodeType", nodeType, "result", result)
-
-		// Store the result of the final node
-		if nodeType == execGraph.ExecutionOrder[len(execGraph.ExecutionOrder)-1] {
-			finalNodeOutput = result
-			logger.Slog.Info("Final node output stored", "nodeAlias", node.Alias, "result", finalNodeOutput)
+		// 🔒 Safety check for circular dependencies
+		if !progressMade {
+			return nil, fmt.Errorf("circular dependency detected or missing inputs")
 		}
 	}
 
@@ -366,52 +400,46 @@ func stepExecuteGraph(execGraph ExecutionGraph, nodesLib NodesLibrary) (interfac
 //
 
 // executeNode determines the node type and delegates execution accordingly.
-func executeNode(node NodeInstance, nodeDef NodeDefinition, state *ExecutionState) (interface{}, error) {
-	// Only merge inputs for nodes that actually need it
-	node = mergeInputsForNode(node, nodeDef, state)
+func executeNode(agentJobID string, node NodeInstance, nodeDef NodeDefinition, state *ExecutionState, execGraph ExecutionGraph) (interface{}, error) {
+	// Load configuration
+	config := config.LoadConfig()
 
-	// Inject values into parameters from execution state
-	for key, value := range node.Parameters {
-		if strVal, ok := value.(string); ok && strings.Contains(strVal, "{{") {
-			resolvedVal, exists, err := resolveStateReference(strVal, state)
-			if err != nil {
-				logger.Slog.Error("Failed to resolve reference", "key", key, "value", strVal, "error", err)
-				return nil, err
-			} else if exists {
-				node.Parameters[key] = resolvedVal
-				logger.Slog.Info("Resolved reference for parameter", "key", key, "value", resolvedVal)
-			}
-		}
-	}
-
-	// Validate and populate parameters
+	// Merge inputs and resolve parameters
+	node = mergeInputsForNode(node, nodeDef, state, execGraph)
 	validatedParams, err := validateAndFillParameters(node.Parameters, nodeDef.Parameters)
 	if err != nil {
 		return nil, err
 	}
 	node.Parameters = validatedParams
 
-	// Execute API-based nodes
+	// Execute the node
 	var result interface{}
+	status := "Completed"
+
 	if nodeDef.API.BaseURL != "" {
-		logger.Slog.Info("Executing API Node", "nodeType", node.Type)
 		result, err = executeAPINode(node, nodeDef)
 	} else {
-		logger.Slog.Info("Executing Generic Node", "nodeType", node.Type)
 		result, err = executeGenericNode(node, nodeDef, state)
 	}
 
 	if err != nil {
-		return nil, err
+		status = "Failed"
+		logger.Slog.Error("Node execution failed", "node", node.Alias, "error", err)
 	}
 
-	// Store outputs in execution state for downstream nodes
+	// Store the result
 	state.Results[node.Alias] = result
-	logger.Slog.Debug("Execution state after storing result", "state", state.Results)
 
-	logger.Slog.Debug("Stored node result in execution state", "nodeAlias", node.Alias, "result", result)
+	// Emit Kubernetes Event for status update if the feature is enabled
+	if config.FeatureK8sEvents == "true" {
+		if emitErr := EmitK8sEvent(agentJobID, node.Alias, status, map[string]interface{}{
+			"result": result,
+		}); emitErr != nil {
+			logger.Slog.Error("Failed to emit Kubernetes event", "error", emitErr)
+		}
+	}
 
-	return result, nil
+	return result, err
 }
 
 // executeAPINode makes an HTTP request based on the node definition.
@@ -567,37 +595,23 @@ func injectInputsFromState(parameters map[string]interface{}, state *ExecutionSt
 }
 
 func resolveStateReference(reference string, state *ExecutionState) (interface{}, bool, error) {
-	parts := strings.Split(strings.Trim(reference, "{}"), ".")
+	parts := strings.Split(reference, ".")
 	if len(parts) < 2 {
-		return nil, false, fmt.Errorf("Invalid reference format: %s", reference)
+		return nil, false, fmt.Errorf("invalid reference format: %s", reference)
 	}
 
-	nodeAlias, keys := parts[0], parts[1:]
+	nodeAlias := parts[0]
+	key := parts[1]
 
-	// Retrieve the node result from execution state
-	nodeResult, exists := state.Results[nodeAlias]
-	if !exists {
-		logger.Slog.Warn("Failed to resolve state reference: node not found", "reference", reference)
-		logger.Slog.Warn("Current execution state", "state", state.Results)
-		return nil, false, fmt.Errorf("Failed to resolve state reference: node not found. Reference: %s", reference)
+	if nodeResult, exists := state.Results[nodeAlias]; exists {
+		if resMap, ok := nodeResult.(map[string]interface{}); ok {
+			if val, found := resMap[key]; found {
+				return val, true, nil
+			}
+		}
 	}
 
-	// Ensure nodeResult is a map before extracting keys
-	nodeMap, ok := nodeResult.(map[string]interface{})
-	if !ok {
-		logger.Slog.Warn("Node result is not a map", "nodeAlias", nodeAlias, "actualType", fmt.Sprintf("%T", nodeResult))
-		return nil, false, fmt.Errorf("Node result is not a map: %T", nodeResult)
-	}
-
-	// Recursively retrieve the nested value
-	value, found := getNestedValue(nodeMap, keys)
-	if !found {
-		logger.Slog.Warn("Failed to resolve state reference: key not found", "reference", reference)
-		return nil, false, fmt.Errorf("Failed to resolve state reference: key not found. Reference: %s", reference)
-	}
-
-	logger.Slog.Info("Successfully resolved reference", "reference", reference, "value", value)
-	return value, true, nil
+	return nil, false, fmt.Errorf("failed to resolve reference: %s", reference)
 }
 
 // getNestedValue recursively retrieves a nested value from a JSON-like map.
@@ -618,46 +632,173 @@ func getNestedValue(data interface{}, keys []string) (interface{}, bool) {
 	return nil, false
 }
 
-func mergeInputsForNode(targetNode NodeInstance, nodeDef NodeDefinition, state *ExecutionState) NodeInstance {
-	// Ensure the node actually expects a "prompt"
-	hasPrompt := false
+func mergeInputsForNode(targetNode NodeInstance, nodeDef NodeDefinition, state *ExecutionState, execGraph ExecutionGraph) NodeInstance {
+	var mergedInputs []string
+	seenInputs := make(map[string]bool)
+
+	logger.Slog.Info("Checking for inputs to merge for node", "nodeAlias", targetNode.Alias)
+
+	hasPromptParam := false
 	for _, param := range nodeDef.Parameters {
 		if param.Key == "prompt" {
-			hasPrompt = true
+			hasPromptParam = true
 			break
 		}
 	}
 
-	// If the node does not expect "prompt", return as-is
-	if !hasPrompt {
-		logger.Slog.Debug("Skipping input merge for node without 'prompt' parameter", "nodeAlias", targetNode.Alias)
+	if !hasPromptParam {
+		logger.Slog.Debug("Skipping input merge as node doesn't expect 'prompt'", "nodeAlias", targetNode.Alias)
 		return targetNode
 	}
 
-	var mergedInputs []string
-	logger.Slog.Info("Checking for inputs to merge for node", "nodeAlias", targetNode.Alias)
-
-	for source, result := range state.Results {
-		// Ensure the result is a map with an "input" key
-		if inputMap, ok := result.(map[string]interface{}); ok {
-			if userInput, found := inputMap["input"].(string); found {
-				// Only merge the actual user input text, not the placeholder
-				mergedInputs = append(mergedInputs, userInput)
-				logger.Slog.Debug("Appending user input from source", "source", source, "value", userInput)
-			} else {
-				logger.Slog.Warn("Source input does not contain a string", "source", source, "value", inputMap)
+	// Merge upstream node outputs
+	for upstreamNodeAlias, downstreams := range execGraph.AdjList {
+		for _, downstream := range downstreams {
+			if downstream == targetNode.Alias {
+				if upstreamResult, exists := state.Results[upstreamNodeAlias]; exists {
+					if resMap, ok := upstreamResult.(map[string]interface{}); ok {
+						for _, key := range []string{"input", "response"} {
+							if val, exists := resMap[key]; exists {
+								if strVal, isString := val.(string); isString && !seenInputs[strVal] {
+									mergedInputs = append(mergedInputs, strVal)
+									seenInputs[strVal] = true
+									logger.Slog.Debug("Merged from upstream", "source", upstreamNodeAlias, "key", key, "value", strVal)
+								}
+							}
+						}
+					}
+				}
 			}
-		} else {
-			logger.Slog.Warn("Unexpected input format", "source", source, "value", result)
 		}
 	}
 
-	// Join all user inputs into a single prompt
+	// Apply merged inputs
 	if len(mergedInputs) > 0 {
 		finalPrompt := strings.Join(mergedInputs, " ")
 		targetNode.Parameters["prompt"] = finalPrompt
 		logger.Slog.Info("Merged inputs for node", "nodeAlias", targetNode.Alias, "mergedPrompt", finalPrompt)
 	}
 
+	// 🚀 **NEW:** Resolve placeholders after merging
+	resolvedParams, err := injectInputsFromState(targetNode.Parameters, state)
+	if err != nil {
+		logger.Slog.Error("Error resolving placeholders", "nodeAlias", targetNode.Alias, "error", err)
+	} else {
+		targetNode.Parameters = resolvedParams
+		logger.Slog.Info("Resolved placeholders for node", "nodeAlias", targetNode.Alias, "resolvedPrompt", targetNode.Parameters["prompt"])
+	}
+
 	return targetNode
+}
+
+func EmitK8sEvent(agentJobID string, nodeAlias, status string, output map[string]interface{}) error {
+	// Create Kubernetes client
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return fmt.Errorf("failed to create Kubernetes config: %w", err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create Kubernetes client: %w", err)
+	}
+
+	// Marshal output to JSON string
+	outputJSON, err := json.Marshal(output)
+	if err != nil {
+		logger.Slog.Error("Failed to marshal output to JSON", "error", err)
+		outputJSON = []byte("{}") // Use empty JSON object on failure
+	}
+
+	// Create the event object
+	event := &corev1.Event{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: fmt.Sprintf("%s-%s-", agentJobID, nodeAlias),
+			Namespace:    "ea-platform",
+		},
+		InvolvedObject: corev1.ObjectReference{
+			Kind:      "AgentJob",
+			Namespace: "ea-platform",
+			Name:      agentJobID,
+		},
+		Reason:  "NodeStatusUpdate",
+		Message: fmt.Sprintf("Node %s status: %s", nodeAlias, status),
+		Type:    "Normal",
+		Source: corev1.EventSource{
+			Component: "ea-job-executor",
+		},
+		FirstTimestamp: metav1.Time{Time: time.Now()},
+		LastTimestamp:  metav1.Time{Time: time.Now()},
+		Count:          1,
+	}
+
+	// Add output as annotations
+	event.Annotations = map[string]string{
+		"nodeAlias": nodeAlias,
+		"status":    status,
+		"output":    string(outputJSON), // JSON string instead of raw map
+	}
+
+	// Emit the event
+	_, err = clientset.CoreV1().Events("ea-platform").Create(context.TODO(), event, metav1.CreateOptions{})
+	return err
+}
+
+func extractDependencies(parameters map[string]interface{}, nodes map[string]NodeInstance) []string {
+	dependencies := []string{}
+	seen := make(map[string]bool) // To prevent duplicate dependencies
+
+	// Regex to find placeholders like {{nodeAlias.key}}
+	re := regexp.MustCompile(`{{\s*(\w+)\.\w+\s*}}`)
+
+	// Helper to recursively find dependencies
+	var dfs func(paramValue string)
+	dfs = func(paramValue string) {
+		matches := re.FindAllStringSubmatch(paramValue, -1)
+		for _, match := range matches {
+			alias := match[1]
+			if !seen[alias] {
+				seen[alias] = true
+				dependencies = append(dependencies, alias)
+
+				// Recursively check nested dependencies
+				if node, exists := nodes[alias]; exists {
+					for _, nestedVal := range node.Parameters {
+						if nestedStr, ok := nestedVal.(string); ok {
+							dfs(nestedStr)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Start DFS for each parameter
+	for _, value := range parameters {
+		if strVal, ok := value.(string); ok {
+			dfs(strVal)
+		}
+	}
+
+	return dependencies
+}
+
+func dependenciesResolved(node NodeInstance, state *ExecutionState) bool {
+	re := regexp.MustCompile(`{{\s*(\w+)\.(\w+)\s*}}`)
+
+	for _, param := range node.Parameters {
+		if strVal, ok := param.(string); ok {
+			matches := re.FindAllStringSubmatch(strVal, -1)
+			for _, match := range matches {
+				nodeAlias, key := match[1], match[2]
+				if result, exists := state.Results[nodeAlias]; !exists {
+					return false // Dependency not yet resolved
+				} else if resMap, ok := result.(map[string]interface{}); ok {
+					if _, keyExists := resMap[key]; !keyExists {
+						return false
+					}
+				}
+			}
+		}
+	}
+	return true
 }
