@@ -585,7 +585,7 @@ function drawSVGGrid() {
 }
 
 function updateJsonSidebar(agentName = null) {
-    const defaultAgentName = "My Sample Ollama Agent";
+    const defaultAgentName = "My Agent";
     const agentDescription = "An example agent using the Ollama LLM definition.";
 
     const nodes = Array.from(svgCanvas.querySelectorAll("g")).map((nodeGroup) => {
