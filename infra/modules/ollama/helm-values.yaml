@@ -3,8 +3,10 @@ ollama:
   models:
     pull:
       - llama3.2
+      # - deepseek-r1:8b
     run:
       - llama3.2
+      # - deepseek-r1:8b
 
 autoscaling:
   enabled: true

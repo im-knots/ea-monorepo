@@ -12,6 +12,7 @@ type Config struct {
 	FeatureInactiveAgentJobs  string
 	FeatureCompletedAgentJobs string
 	FeatureErrorAgentJobs     string
+	FeatureNodeStatusUpdates  string
 	DBURL                     string
 }
 
@@ -24,6 +25,7 @@ func LoadConfig() Config {
 		FeatureInactiveAgentJobs:  getEnv("FEATURE_INACTIVE_AGENT_JOBS", "true"),
 		FeatureCompletedAgentJobs: getEnv("FEATURE_COMPLETED_AGENT_JOBS", "true"),
 		FeatureErrorAgentJobs:     getEnv("FEATURE_ERROR_AGENT_JOBS", "true"),
+		FeatureNodeStatusUpdates:  getEnv("FEATURE_NODE_STATUS_UPDATES", "true"),
 		DBURL:                     getEnv("DB_URL", "mongodb://admin:password@localhost:27017"),
 	}
 }
