@@ -193,6 +193,8 @@ const startAgent = async (agentId, userId) => {
 };
 
 
+// Function to populate the job table with expandable node details
+// Function to populate the job table with expandable node details
 const populateAgentsJobTable = async (agentId, userId) => {
     const jobDetails = await fetchJobs(agentId, userId);
     const jobsTableBody = document.querySelector(`.job-rows[data-agent-id="${agentId}"]`);
@@ -203,11 +205,29 @@ const populateAgentsJobTable = async (agentId, userId) => {
     const jobRows = jobDetails.map(job => {
         const statusClass = job.status === "New" ? "new" :
                             job.status === "Pending" ? "pending" :
-                            job.status === "Executing" ? "executing" :
+                            job.status === "executing" ? "executing" :
                             job.status === "Error" ? "error" :
                             job.status === "Complete" ? "complete" : "unknown";
 
         const isDeletable = job.status === "Complete" ? "" : "disabled";
+
+        const nodesTable = job.nodes?.map(node => {
+            const nodeStatusClass = node.status === "Completed" ? "complete" :
+                                    node.status === "Pending" ? "pending" :
+                                    node.status === "Error" ? "error" : "unknown";
+
+            return `
+                <tr>
+                    <td>${node.alias}</td>
+                    <td>
+                        <span class="status-indicator ${nodeStatusClass}"></span>
+                        ${node.status}
+                    </td>
+                    <td>${node.lastUpdated || "N/A"}</td>
+                    <td>${node.output?.result?.input || node.output?.result?.response || "N/A"}</td>
+                </tr>
+            `;
+        }).join('') || '<tr><td colspan="4">No nodes available</td></tr>';
 
         return `
             <tr>
@@ -219,13 +239,34 @@ const populateAgentsJobTable = async (agentId, userId) => {
                     ${job.status || "Unknown"}
                 </td>
                 <td>
+                    <button class="btn btn-sm btn-outline-dark toggle-node-btn" data-job-id="${job.id}" title="Toggle Node Details">
+                        <i class="bi bi-chevron-down"></i>
+                    </button>
                     <button class="btn btn-sm btn-outline-danger delete-job-btn" 
                             data-job-id="${job.id}" 
-                            data-agent-id="${agentId}"
+                            data-agent-id="${agentId}" 
                             title="Delete Job"
                             ${isDeletable}>
                         <i class="bi bi-trash"></i>
                     </button>
+                </td>
+            </tr>
+            <tr class="node-details" data-job-id="${job.id}" style="display: none;">
+                <td colspan="5">
+                    <h6>Nodes</h6>
+                    <table class="table table-sm table-bordered table-dark">
+                        <thead>
+                            <tr>
+                                <th>Alias</th>
+                                <th>Status</th>
+                                <th>Last Updated</th>
+                                <th>Output</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${nodesTable}
+                        </tbody>
+                    </table>
                 </td>
             </tr>
         `;
@@ -246,21 +287,27 @@ const populateAgentsJobTable = async (agentId, userId) => {
         });
     });
 
-    // Auto-refresh logic: If any job is not "Complete", continue refreshing every 2 seconds
-    const hasPendingJobs = jobDetails.some(job => job.status !== "Complete");
+    // Attach click event to toggle node details
+    jobsTableBody.querySelectorAll(".toggle-node-btn").forEach(button => {
+        button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            const jobId = button.getAttribute("data-job-id");
+            const nodeDetailsRow = document.querySelector(`.node-details[data-job-id="${jobId}"]`);
 
-    if (hasPendingJobs && !jobRefreshIntervals[agentId]) {
-        jobRefreshIntervals[agentId] = setInterval(() => {
-            populateAgentsJobTable(agentId, userId);
-        }, 5000);
-    }
+            if (nodeDetailsRow) {
+                const isVisible = nodeDetailsRow.style.display === "table-row";
+                nodeDetailsRow.style.display = isVisible ? "none" : "table-row";
 
-    // Stop refreshing if all jobs are complete
-    if (!hasPendingJobs && jobRefreshIntervals[agentId]) {
-        clearInterval(jobRefreshIntervals[agentId]);
-        delete jobRefreshIntervals[agentId];
-    }
+                // Toggle the arrow direction
+                button.innerHTML = isVisible 
+                    ? '<i class="bi bi-chevron-down"></i>' 
+                    : '<i class="bi bi-chevron-up"></i>';
+            }
+        });
+    });
 };
+
+
 
 // Populate Agents in Grid View
 const populateAgentsGrid = async () => {
