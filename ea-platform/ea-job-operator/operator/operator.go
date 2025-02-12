@@ -721,7 +721,7 @@ func processNodeStatusQueue(dynamicClient dynamic.Interface, stopCh <-chan struc
 			nodeStatus := map[string]interface{}{
 				"alias":       nodeAlias,
 				"status":      status,
-				"output":      output,
+				"output":      outputJSON,
 				"lastUpdated": time.Now().Format(time.RFC3339),
 			}
 

@@ -224,7 +224,7 @@ const populateAgentsJobTable = async (agentId, userId) => {
                         ${node.status}
                     </td>
                     <td>${node.lastUpdated || "N/A"}</td>
-                    <td>${node.output?.result?.input || node.output?.result?.response || "N/A"}</td>
+                    <td>${node.output || "N/A"}</td>
                 </tr>
             `;
         }).join('') || '<tr><td colspan="4">No nodes available</td></tr>';

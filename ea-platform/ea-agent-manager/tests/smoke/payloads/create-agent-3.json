@@ -41,14 +41,14 @@
             "alias": "color2-out",
             "type": "input.internal.text",
             "parameters": {
-                "input": "{{color2.response}}"
+                "input": "{{color2.textoutput.response}}"
             }
         },
         {
             "alias": "color1-out",
             "type": "input.internal.text",
             "parameters": {
-                "input": "{{color1.response}}"
+                "input": "{{color1.textoutput.response}}"
             }
         },
         {
@@ -56,7 +56,7 @@
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
-                "prompt": "{{picker-prompt.input}}",
+                "prompt": "{{picker-prompt.input}} {{color1-out.input}} {{color2-out.input}}",
                 "stream": false,
                 "temperature": "0.7"
             }

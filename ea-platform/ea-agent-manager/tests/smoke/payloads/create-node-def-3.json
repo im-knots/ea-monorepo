@@ -1,0 +1,47 @@
+{
+    "type": "worker.api.weather.noaa",
+    "name": "NOAA Weather API",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "https://api.weather.gov",
+      "endpoint": "/gridpoints/{office}/{gridX},{gridY}/forecast",
+      "method": "GET",
+      "headers": {}
+    },
+    "parameters": [
+      {
+        "key": "office",
+        "type": "string",
+        "description": "the NOAA office for the grid location",
+        "default": "OKX"
+      },
+      {
+        "key": "gridX",
+        "type": "number",
+        "description": "Grid x position for the weather data.",
+        "default": 33
+      },
+      {
+        "key": "gridY",
+        "type": "number",
+        "description": "Grid y position for the weather data.",
+        "default": 35
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "The weather forecast data."
+      }
+    ],
+    "metadata": {
+      "description": "Fetches weather data from the NOAA API based on latitude and longitude.",
+      "tags": ["weather", "noaa", "api"],
+      "additional": {
+        "documentation_url": "https://www.weather.gov/documentation/services-web-api",
+        "timeout": 15
+      }
+    }
+  }
+  

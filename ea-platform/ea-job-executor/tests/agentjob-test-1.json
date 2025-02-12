@@ -1,46 +1,54 @@
 {
-    "id": "25b218a7-b260-4212-9b3f-62b9ecfd43f6",
-    "name": "My Sample Ollama Agent",
-    "creator": "marco@erulabs.ai",
+    "creator": "9b2fa0b8-2440-4465-a7c1-9b158e32af75",
     "description": "An example agent using the Ollama LLM definition.",
+    "edges": [
+        {
+            "from": [
+                "input"
+            ],
+            "to": [
+                "ollama"
+            ]
+        },
+        {
+            "from": [
+                "ollama"
+            ],
+            "to": [
+                "output"
+            ]
+        }
+    ],
+    "id": "bce787c7-b0f8-43b8-b761-5b9999a86cd5",
+    "metadata": {
+        "createdat": "2025-02-11T17:03:50.362Z",
+        "updatedat": "2025-02-11T17:03:50.362Z"
+    },
+    "name": "My Sample Ollama Agent With one Input",
     "nodes": [
         {
             "alias": "input",
-            "type": "input.internal.text",
             "parameters": {
-                "input": "POSITIVE PROMPT: Tell me about how black holes are formed"
-            }
-        },
-        {
-            "alias": "input2",
-            "type": "input.internal.text",
-            "parameters": {
-                "input": "NEGATIVE PROMPT: But dont talk to me about space. do it in math terms"
-            }
+                "input": "Tell me a short story about a flying cat."
+            },
+            "type": "input.internal.text"
         },
         {
             "alias": "ollama",
-            "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
-                "prompt": "{{input.input}}"
-            }
+                "prompt": "{{input.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            },
+            "type": "worker.inference.llm.ollama"
         },
         {
             "alias": "output",
-            "type": "destination.internal.text",
             "parameters": {
                 "input": "{{ollama.response}}"
-            }
+            },
+            "type": "destination.internal.text"
         }
-    ],
-    "edges": [
-        { "from": ["input"],"to": ["ollama"] },
-        { "from": ["input2"],"to": ["ollama"] },
-        { "from": ["ollama"],"to": ["output"] }
-    ],
-    "metadata": {
-        "created_at": "2025-02-04T17:56:27.169Z",
-        "updated_at": "2025-02-04T17:56:27.169Z"
-    }
+    ]
 }
