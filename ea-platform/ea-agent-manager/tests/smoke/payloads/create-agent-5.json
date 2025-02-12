@@ -1,0 +1,66 @@
+{
+    "name": "Outfit for Today's Weather",
+    "creator": "<SOME USER UUID>",
+    "description": "An example agent using the NOAA weather API and Ollama to plan an outfit for today",
+    "nodes": [
+        {
+            "alias": "ollama",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{noaa.properties.periods[0].detailedForecast}} {{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "noaa",
+            "type": "worker.api.weather.noaa",
+            "parameters": {
+                "office": "OKX",
+                "gridX": "33",
+                "gridY": "35"
+            }
+        },
+        {
+            "alias": "in",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "//USERPROMPT what should i wear for todays weather?"
+            }
+        },
+        {
+            "alias": "out",
+            "type": "destination.internal.text",
+            "parameters": {
+                "input": "{{ollama.response}}"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": [
+                "noaa"
+            ],
+            "to": [
+                "ollama"
+            ]
+        },
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "ollama"
+            ]
+        },
+        {
+            "from": [
+                "ollama"
+            ],
+            "to": [
+                "out"
+            ]
+        }
+    ]
+}

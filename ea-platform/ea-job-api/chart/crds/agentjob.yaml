@@ -97,11 +97,8 @@ spec:
                         type: string
                         description: "Execution status of the node (Pending, Running, Completed, Failed)"
                       output:
-                        type: object
+                        type: string
                         description: "Execution output or result for the node"
-                        additionalProperties:
-                          type: object
-                          additionalProperties: true
                       lastUpdated:
                         type: string
                         format: date-time

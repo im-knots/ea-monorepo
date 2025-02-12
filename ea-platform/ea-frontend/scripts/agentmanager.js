@@ -192,6 +192,25 @@ const startAgent = async (agentId, userId) => {
     }
 };
 
+const formatJsonOutput = (output) => {
+    try {
+        const parsedOutput = JSON.parse(output);  // Parse the JSON string
+        return `<pre style="
+            background-color: #1e1e1e; 
+            color: #d4d4d4; 
+            padding: 8px; 
+            border-radius: 4px; 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            max-height: 200px; 
+            overflow-y: auto;
+        ">${JSON.stringify(parsedOutput, null, 4)}</pre>`;
+    } catch (error) {
+        console.error("Failed to parse output JSON:", error);
+        return output;  // Fallback to raw output if parsing fails
+    }
+};
 
 // Function to populate the job table with expandable node details
 // Function to populate the job table with expandable node details
@@ -224,7 +243,7 @@ const populateAgentsJobTable = async (agentId, userId) => {
                         ${node.status}
                     </td>
                     <td>${node.lastUpdated || "N/A"}</td>
-                    <td>${node.output?.result?.input || node.output?.result?.response || "N/A"}</td>
+                    <td>${formatJsonOutput(node.output) || "N/A"}</td> 
                 </tr>
             `;
         }).join('') || '<tr><td colspan="4">No nodes available</td></tr>';

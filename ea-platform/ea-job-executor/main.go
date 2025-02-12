@@ -8,7 +8,7 @@ import (
 func main() {
 	// Set up the logger
 	logger.Slog.Info("Starting the application")
-
-	executor.ExecuteAgentJob()
+	filePath := "agentjob.json"
+	executor.ExecuteAgentJob(filePath)
 
 }
