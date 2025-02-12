@@ -8,7 +8,7 @@
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
-                "prompt": "{{noaa.periods[0].detailedForecast}} {{in.input}}",
+                "prompt": "{{noaa.properties.periods[0].detailedForecast}} {{in.input}}",
                 "stream": false,
                 "temperature": "0.7"
             }
