@@ -114,8 +114,18 @@ I have created a helper script to easily set up the entire platform in a local c
 
 ### Start up Eru Labs components locally with helm and minikube
 ```bash
+### Optional: use GPUs
+# Install the nvidia container toolkit https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+# Follow setup instructions for minikube https://minikube.sigs.k8s.io/docs/tutorials/nvidia/
+sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart docker
+
 minikube delete # Clean up previous minikube setups
-minikube start --driver=docker --extra-config=kubelet.max-pods=1000 #set a large single node cluster for ease of use, allow lots of pods
+
+# WITHOUT GPU
+minikube start --driver=docker --extra-config=kubelet.max-pods=1000
+
+# WITH GPU
+minikube start --driver=docker --container-runtime docker --gpus all --extra-config=kubelet.max-pods=1000 #set a large single node cluster for ease of use, allow lots of pods
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development, seeds test data, runs smoke tests
 
