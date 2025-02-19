@@ -1,0 +1,58 @@
+{
+    "type": "worker.inference.llm.ollama",
+    "name": "Ollama LLM Inference",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "http://ollama.ea-platform.svc.cluster.local:11434",
+      "endpoint": "/api/generate",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    },
+    "parameters": [
+      {
+        "key": "model",
+        "type": "string",
+        "description": "Name of the model to use, e.g. 'llama2-7b'.",
+        "enum": ["llama3.2", "llama3.3", "deepseek-r1:8b", "deepseek-r1:1.5b"],
+        "default": "llama3.2"
+      },
+      {
+        "key": "prompt",
+        "type": "string",
+        "description": "User prompt to be sent to the model.",
+        "default": "Hello world"
+      },
+      {
+        "key": "stream",
+        "type": "bool",
+        "description": "enable the full stream response, we have to disable this",
+        "default": false
+      },
+      {
+        "key": "temperature",
+        "type": "number",
+        "description": "Controls randomness in generation (0.0 - 1.0).",
+        "default": 0.7
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "the result of the prompt",
+        "enum": ["some", "promptoutput"],
+        "default": "someoutput"
+      }
+    ],
+    "metadata": {
+      "description": "THIS IS A TEST OF THE PUT NODE API HANDLER FUNCTION",
+      "tags": ["worker", "llm", "ollama", "inference"],
+      "additional": {
+        "documentation_url": "https://github.com/ollama/ollama/blob/main/docs/api.md",
+        "timeout": 30
+      }
+    }
+  }
+  

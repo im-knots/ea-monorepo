@@ -129,9 +129,15 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 | **GET**   | `/api/v1/nodes`          | Retrieve all nodes with their `id` |
 | **GET**   | `/api/v1/nodes/{id}`     | Retrieve a specific node by its `id`.      |
 | **POST**  | `/api/v1/nodes`          | Create a new node definition.             |
+| **PUT**   | `/api/v1/nodes/{id}`     | Update a specific node definition by its `id`. |
+| **DELETE** | `/api/v1/nodes/{id}`    | Delete a specific node definition by its `id`. |
 | **GET**   | `/api/v1/agents`         | Retrieve all agents with their `id` |
 | **GET**   | `/api/v1/agents/{id}`    | Retrieve a specific agent by its `id`.    |
 | **POST**  | `/api/v1/agents`         | Create a new agent.                       |
+| **PUT**   | `/api/v1/agents/{id}`    | Update a specific agent by its `id`.      |
+| **DELETE** | `/api/v1/agents/{id}`   | Delete a specific agent by its `id`.      |
+
+---
 
 ### Nodes
 
@@ -297,6 +303,52 @@ Retrieve a specific node definition by its `id`.
 ```
 
 
+
+#### `PUT /api/v1/nodes/{id}`
+Update an existing node definition.
+
+**Request Body Example:**
+```json
+{
+  "id": "c6520f08-ea04-4899-aeab-672cc01ff500",
+  "type": "worker.inference.llm.ollama",
+  "name": "Updated Ollama LLM Inference",
+  "creator": "<UUID OF CREATOR USER>",
+  "api": {
+    "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
+    "endpoint": "/api/generate",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  "parameters": [
+    {
+      "key": "model",
+      "type": "string",
+      "description": "Updated model selection",
+      "enum": ["llama3.2", "deepseek-r1:8b"],
+      "default": "deepseek-r1:8b"
+    }
+  ],
+  "metadata": {
+    "description": "Updated description",
+    "tags": ["worker", "llm", "update"]
+  }
+}
+```
+---
+**Response Example (Success):**
+```json
+{
+  "message": "Node definition updated successfully",
+  "node_id": "c6520f08-ea04-4899-aeab-672cc01ff500"
+}
+```
+
+
+
+
 #### `DELETE /api/v1/nodes/{id}`
 Delete a specific node definition by its `id`.
 
@@ -421,6 +473,41 @@ Retrieve a specific agent by its `id`.
 }
 ```
 
+---
+
+#### `PUT /api/v1/agents/{id}`
+Update an existing agent.
+
+**Request Body Example:**
+```json
+{
+  "id": "cac871c8-5f72-4e6c-9bc8-9eb006597d31",
+  "name": "Updated Agent Name",
+  "creator": "<UUID OF CREATOR USER>",
+  "description": "Updated description of the agent",
+  "nodes": [
+    {
+      "type": "worker.inference.llm.ollama",
+      "alias": "updated_ollama",
+      "parameters": {
+        "model": "llama3.2",
+        "prompt": "Updated prompt for agent."
+      }
+    }
+  ],
+  "edges": [
+    { "from": ["updated_ollama"], "to": ["textbox"] }
+  ]
+}
+```
+
+**Response Example (Success):**
+```json
+{
+  "message": "Agent updated successfully",
+  "agent_id": "cac871c8-5f72-4e6c-9bc8-9eb006597d31"
+}
+```
 ---
 
 #### `DELETE /api/v1/agents/{id}`

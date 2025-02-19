@@ -8,11 +8,4 @@ Here you will find some tests for the Ea Agent Manager.
 
 ## Run API smoke tests
 
-```bash
-./smoke/create-agent.sh
-./smoke/create-node.sh
-./smoke/get-all-agents.sh
-./smoke/get-all-nodes.sh
-./smoke/get-agent.sh
-./smoke/get-node.sh
-```
+
