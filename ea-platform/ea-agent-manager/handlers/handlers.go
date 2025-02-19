@@ -196,6 +196,51 @@ func HandleGetNodeDef(c *gin.Context) {
 	c.JSON(http.StatusOK, nodeDef)
 }
 
+// HandleUpdateNodeDef updates an existing node definition by ID.
+func HandleUpdateNodeDef(c *gin.Context) {
+	path := c.FullPath()
+	nodeID := c.Param("node_id")
+
+	if nodeID == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing node definition ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing node definition ID"})
+		return
+	}
+
+	var input NodeDefinition
+	if err := c.ShouldBindJSON(&input); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
+		return
+	}
+
+	input.Metadata.UpdatedAt = time.Now().UTC()
+
+	filter := bson.M{"id": nodeID}
+	update := bson.M{"$set": input}
+
+	result, err := dbClient.UpdateRecord("nodeDefs", "nodes", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to update node definition", "node_id", nodeID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update node definition"})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "node_not_found", "error").Inc()
+		logger.Slog.Warn("Node definition not found", "node_id", nodeID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node definition not found"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
+	logger.Slog.Info("Node definition updated successfully", "node_id", nodeID)
+	c.JSON(http.StatusOK, gin.H{"message": "Node definition updated successfully", "node_id": nodeID})
+}
+
 // HandleDeleteNode deletes a node definition by ID.
 func HandleDeleteNodeDef(c *gin.Context) {
 	path := c.FullPath()
@@ -330,6 +375,51 @@ func HandleGetAgent(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
 	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID)
 	c.JSON(http.StatusOK, agent)
+}
+
+// HandleUpdateAgent updates an existing agent by ID.
+func HandleUpdateAgent(c *gin.Context) {
+	path := c.FullPath()
+	agentID := c.Param("agent_id")
+
+	if agentID == "" {
+		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
+		logger.Slog.Error("Missing agent ID in request")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing agent ID"})
+		return
+	}
+
+	var input Agent
+	if err := c.ShouldBindJSON(&input); err != nil {
+		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
+		logger.Slog.Error("Failed to parse request body", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
+		return
+	}
+
+	input.Metadata.UpdatedAt = time.Now().UTC()
+
+	filter := bson.M{"id": agentID}
+	update := bson.M{"$set": input}
+
+	result, err := dbClient.UpdateRecord("userAgents", "agents", filter, update)
+	if err != nil {
+		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
+		logger.Slog.Error("Failed to update agent", "agent_id", agentID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update agent"})
+		return
+	}
+
+	if result.MatchedCount == 0 {
+		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
+		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
+	logger.Slog.Info("Agent updated successfully", "agent_id", agentID)
+	c.JSON(http.StatusOK, gin.H{"message": "Agent updated successfully", "agent_id": agentID})
 }
 
 // HandleDeleteAgent deletes an agent by ID.

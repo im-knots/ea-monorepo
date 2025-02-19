@@ -1,0 +1,132 @@
+{
+    "name": "Day Trip Planne with Weather Check",
+    "creator": "<SOME USER UUID>",
+    "description": "An example of a more complex workflow with weather check, outfit plan, day plan, and review AIs",
+    "nodes": [
+        {
+            "alias": "noaa",
+            "type": "worker.api.weather.noaa",
+            "parameters": {
+                "office": "OKX",
+                "gridX": "33",
+                "gridY": "35"
+            }
+        },
+        {
+            "alias": "in-outfit",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "Based on the weather pick me an outfit"
+            }
+        },
+        {
+            "alias": "outfit",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in-outfit.input}} //Weather: {{noaa.properties.periods[0].detailedForecast}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "planner",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in-planner.input}} //GENERATED OUTFIT BASED ON WEATHER: {{outfit.response}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "in-planner",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "plan me a fun day around NYC."
+            }
+        },
+        {
+            "alias": "review",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in-review.input}} //PLAN {{planner.response}} //WEATHER  {{noaa.properties.periods[0].detailedForecast}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "in-review",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "Review the weather and this day plan and give me your thoughts"
+            }
+        },
+        {
+            "alias": "out",
+            "type": "destination.internal.text",
+            "parameters": {
+                "input": "{{review.response}}"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": [
+                "in-outfit"
+            ],
+            "to": [
+                "outfit"
+            ]
+        },
+        {
+            "from": [
+                "noaa"
+            ],
+            "to": [
+                "outfit"
+            ]
+        },
+        {
+            "from": [
+                "outfit"
+            ],
+            "to": [
+                "planner"
+            ]
+        },
+        {
+            "from": [
+                "in-planner"
+            ],
+            "to": [
+                "planner"
+            ]
+        },
+        {
+            "from": [
+                "planner"
+            ],
+            "to": [
+                "review"
+            ]
+        },
+        {
+            "from": [
+                "in-review"
+            ],
+            "to": [
+                "review"
+            ]
+        },
+        {
+            "from": [
+                "review"
+            ],
+            "to": [
+                "out"
+            ]
+        }
+    ]
+}

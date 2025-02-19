@@ -1,0 +1,36 @@
+{
+    "name": "My Sample Ollama Agent With one Input",
+    "creator": "<UUID OF CREATOR USER>",
+    "description": "THIS IS AN UPDATE TO TEST THE PUT AGENT HANDLER FUNCTIONALITY",
+    "nodes": [
+      {
+          "alias": "input",
+          "type": "input.internal.text",
+          "parameters": {
+              "input": "Tell me a short story about a flying cat."
+          }
+      },
+      {
+          "alias": "ollama",
+          "type": "worker.inference.llm.ollama",
+          "parameters": {
+              "model": "llama3.2",
+              "prompt": "{{input.input}}",
+              "stream": false,
+              "temperature": "0.7"
+          }
+      },
+      {
+          "alias": "output",
+          "type": "destination.internal.text",
+          "parameters": {
+              "input": "{{ollama.response}}"
+          }
+      }
+  ],
+    "edges": [
+      { "from": ["input"],"to": ["ollama"] },
+      { "from": ["ollama"],"to": ["output"] }
+    ]
+  }
+    
