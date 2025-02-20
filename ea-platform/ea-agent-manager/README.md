@@ -129,90 +129,17 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 | **GET**   | `/api/v1/nodes`          | Retrieve all nodes with their `id` |
 | **GET**   | `/api/v1/nodes/{id}`     | Retrieve a specific node by its `id`.      |
 | **POST**  | `/api/v1/nodes`          | Create a new node definition.             |
+| **PUT**   | `/api/v1/nodes/{id}`     | Update a specific node definition by its `id`. |
+| **DELETE** | `/api/v1/nodes/{id}`    | Delete a specific node definition by its `id`. |
 | **GET**   | `/api/v1/agents`         | Retrieve all agents with their `id` |
 | **GET**   | `/api/v1/agents/{id}`    | Retrieve a specific agent by its `id`.    |
 | **POST**  | `/api/v1/agents`         | Create a new agent.                       |
+| **PUT**   | `/api/v1/agents/{id}`    | Update a specific agent by its `id`.      |
+| **DELETE** | `/api/v1/agents/{id}`   | Delete a specific agent by its `id`.      |
+
+---
 
 ### Nodes
-
-#### `GET /api/v1/nodes`
-Retrieve a list of all nodes.
-
-**Response Example:**
-```json
-[
-    {
-        "creator":"marco@erulabs.ai",
-        "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
-        "type":"worker.inference.llm.ollama"
-    },
-    {
-        "creator":"someuser@example.com",
-        "id":"abc12312-aaaa-bbbb-abcd-1234567890123",
-        "type":"worker.inference.llm.openai"
-    },
-
-]
-```
-
-#### `GET /api/v1/nodes/{id}`
-Retrieve a specific node definition by its `id`.
-
-**Response Example:**
-```json
-{
-    "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
-    "name":"Ollama LLM Inference",
-    "creator":"marco@erulabs.ai",
-    "type":"worker.inference.llm.ollama",
-    "api":{
-        "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
-        "endpoint":"/api/generate",
-        "headers":{
-            "Content-Type":"application/json"
-        },
-        "method":"POST"
-    },
-    "metadata":{
-        "additional":null,
-        "createdat":"2025-02-04T17:15:57.804Z",
-        "description":"",
-        "tags":null,
-        "updatedat":"2025-02-04T17:15:57.804Z"
-    },
-    "parameters":[
-        {
-            "default":"llama3.2",
-            "description":"Name of the model to use, e.g. 'llama2-7b'.",
-            "enum":["llama3.2","deepseek-r1:8b"],
-            "key":"model",
-            "type":"string"},
-        {
-            "default":"Hello world",
-            "description":"User prompt to be sent to the model.",
-            "enum":null,
-            "key":"prompt",
-            "type":"text"
-        },
-        {
-            "default":0.7,
-            "description":"Controls randomness in generation (0.0 - 1.0).",
-            "enum":null,
-            "key":"temperature",
-            "type":"number"
-        }
-    ],
-    "outputs":[
-        {
-            "default":"someoutput",
-            "description":"the result of the prompt",
-            "enum":["some","promptoutput"],
-            "key":"textoutput",
-            "type":"string"
-        }
-    ]
-}
-```
 
 #### `POST /api/v1/nodes`
 Create a new node definition.
@@ -278,19 +205,218 @@ Create a new node definition.
 }
 ```
 
+---
+
+#### `GET /api/v1/nodes`
+Retrieve a list of all nodes. Use the `creator_id` query parameter to filter by creator.
+
+**Request Example:**
+- All nodes: `/api/v1/nodes`
+- Nodes by creator: `/api/v1/nodes?creator_id=<SOME CREATOR UUID>`
+
+**Response Example:**
+```json
+[
+    {
+        "creator":"<SOME CREATOR UUID>",
+        "id":"<SOME NODE UUID>",
+        "type":"worker.inference.llm.ollama"
+    },
+    {
+        "creator":"<SOME CREATOR UUID>",
+        "id":"<SOME NODE UUID>",
+        "type":"worker.inference.llm.openai"
+    }
+]
+```
+---
+
+#### `GET /api/v1/nodes/{id}`
+Retrieve a specific node definition by its `id`.
+
+**Response Example:**
+```json
+{
+    "id":"c6520f08-ea04-4899-aeab-672cc01ff500",
+    "name":"Ollama LLM Inference",
+    "creator":"<SOME CREATOR UUID>",
+    "type":"worker.inference.llm.ollama",
+    "api":{
+        "baseurl":"https://ollama.ea-platform.svc.cluster.local:11434",
+        "endpoint":"/api/generate",
+        "headers":{
+            "Content-Type":"application/json"
+        },
+        "method":"POST"
+    },
+    "metadata":{
+        "additional":null,
+        "createdat":"2025-02-04T17:15:57.804Z",
+        "description":"",
+        "tags":null,
+        "updatedat":"2025-02-04T17:15:57.804Z"
+    },
+    "parameters":[
+        {
+            "default":"llama3.2",
+            "description":"Name of the model to use, e.g. 'llama2-7b'.",
+            "enum":["llama3.2","deepseek-r1:8b"],
+            "key":"model",
+            "type":"string"},
+        {
+            "default":"Hello world",
+            "description":"User prompt to be sent to the model.",
+            "enum":null,
+            "key":"prompt",
+            "type":"text"
+        },
+        {
+            "default":0.7,
+            "description":"Controls randomness in generation (0.0 - 1.0).",
+            "enum":null,
+            "key":"temperature",
+            "type":"number"
+        }
+    ],
+    "outputs":[
+        {
+            "default":"someoutput",
+            "description":"the result of the prompt",
+            "enum":["some","promptoutput"],
+            "key":"textoutput",
+            "type":"string"
+        }
+    ]
+}
+```
+
+---
+
+
 **Response Example:**
 ```json
 {
     "node_id":"9fb7ef94-9aba-4c8c-b085-f17b008ab9ed",
-    "creator":"marco@erulabs.ai",
+    "creator":"<SOME CREATOR UUID>",
     "message":"Node definition created"  
+}
+```
+
+
+
+#### `PUT /api/v1/nodes/{id}`
+Update an existing node definition.
+
+**Request Body Example:**
+```json
+{
+  "id": "c6520f08-ea04-4899-aeab-672cc01ff500",
+  "type": "worker.inference.llm.ollama",
+  "name": "Updated Ollama LLM Inference",
+  "creator": "<UUID OF CREATOR USER>",
+  "api": {
+    "base_url": "https://ollama.ea-platform.svc.cluster.local:11434",
+    "endpoint": "/api/generate",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  },
+  "parameters": [
+    {
+      "key": "model",
+      "type": "string",
+      "description": "Updated model selection",
+      "enum": ["llama3.2", "deepseek-r1:8b"],
+      "default": "deepseek-r1:8b"
+    }
+  ],
+  "metadata": {
+    "description": "Updated description",
+    "tags": ["worker", "llm", "update"]
+  }
+}
+```
+---
+**Response Example (Success):**
+```json
+{
+  "message": "Node definition updated successfully",
+  "node_id": "c6520f08-ea04-4899-aeab-672cc01ff500"
+}
+```
+
+
+
+
+#### `DELETE /api/v1/nodes/{id}`
+Delete a specific node definition by its `id`.
+
+**Response Example (Success):**
+```json
+{
+    "message": "Node definition deleted successfully",
+    "node_id": "c6520f08-ea04-4899-aeab-672cc01ff500"
+}
+```
+
+**Response Example (Not Found):**
+```json
+{
+    "error": "Node definition not found"
 }
 ```
 
 ### Agents
 
+#### `POST /api/v1/agents`
+Create a new agent.
+
+**Request Body Example:**
+```json
+{
+  "name": "My Sample Ollama Agent",
+  "creator": "<UUID OF CREATOR USER FROM EA-AINU-MANAGER>",
+  "description": "An example agent using the Ollama LLM definition.",
+  "nodes": [
+    {
+      "type": "worker.inference.llm.ollama",
+      "alias": "ollama",
+      "parameters": {
+        "model": "llama2-13b",
+        "prompt": "Tell me a short story about a flying cat."
+      }
+    },
+    {
+      "type": "destination.internal.text",
+      "alias": "textbox",
+      "parameters": {}
+    }
+  ],
+  "edges": [
+    { "from": ["ollama"],"to": ["textbox"] }
+  ]
+}
+```
+
+**Response Example:**
+```json
+{
+    "agent_id":"cac871c8-5f72-4e6c-9bc8-9eb006597d31",
+    "creator":"<SOME CREATOR UUID>",
+    "message":"Agent created"
+}
+```
+
+---
+
+
 #### `GET /api/v1/agents`
-Retrieve a list of all agents.
+Retrieve a list of all agents. Use the `creator_id` query parameter to filter by creator.
+
+**Request Example:**
+- All agents: `/api/v1/agents`
+- Agents by creator: `/api/v1/agents?creator_id=<SOME CREATOR UUID>`
 
 **Response Example:**
 ```json
@@ -307,6 +433,8 @@ Retrieve a list of all agents.
     }
 ]
 ```
+
+---
 
 #### `GET /api/v1/agents/{id}`
 Retrieve a specific agent by its `id`.
@@ -345,41 +473,58 @@ Retrieve a specific agent by its `id`.
 }
 ```
 
-#### `POST /api/v1/agents`
-Create a new agent.
+---
+
+#### `PUT /api/v1/agents/{id}`
+Update an existing agent.
 
 **Request Body Example:**
 ```json
 {
-  "name": "My Sample Ollama Agent",
-  "creator": "<UUID OF CREATOR USER FROM EA-AINU-MANAGER>",
-  "description": "An example agent using the Ollama LLM definition.",
+  "id": "cac871c8-5f72-4e6c-9bc8-9eb006597d31",
+  "name": "Updated Agent Name",
+  "creator": "<UUID OF CREATOR USER>",
+  "description": "Updated description of the agent",
   "nodes": [
     {
       "type": "worker.inference.llm.ollama",
-      "alias": "ollama",
+      "alias": "updated_ollama",
       "parameters": {
-        "model": "llama2-13b",
-        "prompt": "Tell me a short story about a flying cat."
+        "model": "llama3.2",
+        "prompt": "Updated prompt for agent."
       }
-    },
-    {
-      "type": "destination.internal.text",
-      "alias": "textbox",
-      "parameters": {}
     }
   ],
   "edges": [
-    { "from": ["ollama"],"to": ["textbox"] }
+    { "from": ["updated_ollama"], "to": ["textbox"] }
   ]
 }
 ```
 
-**Response Example:**
+**Response Example (Success):**
 ```json
 {
-    "agent_id":"cac871c8-5f72-4e6c-9bc8-9eb006597d31",
-    "creator":"marco@erulabs.ai",
-    "message":"Agent created"
+  "message": "Agent updated successfully",
+  "agent_id": "cac871c8-5f72-4e6c-9bc8-9eb006597d31"
 }
 ```
+---
+
+#### `DELETE /api/v1/agents/{id}`
+Delete a specific agent by its `id`.
+
+**Response Example (Success):**
+```json
+{
+    "message": "Agent deleted successfully",
+    "agent_id": "34ef1000-d6d0-44a6-ac37-3937d42ce0e2"
+}
+```
+
+**Response Example (Not Found):**
+```json
+{
+    "error": "Agent not found"
+}
+```
+---

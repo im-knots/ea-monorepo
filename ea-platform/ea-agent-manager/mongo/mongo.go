@@ -94,3 +94,23 @@ func (m *MongoClient) FindRecordsWithProjection(database, collection string, fil
 	}
 	return results, nil
 }
+
+// UpdateRecord updates a record in a specified collection.
+func (m *MongoClient) UpdateRecord(database, collection string, filter, update interface{}) (*mongo.UpdateResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	coll := m.client.Database(database).Collection(collection)
+	return coll.UpdateOne(ctx, filter, update)
+}
+
+// DeleteRecordByID deletes a record from a collection by its UUID ID.
+func (m *MongoClient) DeleteRecordByID(database, collection, id string) (*mongo.DeleteResult, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	coll := m.client.Database(database).Collection(collection)
+	filter := bson.M{"id": id}
+
+	return coll.DeleteOne(ctx, filter)
+}

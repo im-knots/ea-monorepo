@@ -45,6 +45,7 @@ var (
 	inactiveAgentJobQueue  = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	completedAgentJobQueue = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 	errorAgentJobQueue     = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
+	nodeStatusQueue        = workqueue.NewRateLimitingQueue(workqueue.DefaultControllerRateLimiter())
 )
 
 // StartOperators initializes informers and starts watching resources
@@ -97,6 +98,11 @@ func StartOperators(stopCh <-chan struct{}) {
 	if cfg.FeatureErrorAgentJobs == "true" {
 		go watchErrorAgentJobs(dynamicFactory, stopCh)
 		go processErrorAgentJobQueue(stopCh)
+	}
+
+	if cfg.FeatureNodeStatusUpdates == "true" {
+		go watchNodeStatus(dynamicFactory, stopCh)
+		go processNodeStatusQueue(stopCh)
 	}
 
 	// Start and sync factories
@@ -221,6 +227,26 @@ func watchErrorAgentJobs(factory dynamicinformer.DynamicSharedInformerFactory, s
 				// logger.Slog.Info("Queuing completed AgentJob for cleanup", "job", jobName)
 				errorAgentJobQueue.Add(job)
 			}
+		},
+	})
+
+	informer.Run(stopCh)
+}
+
+func watchNodeStatus(factory dynamicinformer.DynamicSharedInformerFactory, stopCh <-chan struct{}) {
+	logger.Slog.Info("Starting Node Update Informer")
+
+	informer := factory.ForResource(agentJobGVR).Informer()
+
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		UpdateFunc: func(_, newObj interface{}) {
+			job, ok := newObj.(*unstructured.Unstructured)
+			if !ok {
+				logger.Slog.Error("Failed to parse AgentJob object")
+				return
+			}
+
+			nodeStatusQueue.Add(job)
 		},
 	})
 
@@ -478,6 +504,70 @@ func processErrorAgentJobQueue(stopCh <-chan struct{}) {
 			}()
 		}
 	}, time.Second, stopCh) // Runs continuously while stopCh is open
+}
+
+func processNodeStatusQueue(stopCh <-chan struct{}) {
+	wait.Until(func() {
+		if nodeStatusQueue.Len() == 0 {
+			return
+		}
+
+		batchSize := min(10, nodeStatusQueue.Len())
+
+		for i := 0; i < batchSize; i++ {
+			item, shutdown := nodeStatusQueue.Get()
+			if shutdown {
+				return
+			}
+
+			job, ok := item.(*unstructured.Unstructured)
+			if !ok {
+				logger.Slog.Error("Failed to cast item to AgentJob")
+				continue
+			}
+
+			go func() {
+				defer nodeStatusQueue.Done(job)
+
+				userID, found, _ := unstructured.NestedString(job.Object, "spec", "user")
+				if !found || userID == "" {
+					logger.Slog.Error("User ID not found in AgentJob spec")
+					return
+				}
+
+				status, _, _ := unstructured.NestedString(job.Object, "status", "state")
+
+				// Extract nodes as an array
+				nodes, found, err := unstructured.NestedSlice(job.Object, "status", "nodes")
+				if err != nil || !found {
+					logger.Slog.Error("Failed to extract nodes from AgentJob", "user_id", userID, "error", err)
+					return
+				}
+
+				logger.Slog.Info("Extracted nodes data", "user_id", userID, "nodes", nodes)
+
+				filter := map[string]interface{}{
+					"id":      userID,
+					"jobs.id": string(job.GetUID()),
+				}
+
+				update := map[string]interface{}{
+					"$set": map[string]interface{}{
+						"jobs.$.status":      status,
+						"jobs.$.last_active": time.Now(),
+						"jobs.$.nodes":       nodes, // Correctly storing the nodes array
+					},
+				}
+
+				_, err = dbClient.UpdateRecord("ainuUsers", "users", filter, update)
+				if err != nil {
+					logger.Slog.Error("Failed to update node status in MongoDB", "user_id", userID, "error", err)
+				} else {
+					logger.Slog.Info("Updated node status in MongoDB", "user_id", userID, "status", status)
+				}
+			}()
+		}
+	}, time.Second, stopCh)
 }
 
 //

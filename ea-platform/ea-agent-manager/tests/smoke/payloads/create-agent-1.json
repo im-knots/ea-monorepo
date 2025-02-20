@@ -8,7 +8,9 @@
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
-                "prompt": "talk to me about the future of mankind"
+                "prompt": "talk to me about the future of mankind",
+                "stream": false,
+                "temperature": "0.7"
             }
         }
     ],

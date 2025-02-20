@@ -1,0 +1,179 @@
+/* Main Area */
+main {
+    flex-grow: 1;
+    background-color: #1e1e1e;   /* Darker shade */
+    color: #ffffff;              /* Adjust text color for better contrast */
+    padding: 20px;               /* Maintain padding for spacing */
+    transition: background-color 0.3s ease;
+    position: relative;          /* Position for absolute children */
+    overflow: hidden;            /* Prevent content overflow issues */
+}
+
+/* Offcanvas Sidebar (JSON Editor) */
+#jsonEditorPanel {
+    width: 25vw !important;      /* 25% of the viewport width */
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border-left: 2px solid #444;
+    transition: width 0.3s ease; /* Smooth transition when opening/closing */
+    min-width: 300px;            /* Ensure a minimum width for usability */
+    max-width: 800px;            /* Optional: Limit the maximum width */
+    z-index: 1050;               /* Ensure it sits above other content */
+}
+
+/* JSON Text Area */
+#jsonEditor {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;             /* Larger font for readability */
+    background-color: #000;      /* Black background */
+    color: #00ff00;              /* Neon green text */
+    border: 1px solid #444;
+    resize: none;                /* Disable manual resizing */
+    padding: 10px;
+    line-height: 1.5;
+    caret-color: #00ff00;        /* Green caret */
+    overflow-y: auto;
+    flex-grow: 1;                /* Fill available vertical space */
+}
+
+/* Bottom Bar (Node Library) */
+#bottomBar {
+    max-height: 300px;
+    overflow-y: auto;
+    border-top: 2px solid #444;
+    transition: max-height 0.5s ease;
+    z-index: 1040;               /* Ensure it stays above main content but below JSON editor */
+    background-color: #1e1e1e;
+    position: absolute;          /* Sticks to the bottom of the main content */
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+/* Node Tiles */
+.node-tile {
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border: 1px solid #444;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 8px;
+    transition: transform 0.2s ease, background-color 0.3s ease, border-color 0.3s ease;
+    cursor: pointer;
+    text-align: center;
+    min-height: 120px;           /* Consistent tile height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+/* Node Tile Hover Effect */
+.node-tile:hover {
+    transform: scale(1.05);      /* Slight zoom on hover */
+    background-color: #3a3a3a;   /* Brighter background on hover */
+    border-color: #00ff00;       /* Green border on hover */
+}
+
+/* Toggle Button (For Node Library & JSON Editor) */
+button[data-bs-toggle="collapse"], 
+button[data-bs-toggle="offcanvas"] {
+    z-index: 1100;               /* Ensure toggle buttons are clickable above other elements */
+}
+
+/* Icon Toggle for Node Library */
+button[data-bs-target="#bottomBar"][aria-expanded="true"] i {
+    content: "\f62a";            /* Bootstrap Icons 'X' (bi-x-lg) */
+    font-family: 'bootstrap-icons';
+}
+
+button[data-bs-target="#bottomBar"][aria-expanded="false"] i {
+    content: "\f4f9";            /* Bootstrap Icons 'Grid' (bi-grid-3x3-gap) */
+    font-family: 'bootstrap-icons';
+}
+
+/* Icon Toggle for JSON Editor */
+button[data-bs-target="#jsonEditorPanel"][aria-expanded="true"] i {
+    content: "\f62a";            /* Bootstrap Icons 'X' (bi-x-lg) */
+    font-family: 'bootstrap-icons';
+}
+
+button[data-bs-target="#jsonEditorPanel"][aria-expanded="false"] i {
+    content: "\f4e4";            /* Bootstrap Icons 'Code Slash' (bi-code-slash) */
+    font-family: 'bootstrap-icons';
+}
+
+.svg-canvas {
+    width: 100%;
+    height: 100%;
+    background-color: #1e1e1e;
+    z-index: 1;
+}
+
+.svg-input, .svg-select {
+    width: 100%;
+    height: 35px;                      /* Larger input height */
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #ffffff;         /* White borders for inputs */
+    padding: 5px;
+    font-size: 14px;                   /* Slightly larger font */
+    box-sizing: border-box;
+    outline: none;
+    border-radius: 4px;
+    margin-bottom: 5px;                /* Extra spacing between elements */
+}
+
+.svg-input:focus, .svg-select:focus {
+    border-color: #00ffff;             /* Bright cyan on focus */
+    box-shadow: 0 0 5px #00ffff;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;                       /* Wider toggle */
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #444;
+    transition: 0.4s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #00ff00;         /* Bright green when toggled */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+foreignObject {
+    pointer-events: all; /* Allow interaction with form elements inside SVG */
+}

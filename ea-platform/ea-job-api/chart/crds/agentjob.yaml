@@ -84,8 +84,27 @@ spec:
                 message:
                   type: string
                   description: "Any additional information regarding the state"
+                nodes:
+                  type: array
+                  description: "Execution status and output for each node"
+                  items:
+                    type: object
+                    properties:
+                      alias:
+                        type: string
+                        description: "Node identifier"
+                      status:
+                        type: string
+                        description: "Execution status of the node (Pending, Running, Completed, Failed)"
+                      output:
+                        type: string
+                        description: "Execution output or result for the node"
+                      lastUpdated:
+                        type: string
+                        format: date-time
+                        description: "Timestamp of the last status update"
       subresources:
-        status: {}
+        status: {}  # Enables status updates via the /status subresource
       additionalPrinterColumns:
         - name: AgentID
           type: string

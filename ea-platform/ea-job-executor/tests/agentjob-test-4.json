@@ -1,0 +1,71 @@
+{
+    "creator": "d5b1905f-740d-4187-9e78-4d70d610b74e",
+    "description": "An example agent using the Ollama LLM definition.",
+    "edges": [
+        {
+            "from": [
+                "noaa"
+            ],
+            "to": [
+                "ollama"
+            ]
+        },
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "ollama"
+            ]
+        },
+        {
+            "from": [
+                "ollama"
+            ],
+            "to": [
+                "out"
+            ]
+        }
+    ],
+    "id": "2cebae6b-3f4d-4d7f-a574-500289257583",
+    "metadata": {
+        "createdat": "2025-02-11T18:47:32.518Z",
+        "updatedat": "2025-02-11T18:47:32.518Z"
+    },
+    "name": "What to wear for today's weather",
+    "nodes": [
+        {
+            "alias": "ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{noaa.properties.periods[0].detailedForecast}} {{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            },
+            "type": "worker.inference.llm.ollama"
+        },
+        {
+            "alias": "noaa",
+            "parameters": {
+                "gridX": "33",
+                "gridY": "35",
+                "office": "OKX"
+            },
+            "type": "worker.api.weather.noaa"
+        },
+        {
+            "alias": "in",
+            "parameters": {
+                "input": "//USER PROMPT what should i wear today based on the weather forecast?"
+            },
+            "type": "input.internal.text"
+        },
+        {
+            "alias": "out",
+            "parameters": {
+                "input": "{{ollama.response}}"
+            },
+            "type": "destination.internal.text"
+        }
+    ]
+}

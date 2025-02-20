@@ -25,17 +25,21 @@ func RegisterRoutes() *gin.Engine {
 	// Agents routes
 	agents := router.Group("/api/v1/agents")
 	{
-		agents.GET("", handlers.HandleGetAllAgents)       // List all Agents
-		agents.POST("", handlers.HandleCreateAgent)       // Create new Agent
-		agents.GET("/:agent_id", handlers.HandleGetAgent) // Get Agent by ID
+		agents.POST("", handlers.HandleCreateAgent)             // Create new Agent
+		agents.GET("", handlers.HandleGetAllAgents)             // List all Agents
+		agents.GET("/:agent_id", handlers.HandleGetAgent)       // Get Agent by ID
+		agents.PUT("/:agent_id", handlers.HandleUpdateAgent)    // Update Agent by ID
+		agents.DELETE("/:agent_id", handlers.HandleDeleteAgent) // Delete Agent by ID
 	}
 
 	// Nodes routes
 	nodes := router.Group("/api/v1/nodes")
 	{
-		nodes.GET("", handlers.HandleGetAllNodeDefs)      // List all nodes
-		nodes.POST("", handlers.HandleCreateNodeDef)      // Create new node
-		nodes.GET("/:node_id", handlers.HandleGetNodeDef) // Get node by ID
+		nodes.POST("", handlers.HandleCreateNodeDef)            // Create new node
+		nodes.GET("", handlers.HandleGetAllNodeDefs)            // List all nodes
+		nodes.GET("/:node_id", handlers.HandleGetNodeDef)       // Get node by ID
+		nodes.PUT("/:node_id", handlers.HandleUpdateNodeDef)    // Update Node Definition by ID
+		nodes.DELETE("/:node_id", handlers.HandleDeleteNodeDef) // Delete node by ID
 	}
 
 	return router

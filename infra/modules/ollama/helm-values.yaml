@@ -3,8 +3,20 @@ ollama:
   models:
     pull:
       - llama3.2
+      # - llama3.3
+      # - deepseek-r1:1.5b
+      # - deepseek-r1:8b
     run:
       - llama3.2
+      # - llama3.3
+      # - deepseek-r1:1.5b
+      # - deepseek-r1:8b
+  gpu:
+    enabled: true
+    type: 'nvidia'
+    number: 1
+    nvidiaResource: "nvidia.com/gpu"
+
 
 autoscaling:
   enabled: true

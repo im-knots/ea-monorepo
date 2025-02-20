@@ -22,7 +22,9 @@
             "type": "worker.inference.llm.ollama",
             "parameters": {
                 "model": "llama3.2",
-                "prompt": "{{input.input}}"
+                "prompt": "{{input.input}} {{input2.input}}",
+                "stream": false,
+                "temperature": "0.7"
             }
         },
         {

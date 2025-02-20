@@ -1,0 +1,23 @@
+{
+    "creator": "fabc83c4-99c6-43f5-940c-be79611dfb10",
+    "description": "An example agent using the Ollama LLM definition.",
+    "edges": [],
+    "id": "0e8f6efc-fbb6-4d27-911f-5483e1b7bded",
+    "metadata": {
+        "createdat": "2025-02-11T16:54:25.966Z",
+        "updatedat": "2025-02-11T16:54:25.966Z"
+    },
+    "name": "noaa-test",
+    "nodes": [
+        {
+            "alias": "node1739292857657",
+            "parameters": {
+                "gridX": "33",
+                "gridY": "35",
+                "office": "OKX"
+            },
+            "type": "worker.api.weather.noaa"
+        }
+    ]
+}
+       

@@ -13,12 +13,13 @@ type Config struct {
 	FeatureInactiveAgentJobs    string
 	FeatureCompletedJobs        string
 	FeatureCompletedAgentJobs   string
+	FeatureNodeStatusUpdates    string
 	CompletedCleanupGracePeriod int
 }
 
 // LoadConfig initializes the configuration from environment variables.
 func LoadConfig() Config {
-	gracePeriod, err := strconv.Atoi(getEnv("CLEANUP_GRACE_PERIOD", "0"))
+	gracePeriod, err := strconv.Atoi(getEnv("CLEANUP_GRACE_PERIOD", "5000"))
 	if err != nil {
 		gracePeriod = 0 // Default to 0 if conversion fails
 	}
@@ -30,6 +31,7 @@ func LoadConfig() Config {
 		FeatureInactiveAgentJobs:    getEnv("FEATURE_INACTIVE_AGENT_JOBS", "true"),
 		FeatureCompletedJobs:        getEnv("FEATURE_COMPLETED_JOBS", "true"),
 		FeatureCompletedAgentJobs:   getEnv("FEATURE_COMPLETED_AGENT_JOBS", "true"),
+		FeatureNodeStatusUpdates:    getEnv("FEATURE_NODE_STATUS_UPDATES", "true"),
 		CompletedCleanupGracePeriod: gracePeriod,
 	}
 }

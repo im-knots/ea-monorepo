@@ -1,0 +1,138 @@
+{
+    "name": "color picker",
+    "creator": "<SOME USER UUID>",
+    "description": "An example agent using multiple AIs to pick a color",
+    "nodes": [
+        {
+            "alias": "color2",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "color1",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{in.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "in",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "pick a color and output nothing but the color name in english"
+            }
+        },
+        {
+            "alias": "picker-prompt",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "//USER PROMPT: Pick one of these colors and tell me why you picked it END USER PROMPT"
+            }
+        },
+        {
+            "alias": "color2-out",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "{{color2.textoutput.response}}"
+            }
+        },
+        {
+            "alias": "color1-out",
+            "type": "input.internal.text",
+            "parameters": {
+                "input": "{{color1.textoutput.response}}"
+            }
+        },
+        {
+            "alias": "picker",
+            "type": "worker.inference.llm.ollama",
+            "parameters": {
+                "model": "llama3.2",
+                "prompt": "{{picker-prompt.input}} {{color1-out.input}} {{color2-out.input}}",
+                "stream": false,
+                "temperature": "0.7"
+            }
+        },
+        {
+            "alias": "out",
+            "type": "destination.internal.text",
+            "parameters": {
+                "input": "{{picker.response}}"
+            }
+        }
+    ],
+    "edges": [
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "color1"
+            ]
+        },
+        {
+            "from": [
+                "color1"
+            ],
+            "to": [
+                "color1-out"
+            ]
+        },
+        {
+            "from": [
+                "color1-out"
+            ],
+            "to": [
+                "picker"
+            ]
+        },
+        {
+            "from": [
+                "picker-prompt"
+            ],
+            "to": [
+                "picker"
+            ]
+        },
+        {
+            "from": [
+                "color2-out"
+            ],
+            "to": [
+                "picker"
+            ]
+        },
+        {
+            "from": [
+                "picker"
+            ],
+            "to": [
+                "out"
+            ]
+        },
+        {
+            "from": [
+                "in"
+            ],
+            "to": [
+                "color2"
+            ]
+        },
+        {
+            "from": [
+                "color2"
+            ],
+            "to": [
+                "color2-out"
+            ]
+        }
+    ]
+}

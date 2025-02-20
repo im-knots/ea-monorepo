@@ -108,8 +108,13 @@ main {
   .status-indicator.pending {
     background-color: blue;
   }
+
+  .status-indicator.executing {
+    background-color: purple;
+  }
   
   .status-indicator.complete {
     background-color: green;
   }
-  
+
+

@@ -168,6 +168,7 @@ case "$1" in
         minikube addons enable ingress
         # minikube addons enable ingress-dns // we could do this but hosts file is more universal than resolvconf
         minikube addons enable registry
+        minikube addons enable metrics-server
         eval $(minikube docker-env)
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
