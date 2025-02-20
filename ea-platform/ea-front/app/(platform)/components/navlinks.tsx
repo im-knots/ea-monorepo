@@ -18,9 +18,9 @@ import { Box } from '@mui/material';
 
 const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
+  { name: 'Agent Builder', href: '/agent-builder', icon: SmartToyIcon },
+  { name: 'Agent Manager', href: '/agent-manager', icon: GroupAddIcon },
   { name: 'Datasets', href: '/datasets', icon: ContentCopyIcon},
-  { name: 'Agents', href: '/agents', icon: SmartToyIcon },
-  { name: 'Compute Jobs', href: '/jobs', icon: GroupAddIcon },
   { name: 'Marketplace', href: '/marketplace', icon: LocalGroceryStoreIcon },
   { name: 'Leaderboards', href: '/leaderboards', icon: LeaderboardIcon },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
