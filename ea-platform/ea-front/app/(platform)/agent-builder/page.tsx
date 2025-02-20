@@ -11,7 +11,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
 
 export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean }) {
-  const [jsonEditorOpen, setJsonEditorOpen] = useState(true);
+  const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const jsonEditorWidth = jsonEditorOpen ? "20rem" : "4rem";
   const [workflowNodes, setWorkflowNodes] = useState<Node[]>([]);
   const [workflowEdges, setWorkflowEdges] = useState<Edge[]>([]);

@@ -22,7 +22,7 @@ export default function NodeLibrary({
     sidebarOpen: boolean;
     addNodeToFlow: (node: Node) => void;
   }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [nodes, setNodes] = useState<NodeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
