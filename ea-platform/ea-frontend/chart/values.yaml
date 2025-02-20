@@ -57,7 +57,7 @@ ingress:
   className: "nginx"
   annotations: {}
   hosts:
-    - host: ea.erulabs.local
+    - host: ea-front-old.erulabs.local
       paths:
         - path: /
           pathType: ImplementationSpecific
