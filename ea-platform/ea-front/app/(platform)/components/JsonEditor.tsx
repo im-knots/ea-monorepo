@@ -93,7 +93,7 @@ export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: J
 
   return (
     <div
-      className="fixed right-0 top-0 h-screen bg-neutral-900 text-white shadow-2xl transition-all flex flex-col"
+      className="fixed right-0 top-0 h-screen bg-neutral-800 text-white shadow-2xl transition-all flex flex-col"
       style={{ width: isOpen ? `${width}px` : "4rem" }}
     >
       <button
@@ -107,7 +107,7 @@ export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: J
         <div className="flex-1 p-4 overflow-auto flex flex-col">
           <h3 className="text-lg font-bold mb-2">JSON Editor</h3>
           <textarea
-            className={`w-full flex-1 bg-neutral-800 text-white p-2 rounded-lg resize-none border ${
+            className={`w-full flex-1 bg-neutral-900 text-white p-2 rounded-lg resize-none border ${
               isValidJson ? "border-neutral-700" : "border-red-500"
             }`}
             placeholder="Edit JSON here..."

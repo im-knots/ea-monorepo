@@ -30,7 +30,7 @@ export function Card({
 }) {
 
   return (
-    <div className="rounded-xl bg-slate-700 p-2 shadow-sm">
+    <div className="rounded-xl bg-neutral-800 p-2 shadow-sm">
       <div className="flex p-6">
         <Typography variant="h5" className="ml-2 text-sm font-medium">{title}</Typography>
       </div>
