@@ -119,21 +119,20 @@ export default function AgentBuilderPage() {
         </div>
       )}
 
-      <div className="flex-1 flex flex-col relative" style={{ marginRight: jsonEditorWidth, marginTop: "50px" }}>
-        <div className="flex-1 flex items-center justify-center">
-          <WorkflowBuilder
-            nodes={workflowNodes}
-            setNodes={setWorkflowNodes}
-            edges={workflowEdges}
-            setEdges={setWorkflowEdges}
-            setJsonText={setJsonText}
-            agentId={agentId}
-            creatorId={creator}
-            runningJobId={runningJobId}
-            setRunningJobId={setRunningJobId} 
-          />
-        </div>
-      </div>
+    <div className={`flex-1 flex flex-col relative transition-all duration-300`}>
+      <WorkflowBuilder
+        nodes={workflowNodes}
+        setNodes={setWorkflowNodes}
+        edges={workflowEdges}
+        setEdges={setWorkflowEdges}
+        setJsonText={setJsonText}
+        agentId={agentId}
+        creatorId={creator}
+        runningJobId={runningJobId}
+        setRunningJobId={setRunningJobId} 
+        sidebarOpen={sidebarOpen} // Pass sidebar state
+      />
+    </div>
 
       <NodeLibrary sidebarOpen={sidebarOpen} addNodeToFlow={addNodeToFlow} />
       <JsonEditor

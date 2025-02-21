@@ -59,14 +59,12 @@ export default function NodeLibrary({
   }, []);
 
   return (
-    <div
-      className="absolute bottom-0 bg-neutral-900 text-white shadow-2xl transition-all"
-      style={{
-        left: sidebarOpen ? "15rem" : "4rem", // Adjust the left based on sidebar open state
-        width: `calc(100% - ${sidebarOpen ? "15rem" : "4rem"})`, // Ensure the width is calculated dynamically based on sidebar width
-        bottom: "0",
-      }}
-    >
+      <div
+        className="absolute bottom-0 bg-neutral-900 text-white shadow-2xl transition-all duration-300"
+        style={{
+          width: `calc(100% - ${sidebarOpen ? "16rem" : "4rem"})`,
+        }}
+      >
       {/* Node Library Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}

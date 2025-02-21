@@ -42,6 +42,7 @@ interface WorkflowBuilderProps {
   creatorId: string;
   runningJobId: string | null;
   setRunningJobId: (jobId: string | null) => void;
+  sidebarOpen: boolean;
 }
 
 const nodeTypes = { custom: CustomNode };
@@ -56,6 +57,7 @@ export default function WorkflowBuilder({
   creatorId,
   runningJobId,
   setRunningJobId,
+  sidebarOpen,
 }: WorkflowBuilderProps) {
   // 🆕 Function to reset node status and outputs when a new job starts
   const resetNodes = useCallback(() => {
@@ -218,8 +220,13 @@ export default function WorkflowBuilder({
   );
 
   return (
-    <div className="relative flex-1 w-full h-full bg-neutral-900">
-      <ReactFlow
+      <div 
+        className="relative flex-1 h-full bg-neutral-900 transition-all duration-300"
+        style={{ 
+          marginTop: "70px" // ✅ Ensure it moves below the header bar
+        }} 
+      >
+        <ReactFlow
         nodes={initializedNodes.map((node) => ({
           ...node,
           data: {
