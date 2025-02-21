@@ -13,6 +13,7 @@ A NextJS Front-end client for all things Erulabs.
 ```bash
 $ git clone git@github.com:/eru-labs/eru-labs-monorepo && cd eru-labs-monorepo/ea-platform/ea-front
 $ pnpm install 
+$ pnpx @tailwindcss/cli -i ./app/global.css
 $ pnpm test
 $ $ pnpm test
 

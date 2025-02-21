@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from "@mui/material/Typography";
 import TextField from '@mui/material/TextField';
+import Image from 'next/image';
 
 export default function Page() {
   return (
@@ -11,6 +12,9 @@ export default function Page() {
       </Box>
       <Box className="h-screen flex flex-col justify-center items-center" id="login-container">
         <Box className="flex flex-col justify-center items-center" id="login-form">
+          <Box className="w-32 text-white md:w-40">
+            <Image src={'/logo.png'} alt="eru-logo" width={500} height={500} priority={true} />
+          </Box>
           <Box className="p-4">
             <Typography variant="h6">Login</Typography>
           </Box>
