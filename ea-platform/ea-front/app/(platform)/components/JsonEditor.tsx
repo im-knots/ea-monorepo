@@ -12,9 +12,10 @@ interface JsonEditorProps {
   toggle: () => void;
   jsonText: string;
   onJsonChange: (json: string) => void;
-  agentId: string | null; // Accept agentId as prop
-  updateAgentId: (id: string) => void; // Callback to update the agentId in page.tsx
-  creatorId: string;  // Pass creator ID from parent state to this component
+  agentId: string | null;
+  updateAgentId: (id: string) => void;
+  creatorId: string;
+  onJobStarted?: (jobId: string) => void; // New callback for job started events
 }
 
 export default function JsonEditor({
@@ -24,13 +25,16 @@ export default function JsonEditor({
   onJsonChange,
   agentId,
   updateAgentId,
-  creatorId, // Receive creator ID from the parent
+  creatorId,
+  onJobStarted,
 }: JsonEditorProps) {
   const [width] = useState(600);
   const [localJson, setLocalJson] = useState(jsonText);
   const [isValidJson, setIsValidJson] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [jobId, setJobId] = useState<string | null>(null);
 
   // Set localJson whenever jsonText changes
   useEffect(() => {
@@ -103,13 +107,12 @@ export default function JsonEditor({
   };
 
   const handleStartJob = async () => {
-    if (!agentId) return; // Don't allow starting the job if there's no agentId
-
+    if (!agentId) return;
+  
     try {
       setIsLoading(true);
-      setSaveStatus(null); // Reset status before starting
-
-      // Use the actual creatorId passed from parent, rather than a static string
+      setSaveStatus(null);
+  
       const response = await fetch(EA_JOB_API_URL, {
         method: "POST",
         headers: {
@@ -117,14 +120,21 @@ export default function JsonEditor({
         },
         body: JSON.stringify({
           agent_id: agentId,
-          user_id: creatorId, // Use the creatorId here
+          user_id: creatorId,
         }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
-        setSaveStatus(`Job submitted successfully: ${data.jobName}`);
+        console.log("Job started successfully:", data.job_name);
+        setJobId(data.job_name);
+        setSaveStatus(`Job submitted successfully`);
+  
+        // Notify parent component
+        if (onJobStarted) {
+          onJobStarted(data.job_name);
+        }
       } else {
         setSaveStatus("Error starting job");
       }
@@ -134,7 +144,7 @@ export default function JsonEditor({
       setIsLoading(false);
     }
   };
-
+  
   return (
     <div
       className="fixed right-0 top-0 h-screen bg-neutral-800 text-white shadow-2xl transition-all flex flex-col"
@@ -180,7 +190,7 @@ export default function JsonEditor({
           )}
 
           {/* Show job status message */}
-          {saveStatus && saveStatus !== "success" && (
+          {saveStatus && saveStatus !== "success" && saveStatus !== "error" && (
             <div className="flex items-center mt-2">
               {saveStatus === "Job submitted successfully" ? (
                 <CheckCircle size={16} className="mr-2 text-green-400" />

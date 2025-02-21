@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import ReactFlow, {
   Background,
   applyNodeChanges,
@@ -15,7 +15,22 @@ import ReactFlow, {
 import CustomNode from "./CustomNode";
 
 // Import necessary styles for React Flow
-import 'reactflow/dist/style.css';
+import "reactflow/dist/style.css";
+
+// API URL for job status
+const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+
+interface JobNode {
+  alias: string;
+  output?: string;
+  status?: string;
+}
+
+interface Job {
+  job_name: string;
+  status: string;
+  nodes: JobNode[];
+}
 
 interface WorkflowBuilderProps {
   nodes: Node[];
@@ -23,7 +38,10 @@ interface WorkflowBuilderProps {
   edges: Edge[];
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   setJsonText: (json: string) => void;
-  agentId: string | null;  // Add agentId here
+  agentId: string | null;
+  creatorId: string;
+  runningJobId: string | null;
+  setRunningJobId: (jobId: string | null) => void;
 }
 
 const nodeTypes = { custom: CustomNode };
@@ -34,12 +52,29 @@ export default function WorkflowBuilder({
   edges,
   setEdges,
   setJsonText,
-  agentId,  // Receive agentId
+  agentId,
+  creatorId,
+  runningJobId,
+  setRunningJobId,
 }: WorkflowBuilderProps) {
+  // 🆕 Function to reset node status and outputs when a new job starts
+  const resetNodes = useCallback(() => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          status: "Idle", // Reset status
+          outputs: {}, // Clear outputs
+        },
+      }))
+    );
+  }, [setNodes]);
+
   // Handle node changes
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setNodes((nds: Node[]) => applyNodeChanges(changes, nds));
+      setNodes((nds) => applyNodeChanges(changes, nds));
     },
     [setNodes]
   );
@@ -47,46 +82,115 @@ export default function WorkflowBuilder({
   // Handle edge changes
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
-      setEdges((eds: Edge[]) => applyEdgeChanges(changes, eds));
+      setEdges((eds) => applyEdgeChanges(changes, eds));
     },
     [setEdges]
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      setEdges((eds: Edge[]) => addEdge(connection, eds));
+      setEdges((eds) => addEdge(connection, eds));
     },
     [setEdges]
   );
 
+  // Fetch job status periodically
+  const fetchJobStatus = useCallback(async () => {
+    if (!creatorId || !runningJobId) return;
+
+    try {
+      const response = await fetch(`${AINU_MANAGER_URL}/users/${creatorId}`);
+      const data = await response.json();
+
+      if (response.ok && data.jobs) {
+        const job: Job | undefined = data.jobs.find((j: Job) => j.job_name === runningJobId);
+
+        if (job) {
+          console.log("Job status:", job);
+
+          setNodes((prevNodes) =>
+            prevNodes.map((node) => {
+              const nodeStatus: JobNode | undefined = job.nodes.find((n) => n.alias === node.data.alias);
+
+              if (nodeStatus) {
+                let parsedOutput: Record<string, any> = {};
+                try {
+                  parsedOutput = nodeStatus.output ? JSON.parse(nodeStatus.output) : {};
+                } catch (error) {
+                  console.error(`Error parsing output for node ${nodeStatus.alias}:`, error);
+                }
+
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    status: nodeStatus.status, // ✅ Use the node's own `status`
+                    outputs: parsedOutput, // ✅ Store parsed outputs
+                  },
+                };
+              }
+              return node;
+            })
+          );
+
+          // ✅ Stop polling if the overall job is complete
+          if (job.status.toLowerCase() === "complete") {
+            console.log("Job finished:", job.status);
+            setRunningJobId(null);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching job status:", error);
+    }
+  }, [creatorId, runningJobId, setNodes, setRunningJobId]);
+
+  // 🔄 **Reintroduce polling every 5 seconds when a job is running**
+  useEffect(() => {
+    if (runningJobId) {
+      fetchJobStatus(); // Fetch immediately
+      const interval = setInterval(fetchJobStatus, 5000);
+      return () => clearInterval(interval); // Cleanup on unmount
+    }
+  }, [runningJobId, fetchJobStatus]);
+
+  // 🔥 **Reset nodes when a new job starts**
+  useEffect(() => {
+    if (runningJobId) {
+      console.log("Starting new job, resetting node statuses...");
+      resetNodes();
+    }
+  }, [runningJobId, resetNodes]);
+
+  // Generate JSON representation of the workflow
   useEffect(() => {
     const formattedJson = JSON.stringify(
       {
         name: "My Sample Workflow",
-        creator: "<UUID OF CREATOR USER>",
+        creator: creatorId,
         description: "An automatically generated workflow.",
-        nodes: nodes.map((node: Node) => ({
+        nodes: nodes.map((node) => ({
           alias: node.data.alias ?? node.id,
           type: node.data.type,
           parameters: node.data.parametersState || {},
         })),
-        edges: edges.map((edge: Edge) => ({
+        edges: edges.map((edge) => ({
           from: [edge.source],
           to: [edge.target],
         })),
-        id: agentId, // Include agentId here if it's available
+        id: agentId,
       },
       null,
       2
     );
 
     setJsonText(formattedJson);
-  }, [nodes, edges, setJsonText, agentId]);  // Depend on agentId
+  }, [nodes, edges, setJsonText, agentId, creatorId]);
 
-  // Set default node positions if not set
+  // Ensure nodes have default positions
   const initializedNodes = nodes.map((node) => ({
     ...node,
-    position: node.position || { x: Math.random() * 400, y: Math.random() * 400 },  // Ensure position
+    position: node.position || { x: Math.random() * 400, y: Math.random() * 400 },
   }));
 
   // Function to update node data
@@ -100,7 +204,10 @@ export default function WorkflowBuilder({
                 data: {
                   ...node.data,
                   [key]: key === "alias" ? value : node.data[key],
-                  parametersState: key !== "alias" ? { ...node.data.parametersState, [key]: value } : node.data.parametersState,
+                  parametersState:
+                    key !== "alias"
+                      ? { ...node.data.parametersState, [key]: value }
+                      : node.data.parametersState,
                 },
               }
             : node
@@ -109,17 +216,16 @@ export default function WorkflowBuilder({
     },
     [setNodes]
   );
-  
 
   return (
     <div className="relative flex-1 w-full h-full bg-neutral-900">
-        <ReactFlow
+      <ReactFlow
         nodes={initializedNodes.map((node) => ({
-            ...node,
-            data: {
+          ...node,
+          data: {
             ...node.data,
             updateNodeData, // Pass the updateNodeData function
-            },
+          },
         }))}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -127,10 +233,10 @@ export default function WorkflowBuilder({
         onConnect={onConnect}
         fitView
         nodeTypes={nodeTypes}
-        style={{ height: '100%', width: '100%' }}  // Ensure full height
-        >
+        style={{ height: "100%", width: "100%" }}
+      >
         <Background />
-        </ReactFlow>
+      </ReactFlow>
     </div>
   );
 }

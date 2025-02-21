@@ -20,8 +20,9 @@ export default function AgentBuilderPage() {
   const [agentDescription, setAgentDescription] = useState("An awesome AI agent");
   const [creator, setCreator] = useState("");  
   const [descOpen, setDescOpen] = useState(false);
-  const [agentId, setAgentId] = useState<string | null>(null); // Updated state for agentId
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false); // Local state for sidebarOpen
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const [runningJobId, setRunningJobId] = useState<string | null>(null); // Fixed missing state
 
   // Fetch first user from API and update the creator field
   const fetchCreatorId = async () => {
@@ -29,7 +30,7 @@ export default function AgentBuilderPage() {
       const response = await fetch(`${AINU_MANAGER_URL}/users`);
       const users = await response.json();
       if (users.length > 0) {
-        setCreator(users[0].id); // Set the first user's ID
+        setCreator(users[0].id);
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -46,7 +47,7 @@ export default function AgentBuilderPage() {
 
     const agentJob = {
       name: agentName,
-      creator: creator,  // Use the creator state here
+      creator: creator,
       description: agentDescription,
       id: agentId,
       nodes: workflowNodes.map((node) => ({
@@ -61,7 +62,7 @@ export default function AgentBuilderPage() {
     };
 
     if (agentId) {
-      agentJob.id = agentId;  // Include agentId in the JSON if it exists
+      agentJob.id = agentId;
     }
 
     return JSON.stringify(agentJob, null, 2);
@@ -84,12 +85,11 @@ export default function AgentBuilderPage() {
   };
 
   const updateAgentId = (id: string) => {
-    setAgentId(id);  // Update the agentId when a new agent is created or updated
+    setAgentId(id);
   };
 
   return (
     <div className="relative flex min-h-screen bg-neutral-950 text-white">
-      {/* Title Bar with Agent Name & Description */}
       <div className="absolute top-0 left-0 w-full bg-neutral-900 p-3 flex items-center shadow-md">
         <div className="ml-4 flex items-center space-x-2">
           <input
@@ -126,8 +126,11 @@ export default function AgentBuilderPage() {
             setNodes={setWorkflowNodes}
             edges={workflowEdges}
             setEdges={setWorkflowEdges}
-            setJsonText={setJsonText} 
-            agentId={agentId} // Pass the current agentId to the workflow builder
+            setJsonText={setJsonText}
+            agentId={agentId}
+            creatorId={creator}
+            runningJobId={runningJobId}
+            setRunningJobId={setRunningJobId} 
           />
         </div>
       </div>
@@ -138,9 +141,10 @@ export default function AgentBuilderPage() {
         toggle={() => setJsonEditorOpen(!jsonEditorOpen)}
         jsonText={jsonText}
         onJsonChange={handleJsonChange}
-        agentId={agentId} 
-        updateAgentId={updateAgentId}  // Pass the updateAgentId callback to JsonEditor
-        creatorId={creator}  // Pass the creator ID to JsonEditor
+        agentId={agentId}
+        updateAgentId={updateAgentId}
+        creatorId={creator}
+        onJobStarted={(jobId) => setRunningJobId(jobId)} 
       />
     </div>
   );
