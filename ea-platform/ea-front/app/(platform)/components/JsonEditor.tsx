@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
 
-// API URL for the EA Agent Manager
+// API URL for the EA Agent Manager and Job Engine
 const EA_AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1/agents";
+const EA_JOB_API_URL = "http://job-api.ea.erulabs.local/api/v1/jobs";
 
 interface JsonEditorProps {
   isOpen: boolean;
@@ -99,6 +100,37 @@ export default function JsonEditor({
     }
   };
 
+  const handleStartJob = async () => {
+    if (!agentId) return; // Don't allow starting the job if there's no agentId
+
+    try {
+      setIsLoading(true);
+
+      const response = await fetch(EA_JOB_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agent_id: agentId,
+          user_id: "creator-id", // Replace with actual user ID, maybe from state or context
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSaveStatus(`Job started: ${data.jobName}`);
+      } else {
+        setSaveStatus("Error starting job");
+      }
+    } catch (error) {
+      setSaveStatus("Error starting job");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
       className="fixed right-0 top-0 h-screen bg-neutral-800 text-white shadow-2xl transition-all flex flex-col"
@@ -151,8 +183,12 @@ export default function JsonEditor({
             >
               {isLoading ? "Saving..." : "Save"}
             </button>
-            <button className="flex-1 py-2 bg-green-600 hover:bg-green-500 transition rounded-lg text-white font-medium">
-              Run
+            <button
+              onClick={handleStartJob}
+              disabled={!agentId || isLoading}
+              className={`flex-1 py-2 ${agentId ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 cursor-not-allowed"} transition rounded-lg text-white font-medium`}
+            >
+              Start
             </button>
           </div>
         </div>

@@ -25,6 +25,7 @@ locals {
     "ea-ainu-manager"   = "../../../ea-platform/ea-ainu-manager/chart"
     "ea-ainu-operator"  = "../../../ea-platform/ea-ainu-operator/chart"
     "ea-frontend"       = "../../../ea-platform/ea-frontend/chart"
+    "ea-front"          = "../../../ea-platform/ea-front/chart"
     "ea-job-api"        = "../../../ea-platform/ea-job-api/chart"
     "ea-job-operator"   = "../../../ea-platform/ea-job-operator/chart"
   }

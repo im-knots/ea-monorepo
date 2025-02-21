@@ -47,6 +47,7 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
       name: agentName,
       creator: creator,  
       description: agentDescription,
+      id: agentId,
       nodes: workflowNodes.map((node) => ({
         alias: node.data.alias ?? node.id,
         type: node.data.type,
