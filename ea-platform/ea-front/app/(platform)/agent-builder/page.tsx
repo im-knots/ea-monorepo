@@ -45,7 +45,7 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
 
     const agentJob = {
       name: agentName,
-      creator: creator,  
+      creator: creator,  // Use the creator state here
       description: agentDescription,
       id: agentId,
       nodes: workflowNodes.map((node) => ({
@@ -139,6 +139,7 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
         onJsonChange={handleJsonChange}
         agentId={agentId} 
         updateAgentId={updateAgentId}  // Pass the updateAgentId callback to JsonEditor
+        creatorId={creator}  // Pass the creator ID to JsonEditor
       />
     </div>
   );

@@ -14,6 +14,7 @@ interface JsonEditorProps {
   onJsonChange: (json: string) => void;
   agentId: string | null; // Accept agentId as prop
   updateAgentId: (id: string) => void; // Callback to update the agentId in page.tsx
+  creatorId: string;  // Pass creator ID from parent state to this component
 }
 
 export default function JsonEditor({
@@ -23,6 +24,7 @@ export default function JsonEditor({
   onJsonChange,
   agentId,
   updateAgentId,
+  creatorId, // Receive creator ID from the parent
 }: JsonEditorProps) {
   const [width] = useState(600);
   const [localJson, setLocalJson] = useState(jsonText);
@@ -105,7 +107,9 @@ export default function JsonEditor({
 
     try {
       setIsLoading(true);
+      setSaveStatus(null); // Reset status before starting
 
+      // Use the actual creatorId passed from parent, rather than a static string
       const response = await fetch(EA_JOB_API_URL, {
         method: "POST",
         headers: {
@@ -113,14 +117,14 @@ export default function JsonEditor({
         },
         body: JSON.stringify({
           agent_id: agentId,
-          user_id: "creator-id", // Replace with actual user ID, maybe from state or context
+          user_id: creatorId, // Use the creatorId here
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setSaveStatus(`Job started: ${data.jobName}`);
+        setSaveStatus(`Job submitted successfully: ${data.jobName}`);
       } else {
         setSaveStatus("Error starting job");
       }
@@ -172,6 +176,18 @@ export default function JsonEditor({
             <div className="flex items-center text-red-400 mt-2">
               <AlertTriangle size={16} className="mr-2" />
               Error saving/updating the agent.
+            </div>
+          )}
+
+          {/* Show job status message */}
+          {saveStatus && saveStatus !== "success" && (
+            <div className="flex items-center mt-2">
+              {saveStatus === "Job submitted successfully" ? (
+                <CheckCircle size={16} className="mr-2 text-green-400" />
+              ) : (
+                <AlertTriangle size={16} className="mr-2 text-red-400" />
+              )}
+              {saveStatus}
             </div>
           )}
 
