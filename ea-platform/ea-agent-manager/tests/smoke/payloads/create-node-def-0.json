@@ -15,7 +15,7 @@
       "key": "model",
       "type": "string",
       "description": "Name of the model to use, e.g. 'llama2-7b'.",
-      "enum": ["llama3.2", "llama3.3", "deepseek-r1:8b", "deepseek-r1:1.5b"],
+      "enum": ["llama3.2", "llama3.2-ctx", "llama3.3", "deepseek-r1:8b", "deepseek-r1:1.5b"],
       "default": "llama3.2"
     },
     {

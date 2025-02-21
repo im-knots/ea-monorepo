@@ -7,15 +7,22 @@ ollama:
       # - deepseek-r1:1.5b
       # - deepseek-r1:8b
     run:
-      - llama3.2
+      # - llama3.2
       # - llama3.3
       # - deepseek-r1:1.5b
       # - deepseek-r1:8b
+
+    create:
+     - name: llama3.2-ctx
+       template: |
+         FROM llama3.2
+         PARAMETER num_ctx 32768
   gpu:
     enabled: true
     type: 'nvidia'
     number: 1
     nvidiaResource: "nvidia.com/gpu"
+
 
 
 autoscaling:
