@@ -134,7 +134,7 @@ export default function WorkflowBuilder({
           );
 
           // ✅ Stop polling if the overall job is complete
-          if (job.status.toLowerCase() === "complete") {
+          if (job.status.toLowerCase() === "completed") {
             console.log("Job finished:", job.status);
             setRunningJobId(null);
           }
