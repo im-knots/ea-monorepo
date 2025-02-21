@@ -11,18 +11,27 @@ interface JsonEditorProps {
   toggle: () => void;
   jsonText: string;
   onJsonChange: (json: string) => void;
+  agentId: string | null; // Accept agentId as prop
+  updateAgentId: (id: string) => void; // Callback to update the agentId in page.tsx
 }
 
-export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: JsonEditorProps) {
+export default function JsonEditor({
+  isOpen,
+  toggle,
+  jsonText,
+  onJsonChange,
+  agentId,
+  updateAgentId,
+}: JsonEditorProps) {
   const [width] = useState(600);
   const [localJson, setLocalJson] = useState(jsonText);
   const [isValidJson, setIsValidJson] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<string | null>(null); // for notification
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
   // Set localJson whenever jsonText changes
   useEffect(() => {
-    setLocalJson(jsonText);  // Sync the local JSON with the prop passed from parent
+    setLocalJson(jsonText);
   }, [jsonText]);
 
   const validateJson = (text: string) => {
@@ -41,22 +50,22 @@ export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: J
     onJsonChange(newText);
   };
 
-  // Function to handle saving or updating the agent
   const handleSave = async () => {
     if (!isValidJson || isLoading) return;
 
     try {
       setIsLoading(true);
-      setSaveStatus(null); // Reset status before starting
+      setSaveStatus(null);
 
       const jsonPayload = JSON.parse(localJson);
-      const apiUrl = jsonPayload.id
-        ? `${EA_AGENT_MANAGER_URL}/${jsonPayload.id}` // Update agent if agent_id exists
-        : EA_AGENT_MANAGER_URL; // Otherwise, create a new agent
+      const finalAgentId = agentId || jsonPayload.id;
 
-      const method = jsonPayload.id ? "PUT" : "POST"; // Determine if we need to create or update
+      const apiUrl = finalAgentId
+        ? `${EA_AGENT_MANAGER_URL}/${finalAgentId}`
+        : EA_AGENT_MANAGER_URL;
 
-      // Make the API call
+      const method = finalAgentId ? "PUT" : "POST";
+
       const response = await fetch(apiUrl, {
         method,
         headers: {
@@ -69,22 +78,21 @@ export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: J
 
       if (response.ok) {
         if (method === "POST") {
-          // If it's a POST request (new agent), update the JSON payload with the new agent_id
           jsonPayload.id = data.agent_id;
         }
 
-        // Update the JSON editor UI with the response data
         setLocalJson(JSON.stringify(jsonPayload, null, 2));
         onJsonChange(JSON.stringify(jsonPayload, null, 2));
-
-        // Show success notification
         setSaveStatus("success");
+
+        // Update agentId if the response is a successful POST
+        if (method === "POST") {
+          updateAgentId(data.agent_id);
+        }
       } else {
-        console.error("Error creating/updating agent:", data);
         setSaveStatus("error");
       }
     } catch (error) {
-      console.error("Error:", error);
       setSaveStatus("error");
     } finally {
       setIsLoading(false);
@@ -122,7 +130,6 @@ export default function JsonEditor({ isOpen, toggle, jsonText, onJsonChange }: J
             </div>
           )}
 
-          {/* Notification Indicator */}
           {saveStatus === "success" && (
             <div className="flex items-center text-green-400 mt-2">
               <CheckCircle size={16} className="mr-2" />

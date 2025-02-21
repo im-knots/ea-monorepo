@@ -23,6 +23,7 @@ interface WorkflowBuilderProps {
   edges: Edge[];
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   setJsonText: (json: string) => void;
+  agentId: string | null;  // Add agentId here
 }
 
 const nodeTypes = { custom: CustomNode };
@@ -33,6 +34,7 @@ export default function WorkflowBuilder({
   edges,
   setEdges,
   setJsonText,
+  agentId,  // Receive agentId
 }: WorkflowBuilderProps) {
   // Handle node changes
   const onNodesChange = useCallback(
@@ -72,13 +74,14 @@ export default function WorkflowBuilder({
           from: [edge.source],
           to: [edge.target],
         })),
+        id: agentId, // Include agentId here if it's available
       },
       null,
       2
     );
 
     setJsonText(formattedJson);
-  }, [nodes, edges, setJsonText]);
+  }, [nodes, edges, setJsonText, agentId]);  // Depend on agentId
 
   // Set default node positions if not set
   const initializedNodes = nodes.map((node) => ({

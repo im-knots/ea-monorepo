@@ -18,9 +18,9 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
   const [jsonText, setJsonText] = useState("");
   const [agentName, setAgentName] = useState("My Agent");
   const [agentDescription, setAgentDescription] = useState("An awesome AI agent");
-  const [creator, setCreator] = useState("");  // New state to store the creator user ID
+  const [creator, setCreator] = useState("");  
   const [descOpen, setDescOpen] = useState(false);
-  const [agentId, setAgentId] = useState<string | null>(null); // New state to hold the agent ID
+  const [agentId, setAgentId] = useState<string | null>(null); // Updated state for agentId
 
   // Fetch first user from API and update the creator field
   const fetchCreatorId = async () => {
@@ -35,37 +35,17 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
     }
   };
 
-  // Fetch creator user ID when the component mounts
   useEffect(() => {
     fetchCreatorId();
   }, []);
 
   // Define the shape of the agent job schema
-  interface AgentJob {
-    name: string;
-    creator: string;
-    description: string;
-    nodes: {
-      alias: string;
-      type: string;
-      parameters: Record<string, any>;
-    }[];
-    edges: {
-      from: string[];
-      to: string[];
-    }[];
-    id?: string;  // Add `id` as an optional field
-  }
-
-
-  // Convert current workflow into JSON schema
   const generateJsonSchema = (): string => {
-    // Create a map of node IDs to their aliases
     const nodeAliasMap = new Map(workflowNodes.map(node => [node.id, node.data.alias]));
-  
-    const agentJob: AgentJob = {
+
+    const agentJob = {
       name: agentName,
-      creator: creator,  // Use the creator state here
+      creator: creator,  
       description: agentDescription,
       nodes: workflowNodes.map((node) => ({
         alias: node.data.alias ?? node.id,
@@ -73,35 +53,36 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
         parameters: node.data.parametersState || {},
       })),
       edges: workflowEdges.map((edge) => ({
-        from: [nodeAliasMap.get(edge.source) ?? edge.source],  // Use alias for 'from' node
-        to: [nodeAliasMap.get(edge.target) ?? edge.target],  // Use alias for 'to' node
+        from: [nodeAliasMap.get(edge.source) ?? edge.source],
+        to: [nodeAliasMap.get(edge.target) ?? edge.target],
       })),
     };
-  
-    // Ensure that agentId is preserved
+
     if (agentId) {
-      agentJob.id = agentId; // Include agent_id in the payload if it exists
+      agentJob.id = agentId;  // Include agentId in the JSON if it exists
     }
-  
+
     return JSON.stringify(agentJob, null, 2);
   };
-  
-  // Sync JSON whenever the workflow updates
+
   useEffect(() => {
     setJsonText(generateJsonSchema());
   }, [workflowNodes, workflowEdges, agentName, agentDescription, creator, agentId]);
 
-  // Sync WorkflowBuilder state when JSON changes
   const handleJsonChange = (json: string) => {
-    setJsonText(json);  // Only update the JSON text from here
+    setJsonText(json);
   };
 
   const addNodeToFlow = (node: Node) => {
     setWorkflowNodes((prev) => {
       const newNodes = [...prev, node];
-      setJsonText(generateJsonSchema()); // Update the JSON text after adding a node
+      setJsonText(generateJsonSchema());
       return newNodes;
     });
+  };
+
+  const updateAgentId = (id: string) => {
+    setAgentId(id);  // Update the agentId when a new agent is created or updated
   };
 
   return (
@@ -136,29 +117,27 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
         </div>
       )}
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col relative" style={{ marginRight: jsonEditorWidth, marginTop: "50px" }}>
-        {/* Workflow Builder */}
         <div className="flex-1 flex items-center justify-center">
           <WorkflowBuilder
             nodes={workflowNodes}
             setNodes={setWorkflowNodes}
             edges={workflowEdges}
             setEdges={setWorkflowEdges}
-            setJsonText={setJsonText} // Keep the logic centralized here for updating the JSON
+            setJsonText={setJsonText} 
+            agentId={agentId} // Pass the current agentId to the workflow builder
           />
         </div>
       </div>
 
-      {/* Node Library with dynamically calculated width */}
       <NodeLibrary sidebarOpen={sidebarOpen} addNodeToFlow={addNodeToFlow} />
-
-      {/* JSON Editor Sidebar */}
       <JsonEditor
         isOpen={jsonEditorOpen}
         toggle={() => setJsonEditorOpen(!jsonEditorOpen)}
         jsonText={jsonText}
-        onJsonChange={handleJsonChange} // Handle updates to the JSON here
+        onJsonChange={handleJsonChange}
+        agentId={agentId} 
+        updateAgentId={updateAgentId}  // Pass the updateAgentId callback to JsonEditor
       />
     </div>
   );
