@@ -10,7 +10,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 // API URL
 const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
 
-export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean }) {
+export default function AgentBuilderPage() {
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const jsonEditorWidth = jsonEditorOpen ? "20rem" : "4rem";
   const [workflowNodes, setWorkflowNodes] = useState<Node[]>([]);
@@ -21,6 +21,7 @@ export default function AgentBuilderPage({ sidebarOpen }: { sidebarOpen: boolean
   const [creator, setCreator] = useState("");  
   const [descOpen, setDescOpen] = useState(false);
   const [agentId, setAgentId] = useState<string | null>(null); // Updated state for agentId
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false); // Local state for sidebarOpen
 
   // Fetch first user from API and update the creator field
   const fetchCreatorId = async () => {
