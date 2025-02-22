@@ -1,4 +1,4 @@
-resource "helm_release" "name" {
+resource "helm_release" "ollama" {
   name              = "ollama"
   repository        = "https://otwld.github.io/ollama-helm"
   chart             = "ollama"

@@ -1,0 +1,68 @@
+
+grafana.ini:
+  security:
+    disable_initial_admin_creation: true
+  auth:
+    disable_login_form: true
+  auth.anonymous:
+    enabled: true
+    org_role: Editor
+  auth.basic:
+    enabled: false
+
+## ✅ Fix dashboards configuration (remove `enabled: true`, use proper structure)
+dashboards:
+  default:
+    prometheus:
+      gnetId: 1860
+      revision: 30
+      datasource: Prometheus
+    kubernetes-pods:
+      gnetId: 3131
+      revision: 2
+      datasource: Prometheus
+    loki-logs:
+      gnetId: 13639
+      revision: 1
+      datasource: Loki
+
+## Data Sources: Use Alloy for Metrics and Loki for Logs
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        isDefault: true
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.monitoring.svc.cluster.local:3100
+        jsonData:
+          maxLines: 1000
+
+## Ingress (Optional: Update host as needed)
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+  hosts:
+    - grafana.erulabs.local
+
+## Persistence (Ensures dashboards are saved)
+persistence:
+  enabled: true
+  size: 10Gi
+  accessModes:
+    - ReadWriteOnce
+
+## Resources (Adjust based on cluster capacity)
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
