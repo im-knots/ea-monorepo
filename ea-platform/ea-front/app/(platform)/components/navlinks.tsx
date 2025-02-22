@@ -10,6 +10,7 @@ import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import HelpCenterIcon from '@mui/icons-material/HelpCenter';
 import LogoutIcon from '@mui/icons-material/Logout';
+import DeveloperBoardIcon from '@mui/icons-material/DeveloperBoard';
 import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
 import { Box } from '@mui/material';
@@ -20,6 +21,7 @@ const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Agent Builder', href: '/agent-builder', icon: SmartToyIcon },
   { name: 'Agent Manager', href: '/agent-manager', icon: GroupAddIcon },
+  { name: 'Node Builder', href: '/node-builder', icon: DeveloperBoardIcon},
   { name: 'Datasets', href: '/datasets', icon: ContentCopyIcon},
   { name: 'Marketplace', href: '/marketplace', icon: LocalGroceryStoreIcon },
   { name: 'Leaderboards', href: '/leaderboards', icon: LeaderboardIcon },
