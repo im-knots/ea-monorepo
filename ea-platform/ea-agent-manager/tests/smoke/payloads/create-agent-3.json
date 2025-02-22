@@ -41,14 +41,14 @@
             "alias": "color2-out",
             "type": "input.internal.text",
             "parameters": {
-                "input": "{{color2.textoutput.response}}"
+                "input": "{{color2.response}}"
             }
         },
         {
             "alias": "color1-out",
             "type": "input.internal.text",
             "parameters": {
-                "input": "{{color1.textoutput.response}}"
+                "input": "{{color1.response}}"
             }
         },
         {

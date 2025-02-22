@@ -1,21 +1,22 @@
-resource "helm_release" "alloy" {
-  name       = "alloy"
-  namespace  = "monitoring"
-  repository = "https://grafana.github.io/helm-charts"
-  chart      = "alloy"
-
-  values = [file("${path.module}/alloy-helm-values.yaml")]
-}
-
 resource "helm_release" "prometheus" {
   name       = "prometheus"
   namespace  = "monitoring"
   repository = "https://prometheus-community.github.io/helm-charts"
   chart      = "prometheus"
+  create_namespace = true
 
   values = [file("${path.module}/prometheus-helm-values.yaml")]
 }
 
+resource "helm_release" "alloy" {
+  name       = "alloy"
+  namespace  = "monitoring"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "alloy"
+  create_namespace = false
+
+  values = [file("${path.module}/alloy-helm-values.yaml")]
+}
 
 resource "kubernetes_persistent_volume" "loki_pv" {
   metadata {
@@ -62,7 +63,6 @@ resource "helm_release" "loki" {
     values = [file("${path.module}/loki-helm-values.yaml")]
 
     depends_on = [ 
-        helm_release.alloy,
         kubernetes_persistent_volume.loki_pv,
         kubernetes_persistent_volume_claim.loki_pvc
     ]
@@ -76,8 +76,17 @@ resource "helm_release" "grafana" {
     create_namespace = false
 
     values = [file("${path.module}/grafana-helm-values.yaml")]
-    depends_on = [ 
-        helm_release.alloy,
-        helm_release.loki
-    ]
+}
+
+// Security/Compliance
+
+// Trivy operator is a continuous security scanning tool that we can install in our clusters and get constant compliance/sec scans 
+resource "helm_release" "trivy" {
+    name             = "trivy"
+    repository       = "https://aquasecurity.github.io/helm-charts/"
+    chart            = "trivy-operator"
+    namespace        = "monitoring"
+    create_namespace = false
+
+    values = [file("${path.module}/trivy-helm-values.yaml")]
 }

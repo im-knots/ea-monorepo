@@ -25,6 +25,10 @@ dashboards:
       gnetId: 13639
       revision: 1
       datasource: Loki
+    trivy-operator:
+      gnetId: 17813
+      revision: 2
+      datasource: Prometheus
 
 ## Data Sources: Use Alloy for Metrics and Loki for Logs
 datasources:

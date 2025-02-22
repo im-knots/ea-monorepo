@@ -2,6 +2,8 @@ server:
   global:
     scrape_interval: 15s
     evaluation_interval: 15s
+  extraArgs:
+    web.enable-remote-write-receiver: null
 
   scrape_configs:
     - job_name: "alloy-metrics"

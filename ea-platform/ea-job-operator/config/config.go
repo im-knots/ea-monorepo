@@ -19,7 +19,7 @@ type Config struct {
 
 // LoadConfig initializes the configuration from environment variables.
 func LoadConfig() Config {
-	gracePeriod, err := strconv.Atoi(getEnv("CLEANUP_GRACE_PERIOD", "500"))
+	gracePeriod, err := strconv.Atoi(getEnv("CLEANUP_GRACE_PERIOD", "60"))
 	if err != nil {
 		gracePeriod = 0 // Default to 0 if conversion fails
 	}
