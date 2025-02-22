@@ -1,10 +1,64 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AgentRow from "./AgentRow";
 
-export default function AgentTable({ agents, userId }: { agents: any[], userId: string | null }) {
+const AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1/agents";
+
+export default function AgentTable({ userId }: { userId: string | null }) {
   const router = useRouter();
+  const [agents, setAgents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Fetch all agent IDs, then fetch full agent details
+  const fetchAgents = async () => {
+    setLoading(true);
+    try {
+      // 🔥 Step 1: Get basic agent list (IDs)
+      const response = await fetch(AGENT_MANAGER_URL);
+      if (!response.ok) throw new Error("Failed to fetch agents");
+
+      const agentList = await response.json();
+      if (!Array.isArray(agentList)) throw new Error("Invalid agent data received");
+
+      // 🔥 Step 2: Fetch full details for each agent
+      const detailedAgents = await Promise.all(
+        agentList.map(async (agent: any) => {
+          try {
+            const detailsRes = await fetch(`${AGENT_MANAGER_URL}/${agent.id}`);
+            if (!detailsRes.ok) throw new Error(`Failed to fetch details for agent ${agent.id}`);
+            const details = await detailsRes.json();
+            return {
+              ...agent, // Keep original data
+              nodes: details.nodes ?? [], // Ensure nodes exist
+              edges: details.edges ?? [], // Ensure edges exist
+            };
+          } catch (error) {
+            console.error(error);
+            return null; // Ignore failed agents
+          }
+        })
+      );
+
+      // 🔥 Step 3: Remove failed requests (null values)
+      setAgents(detailedAgents.filter(Boolean));
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Fetch agents on component mount
+  useEffect(() => {
+    if (userId) fetchAgents();
+  }, [userId]);
+
+  // ✅ Refresh agent list after deletion
+  const refreshAgents = () => {
+    fetchAgents();
+  };
 
   return (
     <div className="bg-neutral-900 text-white p-6 rounded-lg shadow-md">
@@ -30,9 +84,20 @@ export default function AgentTable({ agents, userId }: { agents: any[], userId: 
             </tr>
           </thead>
           <tbody>
-            {agents.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan={4} className="text-center text-gray-400 py-4">
+                  Loading agents...
+                </td>
+              </tr>
+            ) : agents.length > 0 ? (
               agents.map((agent) => (
-                <AgentRow key={agent.id} agent={agent} userId={userId} />
+                <AgentRow
+                  key={agent.id}
+                  agent={agent}
+                  userId={userId}
+                  refreshAgents={refreshAgents} // ✅ Ensure proper refresh
+                />
               ))
             ) : (
               <tr>
