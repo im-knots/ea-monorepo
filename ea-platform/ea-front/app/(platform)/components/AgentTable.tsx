@@ -62,16 +62,28 @@ export default function AgentTable({ userId }: { userId: string | null }) {
 
   return (
     <div className="bg-neutral-900 text-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">My Agents</h2>
-        <button
-          onClick={() => router.push("/agent-builder")}
-          className="flex items-center space-x-2 bg-neutral-800 hover:bg-neutral-900 text-white font-semibold px-4 py-2 rounded-md transition"
-        >
-          <span className="text-lg">+</span>
-          <span>Create Agent</span>
-        </button>
-      </div>
+        <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">My Agents</h2>
+            
+            {/* Button container to align them together on the right */}
+            <div className="flex space-x-2 ml-auto">
+            <button
+                onClick={() => router.push("/agent-builder")}
+                className="flex items-center space-x-2 bg-neutral-800 hover:bg-neutral-900 text-white font-semibold px-4 py-2 rounded-md transition"
+            >
+                <span className="text-lg">+</span>
+                <span>Create Agent</span>
+            </button>
+
+            <button
+                onClick={() => router.push("/node-builder")}
+                className="flex items-center space-x-2 bg-neutral-800 hover:bg-neutral-900 text-white font-semibold px-4 py-2 rounded-md transition"
+            >
+                <span className="text-lg">+</span>
+                <span>Create Node</span>
+            </button>
+            </div>
+        </div>
 
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-700 rounded-lg text-sm">
