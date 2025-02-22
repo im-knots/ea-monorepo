@@ -25,39 +25,67 @@ interface Node {
 export default function JobList({
   agentId,
   userId,
+  refreshJobs, // 🔥 Refreshes job count in AgentRow
 }: {
   agentId: string;
   userId: string | null;
+  refreshJobs: () => void;
 }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState<string | null>(null);
+
+  // Fetch jobs for the agent
+  const fetchJobs = async () => {
+    try {
+      const res = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
+      const data = await res.json();
+      const filteredJobs = (data.jobs || []).filter((job: Job) => job.agent_id === agentId);
+
+      setJobs(filteredJobs);
+      refreshJobs(); // 🔥 Notify AgentRow to update job count
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const res = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
-        const data = await res.json();
-        setJobs(
-          (data.jobs || []).filter((job: Job) => job.agent_id === agentId)
-        );
-      } catch (error) {
-        console.error("Error fetching jobs:", error);
-      }
-    };
-
     fetchJobs();
   }, [agentId, userId]);
+
+  // Auto-refresh job details when expanded
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(async () => {
+      await fetchJobs();
+      const job = jobs.find((job) => job.id === autoRefresh);
+      if (job?.status.toLowerCase() === "completed" || job?.status.toLowerCase() === "complete") {
+        setAutoRefresh(null);
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, jobs]);
 
   const getStatusColor = (status: string | undefined) => {
     if (!status) return "bg-gray-500 text-white";
     const lowerStatus = status.toLowerCase();
-    return lowerStatus === "completed"
+
+    return lowerStatus === "completed" || lowerStatus === "complete"
       ? "bg-green-600 text-white"
       : lowerStatus === "pending"
       ? "bg-yellow-500 text-black"
       : lowerStatus === "error"
       ? "bg-red-600 text-white"
+      : lowerStatus === "executing"
+      ? "bg-blue-500 text-white"
       : "bg-gray-500 text-white";
+  };
+
+  const handleExpand = (jobId: string) => {
+    setExpandedJobId(expandedJobId === jobId ? null : jobId);
+    setAutoRefresh(jobId);
   };
 
   return (
@@ -78,35 +106,23 @@ export default function JobList({
               <React.Fragment key={job.id}>
                 <tr
                   className="border-b border-gray-700 hover:bg-neutral-800 transition cursor-pointer"
-                  onClick={() =>
-                    setExpandedJobId(expandedJobId === job.id ? null : job.id)
-                  }
+                  onClick={() => handleExpand(job.id)}
                 >
                   <td className="px-4 py-2">{job.job_name}</td>
+                  <td className="px-4 py-2">{new Date(job.created_time).toLocaleString()}</td>
+                  <td className="px-4 py-2">{job.last_active ? new Date(job.last_active).toLocaleString() : "N/A"}</td>
                   <td className="px-4 py-2">
-                    {new Date(job.created_time).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-2">
-                    {job.last_active
-                      ? new Date(job.last_active).toLocaleString()
-                      : "N/A"}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={`px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(job.status)}`}
-                    >
+                    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(job.status)}`}>
                       {job.status}
                     </span>
                   </td>
                 </tr>
 
-                {/* Expanded View for Job Details */}
+                {/* Expanded Job Row: Shows Individual Node Statuses */}
                 {expandedJobId === job.id && (
                   <tr>
                     <td colSpan={4} className="p-4 bg-neutral-800 rounded-lg">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">
-                        Node Outputs
-                      </h4>
+                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Node Outputs</h4>
                       {job.nodes?.length ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                           {job.nodes.map((node) => (
@@ -121,33 +137,21 @@ export default function JobList({
                                 {node.status}
                               </span>
 
-                              <p className="text-gray-300 text-sm font-semibold">
-                                {node.alias}
-                              </p>
+                              <p className="text-gray-300 text-sm font-semibold">{node.alias}</p>
                               <p className="text-xs text-gray-400">
                                 {node.lastUpdated
-                                  ? `Last Updated: ${new Date(
-                                      node.lastUpdated
-                                    ).toLocaleString()}`
+                                  ? `Last Updated: ${new Date(node.lastUpdated).toLocaleString()}`
                                   : "No timestamp"}
                               </p>
 
                               <pre className="bg-neutral-950 p-2 text-xs text-gray-300 rounded mt-2 overflow-y-auto max-h-40 whitespace-pre-wrap break-words">
-                                {node.output
-                                  ? JSON.stringify(
-                                      JSON.parse(node.output),
-                                      null,
-                                      2
-                                    )
-                                  : "No output"}
+                                {node.output ? JSON.stringify(JSON.parse(node.output), null, 2) : "No output"}
                               </pre>
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-gray-400 text-sm">
-                          No node outputs available.
-                        </p>
+                        <p className="text-gray-400 text-sm">No node outputs available.</p>
                       )}
                     </td>
                   </tr>
