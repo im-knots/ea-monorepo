@@ -1,132 +1,201 @@
 {
-    "name": "Day Trip Planne with Weather Check",
+    "name": "NYC Date Planner",
     "creator": "<SOME USER UUID>",
-    "description": "An example of a more complex workflow with weather check, outfit plan, day plan, and review AIs",
+    "description": "A Planner for a cute date in nyc that takes into account the weather. ",
     "nodes": [
-        {
-            "alias": "noaa",
-            "type": "worker.api.weather.noaa",
-            "parameters": {
-                "office": "OKX",
-                "gridX": "33",
-                "gridY": "35"
-            }
-        },
-        {
-            "alias": "in-outfit",
-            "type": "input.internal.text",
-            "parameters": {
-                "input": "Based on the weather pick me an outfit"
-            }
-        },
-        {
-            "alias": "outfit",
-            "type": "worker.inference.llm.ollama",
-            "parameters": {
-                "model": "llama3.2",
-                "prompt": "{{in-outfit.input}} //Weather: {{noaa.properties.periods[0].detailedForecast}}",
-                "stream": false,
-                "temperature": "0.7"
-            }
-        },
-        {
-            "alias": "planner",
-            "type": "worker.inference.llm.ollama",
-            "parameters": {
-                "model": "llama3.2",
-                "prompt": "{{in-planner.input}} //GENERATED OUTFIT BASED ON WEATHER: {{outfit.response}}",
-                "stream": false,
-                "temperature": "0.7"
-            }
-        },
-        {
-            "alias": "in-planner",
-            "type": "input.internal.text",
-            "parameters": {
-                "input": "plan me a fun day around NYC."
-            }
-        },
-        {
-            "alias": "review",
-            "type": "worker.inference.llm.ollama",
-            "parameters": {
-                "model": "llama3.2",
-                "prompt": "{{in-review.input}} //PLAN {{planner.response}} //WEATHER  {{noaa.properties.periods[0].detailedForecast}}",
-                "stream": false,
-                "temperature": "0.7"
-            }
-        },
-        {
-            "alias": "in-review",
-            "type": "input.internal.text",
-            "parameters": {
-                "input": "Review the weather and this day plan and give me your thoughts"
-            }
-        },
-        {
-            "alias": "out",
-            "type": "destination.internal.text",
-            "parameters": {
-                "input": "{{review.response}}"
-            }
+      {
+        "alias": "in-outfit",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "plan me an outfit for today's weather"
         }
+      },
+      {
+        "alias": "noaa",
+        "type": "worker.api.weather.noaa",
+        "parameters": {
+          "office": "OKX",
+          "gridX": 33,
+          "gridY": 35
+        }
+      },
+      {
+        "alias": "outfit-prompt",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "//outfit prompt\n{{in-outfit.input}}\n//Weather\n{{noaa.properties.periods[0].detailedForecast}}"
+        }
+      },
+      {
+        "alias": "outfit",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2",
+          "prompt": "{{outfit-prompt.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "date-prompt",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "Given the outfit and the weather give me a fun date idea in new york city\n//Outfit\n{{outfit.response}}\n\n//Weather\n{{noaa.properties.periods[0].detailedForecast}}\n\n\n"
+        }
+      },
+      {
+        "alias": "date",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2",
+          "prompt": "{{date-prompt.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "review-prompt",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "given this date plan, this outfit, and the weather forecast, review the date plan and provide any feedback or changes you would recommend. \n\n//OUTFIT\n{{outfit.response}}\n\n//WEATHER\n{{noaa.properties.periods[0].detailedForecast}}\n\n//DATE\n{{date.response}}"
+        }
+      },
+      {
+        "alias": "review",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2",
+          "prompt": "{{review-prompt.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{review.response}}"
+        }
+      },
+      {
+        "alias": "date-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{date.response}}"
+        }
+      },
+      {
+        "alias": "outfit-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{outfit.response}}"
+        }
+      }
     ],
     "edges": [
-        {
-            "from": [
-                "in-outfit"
-            ],
-            "to": [
-                "outfit"
-            ]
-        },
-        {
-            "from": [
-                "noaa"
-            ],
-            "to": [
-                "outfit"
-            ]
-        },
-        {
-            "from": [
-                "outfit"
-            ],
-            "to": [
-                "planner"
-            ]
-        },
-        {
-            "from": [
-                "in-planner"
-            ],
-            "to": [
-                "planner"
-            ]
-        },
-        {
-            "from": [
-                "planner"
-            ],
-            "to": [
-                "review"
-            ]
-        },
-        {
-            "from": [
-                "in-review"
-            ],
-            "to": [
-                "review"
-            ]
-        },
-        {
-            "from": [
-                "review"
-            ],
-            "to": [
-                "out"
-            ]
-        }
+      {
+        "from": [
+          "in-outfit"
+        ],
+        "to": [
+          "outfit-prompt"
+        ]
+      },
+      {
+        "from": [
+          "noaa"
+        ],
+        "to": [
+          "outfit-prompt"
+        ]
+      },
+      {
+        "from": [
+          "outfit-prompt"
+        ],
+        "to": [
+          "outfit"
+        ]
+      },
+      {
+        "from": [
+          "outfit"
+        ],
+        "to": [
+          "date-prompt"
+        ]
+      },
+      {
+        "from": [
+          "noaa"
+        ],
+        "to": [
+          "date-prompt"
+        ]
+      },
+      {
+        "from": [
+          "date-prompt"
+        ],
+        "to": [
+          "date"
+        ]
+      },
+      {
+        "from": [
+          "date"
+        ],
+        "to": [
+          "review-prompt"
+        ]
+      },
+      {
+        "from": [
+          "outfit"
+        ],
+        "to": [
+          "review-prompt"
+        ]
+      },
+      {
+        "from": [
+          "noaa"
+        ],
+        "to": [
+          "review-prompt"
+        ]
+      },
+      {
+        "from": [
+          "review-prompt"
+        ],
+        "to": [
+          "review"
+        ]
+      },
+      {
+        "from": [
+          "review"
+        ],
+        "to": [
+          "out"
+        ]
+      },
+      {
+        "from": [
+          "date"
+        ],
+        "to": [
+          "date-out"
+        ]
+      },
+      {
+        "from": [
+          "outfit"
+        ],
+        "to": [
+          "outfit-out"
+        ]
+      }
     ]
-}
+  }
