@@ -30,7 +30,7 @@ Core features of the Ea Platform are:
 |----------|-----------|-------------|
 | **Eru Labs Brand** | [brand-frontend](brand/brand-frontend/README.md) | Frontend for the Eru Labs brand site |
 |  | [brand-backend](brand/brand-backend/README.md) | Backend for the Eru Labs brand site |
-| **Ea Platform Frontend** | [ea-frontend](ea-platform/ea-frontend/README.md) | UI for building and managing AI agents |
+| **Ea Platform Frontend** | [ea-front](ea-platform/ea-front/README.md) | UI for building and managing AI agents |
 | **Ea Agent Engine** | [ea-agent-manager](ea-platform/ea-agent-manager/README.md) | Manages agent + node creation and definitions |
 | **Ea Ainu Engine** | [ea-ainu-manager](ea-platform/ea-ainu-manager/README.md) | Manages user devices and agent jobs |
 |  | [ea-ainu-operator](ea-platform/ea-ainu-operator/README.md) | Operator to sync agent job status to frontend |
