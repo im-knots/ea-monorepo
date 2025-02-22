@@ -81,3 +81,16 @@ resource "helm_release" "grafana" {
         helm_release.loki
     ]
 }
+
+// Security/Compliance
+
+// Trivy operator is a continuous security scanning tool that we can install in our clusters and get constant compliance/sec scans 
+resource "helm_release" "trivy" {
+    name             = "trivy"
+    repository       = "https://aquasecurity.github.io/helm-charts/"
+    chart            = "trivy-operator"
+    namespace        = "monitoring"
+    create_namespace = false
+
+    values = [file("${path.module}/trivy-helm-values.yaml")]
+}
