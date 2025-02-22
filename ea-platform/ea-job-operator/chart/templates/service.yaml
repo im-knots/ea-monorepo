@@ -4,6 +4,10 @@ metadata:
   name: {{ include "ea-job-operator.fullname" . }}
   labels:
     {{- include "ea-job-operator.labels" . | nindent 4 }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    prometheus.io/path: "/api/v1/metrics"
 spec:
   type: {{ .Values.service.type }}
   ports:

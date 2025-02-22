@@ -28,7 +28,7 @@ var (
 
 	RequestLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "ea_job_operator_http_request_duration_seconds",
+			Name:    "ea_ainu_operator_http_request_duration_seconds",
 			Help:    "Histogram of latencies for HTTP requests",
 			Buckets: prometheus.DefBuckets,
 		},

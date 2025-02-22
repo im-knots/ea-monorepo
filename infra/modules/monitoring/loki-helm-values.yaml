@@ -1,0 +1,67 @@
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1  # No replication needed in single-binary mode
+
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb  # TSDB storage
+        object_store: filesystem  # Use local filesystem storage instead of S3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  pattern_ingester:
+    enabled: true  # Enable pattern-based ingestion
+
+  limits_config:
+    allow_structured_metadata: true
+    volume_enabled: true  # Enable volume-based indexing
+
+  ruler:
+    enable_api: true  # Enable API for managing recording and alerting rules
+
+  storage:
+    type: filesystem  # Use local storage instead of MinIO (S3)
+
+  persistence:
+    enabled: true
+    existingClaim: loki-pvc  # Use the PVC created in Terraform
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+  memberlistConfig: null  # 🚨 Disable memberlist (prevents clustering)
+
+deploymentMode: SingleBinary  # Force Loki into single-binary mode
+
+singleBinary:
+  replicas: 1  # Ensure only one instance of Loki runs
+
+# Disable all distributed mode components by setting replicas to 0
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0

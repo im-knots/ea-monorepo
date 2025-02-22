@@ -12,7 +12,7 @@ import (
 var (
 	StepCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "ea_ainu_manager_handler_steps",
+			Name: "ea_agent_manager_handler_steps",
 			Help: "Total number of steps executed in the handler function",
 		},
 		[]string{"path", "step", "type"},
@@ -20,7 +20,7 @@ var (
 
 	RequestLatencyHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "ea_ainu_manager_http_request_duration_seconds",
+			Name:    "ea_agent_manager_http_request_duration_seconds",
 			Help:    "Histogram of latencies for HTTP requests",
 			Buckets: prometheus.DefBuckets,
 		},
