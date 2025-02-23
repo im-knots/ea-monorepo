@@ -1,0 +1,47 @@
+collectors:
+  docker:
+    enabled: true
+    socket: /var/run/docker.sock
+
+  containerd:
+    enabled: true  # Enable Containerd support
+    socket: "/var/run/containerd/containerd.sock"  # Correct socket path for Minikube
+
+  kubernetes:
+    enabled: true
+
+falco:
+  json_output: true
+  stdout_output:
+    enabled: true
+
+
+metrics:
+  enabled: true
+  outputRule: true
+  service:
+    annotations: 
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "8765"
+      prometheus.io/path: "/metrics"
+    ports:
+      metrics:
+        port: 8765
+        targetPort: 8765
+
+controller:
+  kind: daemonset  # Run Falco as a DaemonSet for host monitoring
+  daemonset:
+    updateStrategy:
+      type: RollingUpdate
+
+podSecurityContext:
+  privileged: true  # Ensure privileged mode for syscall monitoring
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 512Mi
+  limits:
+    memory: 1024Mi
+

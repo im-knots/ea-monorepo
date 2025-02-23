@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/brand-backend
+  repository: 10.105.183.185:80/brand-backend
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"

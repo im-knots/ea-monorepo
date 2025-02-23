@@ -1,5 +1,5 @@
 image:
-  repository: localhost:5000/ea-job-operator
+  repository: ea-job-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"

@@ -478,7 +478,7 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 								RestartPolicy:      corev1.RestartPolicyNever,
 								Containers: []corev1.Container{{
 									Name:            "executor",
-									Image:           "localhost:5000/ea-job-executor:latest",
+									Image:           "ea-job-executor:latest",
 									Command:         []string{"/app/ea-job-executor"},
 									ImagePullPolicy: corev1.PullIfNotPresent,
 									VolumeMounts: []corev1.VolumeMount{
