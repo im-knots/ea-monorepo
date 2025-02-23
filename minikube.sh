@@ -21,6 +21,7 @@ EA_NAMESPACE="ea-platform"
 BRAND_NAMESPACE="eru-labs-brand"
 
 build_and_push() {
+    eval $(minikube docker-env)
     echo -e "${BOLD_YELLOW}BUILDING LOCAL IMAGES${RESET}"
     local app_path=$1
     local app_name=$(basename "$app_path")
@@ -28,10 +29,10 @@ build_and_push() {
     echo "Processing app: $app_name"
     
     echo "Building Docker image for $app_name..."
-    docker build -t "$LOCAL_REGISTRY/$app_name:$VERSION" "$app_path"
+    docker build -t "$app_name:$VERSION" "$app_path"
 
-    echo "Pushing Docker image for $app_name to local registry..."
-    docker push "$LOCAL_REGISTRY/$app_name:$VERSION"
+    # echo "Pushing Docker image for $app_name to local registry..."
+    # docker push "$LOCAL_REGISTRY/$app_name:$VERSION"
 
     echo "Completed build and push for $app_name"
 }

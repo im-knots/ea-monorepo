@@ -1,0 +1,33 @@
+trivy:
+    command: filesystem
+    ignoreUnfixed: true
+
+trivyOperator:
+    scanJobPodTemplateContainerSecurityContext:
+        # For filesystem scanning, Trivy needs to run as the root user
+        runAsUser: 0
+
+excludeNamespaces: ""
+targetWorkloads: "pod,replicaset,replicationcontroller,statefulset,daemonset,cronjob,job"
+
+operator:
+  replicas: 1
+  metricsFindingsEnabled: true
+  metricsVulnIdEnabled: true
+  exposedSecretScannerEnabled: true
+  metricsExposedSecretInfo: true
+  metricsConfigAuditInfo: true
+  metricsRbacAssessmentInfo: true
+  metricsInfraAssessmentInfo: true
+  metricsImageInfo: true
+  metricsClusterComplianceInfo: true
+
+service:
+  headless: true
+  metricsPort: 80
+  annotations: 
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "80"
+    prometheus.io/path: "/metrics"
+  metricsAppProtocol: TCP
+  type: ClusterIP
