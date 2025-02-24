@@ -106,7 +106,7 @@ I have created a helper script to easily set up the entire platform in a local c
 
 ### Requirements
 - minikube
-- terraform 1.11.0
+- terraform 1.10.3
 - tfenv (optional, for managing terraform versions)
 - helm
 - kubectl
