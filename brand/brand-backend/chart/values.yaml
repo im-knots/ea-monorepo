@@ -1,5 +1,5 @@
 image:
-  repository: 10.105.183.185:80/brand-backend
+  repository: brand-backend
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
@@ -49,12 +49,12 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: "kong"
   annotations: {}
   hosts:
-    - host: backend.erulabs.local
+    - host: 
       paths:
-        - path: /
+        - path: /brand-backend
           pathType: ImplementationSpecific
 
 livenessProbe:

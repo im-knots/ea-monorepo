@@ -1,0 +1,81 @@
+
+gateway:
+  admin: 
+    enabled: true
+    http:
+      enabled: true
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+  proxy:
+    ingress:
+      # Enable/disable exposure using ingress.
+      enabled: true
+      ingressClassName: nginx                                      
+      labels: {}
+      hostname: 
+      path: 
+      # Each path in an Ingress is required to have a corresponding path type (when used with hostname above). (ImplementationSpecific/Exact/Prefix)
+      pathType: ImplementationSpecific
+      # Ingress hosts. Use this instead of or in combination with hostname to specify multiple ingress host configurations
+      hosts:
+      - host: api.ea.erulabs.local
+        paths:
+        - path: /agent-manager
+          pathType: ImplementationSpecific
+          backend:                                                                                                                                                                                      
+            service: 
+              name: kong-ingress-gateway-proxy                                                                                                                                                                                                                                                                                                                                           
+              port:                                                                                                                                                                                     
+                number: 80 
+      - host: api.ea.erulabs.local
+        paths:
+        - path: /job-api
+          pathType: ImplementationSpecific
+          backend:                                                                                                                                                                                      
+            service:
+              name: kong-ingress-gateway-proxy                                                                                                                                                                                                                                                                                                                                           
+              port:                                                                                                                                                                                     
+                number: 80 
+      - host: api.ea.erulabs.local
+        paths:
+        - path: /ainu-manager
+          pathType: ImplementationSpecific
+          backend:                                                                                                                                                                                      
+            service:
+              name: kong-ingress-gateway-proxy                                                                                                                                                                                                                                                                                                                                     
+              port:                                                                                                                                                                                     
+                number: 80
+      - host: api.ea.erulabs.local
+        paths:
+        - path: /brand-backend
+          pathType: ImplementationSpecific
+          backend:                                                                                                                                                                                      
+            service:
+              name: kong-ingress-gateway-proxy    
+              port:                                                                                                                                                                                   
+                number: 80
+  # readinessProbe for Kong pods
+  readinessProbe:
+    httpGet:
+      path: "/status/ready"
+      port: status
+      scheme: HTTP
+    initialDelaySeconds: 20
+    timeoutSeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
+
+  # livenessProbe for Kong pods
+  livenessProbe:
+    httpGet:
+      path: "/status"
+      port: status
+      scheme: HTTP
+    initialDelaySeconds: 20
+    timeoutSeconds: 5
+    periodSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3

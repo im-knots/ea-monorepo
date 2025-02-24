@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AgentRow from "./AgentRow";
 
-const AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1/agents";
+const AGENT_MANAGER_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/agents";
 
 export default function AgentTable({ userId }: { userId: string | null }) {
   const router = useRouter();

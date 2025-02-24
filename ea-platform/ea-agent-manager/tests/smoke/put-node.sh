@@ -4,7 +4,7 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-NODE_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/nodes"
+NODE_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/nodes"
 
 # Get all nodes
 ALL_NODES=$(curl -s "$NODE_ENDPOINT")

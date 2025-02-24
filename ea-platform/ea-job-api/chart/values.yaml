@@ -58,12 +58,13 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
-  annotations: {}
+  className: "kong"
+  annotations:
+    konghq.com/strip-path: 'true'
   hosts:
-    - host: job-api.ea.erulabs.local
+    - host: 
       paths:
-        - path: /
+        - path: /job-api
           pathType: ImplementationSpecific
 
 livenessProbe:

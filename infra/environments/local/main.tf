@@ -74,7 +74,6 @@ module "ea_app_deployment" {
 
   depends_on = [ 
     module.mongodb_deployment,
-    module.monitoring 
   ]
 }
 
@@ -94,7 +93,9 @@ module "eru_labs_brand_app_deployment" {
 
   depends_on = [ 
     module.mongodb_deployment,
-    module.monitoring 
   ]
 }
 
+module "kong" {
+  source = "../../modules/kong"
+}

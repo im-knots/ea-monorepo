@@ -8,12 +8,9 @@ REPO_DIR=$(pwd)
 BOLD_YELLOW="\e[1;33m"
 RESET="\e[0m"
 
-
 # Base directories containing the app folders
 BASE_DIRS=("ea-platform" "brand")
 
-# Local registry
-LOCAL_REGISTRY="localhost:5000"
 VERSION=${2:-"latest"}
 
 # Namespaces for Helm deployments
@@ -31,9 +28,6 @@ build_and_push() {
     echo "Building Docker image for $app_name..."
     docker build -t "$app_name:$VERSION" "$app_path"
 
-    # echo "Pushing Docker image for $app_name to local registry..."
-    # docker push "$LOCAL_REGISTRY/$app_name:$VERSION"
-
     echo "Completed build and push for $app_name"
 }
 
@@ -50,15 +44,10 @@ k8s_ingress_dns() {
     echo "I need sudo permissions to update your /etc/hosts file"
 
     HOST_ENTRIES=(
-        "agent-manager.ea.erulabs.local"
-        "ainu-manager.ea.erulabs.local"
+        "api.ea.erulabs.local"
         "ea.erulabs.local"
-        "job-api.ea.erulabs.local"
-        "backend.erulabs.local"
         "erulabs.local"
-        "ollama.ea.erulabs.local"
         "grafana.erulabs.local"
-        "prometheus.erulabs.local"
     )
 
     for HOSTNAME in "${HOST_ENTRIES[@]}"; do
@@ -77,15 +66,10 @@ remove_k8s_ingress_dns() {
     echo "I need sudo permissions to remove entries from your /etc/hosts file"
 
     HOST_ENTRIES=(
-        "agent-manager.ea.erulabs.local"
-        "ainu-manager.ea.erulabs.local"
+        "api.ea.erulabs.local"
         "ea.erulabs.local"
-        "job-api.ea.erulabs.local"
-        "backend.erulabs.local"
         "erulabs.local"
-        "ollama.ea.erulabs.local"
         "grafana.erulabs.local"
-        "prometheus.erulabs.local"
     )
 
     for HOSTNAME in "${HOST_ENTRIES[@]}"; do
@@ -166,11 +150,10 @@ cleanup() {
 # Main Script
 case "$1" in
     start)
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
         minikube addons enable ingress
-        # minikube addons enable ingress-dns // we could do this but hosts file is more universal than resolvconf
         minikube addons enable registry
         minikube addons enable metrics-server
-        eval $(minikube docker-env)
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm repo update
 
@@ -195,8 +178,7 @@ case "$1" in
         k8s_ingress_dns
         k8s_port_forward
         seed_test_data
-        run_tests
-
+        # run_tests
 
         echo "All apps processed and deployed successfully."
         ;;

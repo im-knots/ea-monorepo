@@ -8,7 +8,7 @@ import { Node, Edge } from "reactflow";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 // API URL
-const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
 
 export default function AgentBuilderPage() {
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);

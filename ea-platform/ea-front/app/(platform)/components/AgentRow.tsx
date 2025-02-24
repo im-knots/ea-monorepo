@@ -3,8 +3,8 @@
 import { useState } from "react";
 import JobList from "./JobList";
 
-const AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1/agents";
-const EA_JOB_API_URL = "http://job-api.ea.erulabs.local/api/v1";
+const AGENT_MANAGER_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/agents";
+const EA_JOB_API_URL = "http://api.ea.erulabs.local/job-api/api/v1";
 
 interface Node {
   alias: string;

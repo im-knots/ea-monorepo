@@ -4,14 +4,14 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-API_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/nodes"
+API_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/nodes"
 
 # TEST GET ALL NODES
 curl "$API_ENDPOINT"
 echo ""
 
 # TEST GET ALL NODES BY CREATORID
-AINU_URL="http://ainu-manager.ea.erulabs.local/api/v1/users"
+AINU_URL="http://api.ea.erulabs.local/ainu-manager/api/v1/users"
 
 # Fetch users from AINU manager
 AINU_RESPONSE=$(curl -s "$AINU_URL")

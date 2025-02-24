@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from "lucide-react";
 
 // API URL for the EA Agent Manager and Job Engine
-const EA_AGENT_MANAGER_URL = "http://agent-manager.ea.erulabs.local/api/v1/agents";
-const EA_JOB_API_URL = "http://job-api.ea.erulabs.local/api/v1/jobs";
+const EA_AGENT_MANAGER_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/agents";
+const EA_JOB_API_URL = "http://api.ea.erulabs.local/job-api/api/v1/jobs";
 
 interface JsonEditorProps {
   isOpen: boolean;
