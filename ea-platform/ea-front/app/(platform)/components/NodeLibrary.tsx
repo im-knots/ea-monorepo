@@ -13,7 +13,7 @@ interface NodeDefinition {
   metadata?: { description?: string };
 }
 
-const API_BASE_URL = "http://agent-manager.ea.erulabs.local/api/v1/nodes";
+const API_BASE_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/nodes";
 
 export default function NodeLibrary({
     sidebarOpen,

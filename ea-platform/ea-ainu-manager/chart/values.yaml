@@ -55,12 +55,13 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
-  annotations: {}
+  className: "kong"
+  annotations:
+    konghq.com/strip-path: 'true'
   hosts:
-    - host: ainu-manager.ea.erulabs.local
+    - host: 
       paths:
-        - path: /
+        - path: /ainu-manager
           pathType: ImplementationSpecific
 
 livenessProbe:

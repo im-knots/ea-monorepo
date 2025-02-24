@@ -4,7 +4,7 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoint
-AGENT_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/agents"
+AGENT_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/agents"
 
 # Get all agents
 ALL_AGENTS=$(curl -s "$AGENT_ENDPOINT")

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import AgentTable from "../components/AgentTable";
 
-const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
 
 export default function AgentManagerPage() {
   const [userId, setUserId] = useState<string | null>(null);

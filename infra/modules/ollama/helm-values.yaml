@@ -32,12 +32,12 @@ autoscaling:
   targetCPUUtilizationPercentage: 80
 
 ingress:
-  enabled: true
-  className: "nginx"
+  enabled: false
+  className: "kong"
   annotations:
-    kubernetes.io/ingress.class: nginx
+    kubernetes.io/ingress.class: kong
   hosts:
-    - host: ollama.ea.erulabs.local
+    - host: 
       paths:
-        - path: /
-          pathType: Prefix
+        - path: /ollama
+          pathType: ImplementationSpecific

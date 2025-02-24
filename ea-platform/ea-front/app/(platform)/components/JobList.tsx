@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
 
 interface Job {
   id: string;

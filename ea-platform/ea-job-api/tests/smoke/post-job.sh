@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # API Endpoints
-AGENT_MANAGER_URL="http://agent-manager.ea.erulabs.local/api/v1/agents"
-AINU_MANAGER_URL="http://ainu-manager.ea.erulabs.local/api/v1/users"
-JOB_ENGINE_URL="http://job-api.ea.erulabs.local/api/v1/jobs"
+AGENT_MANAGER_URL="http://api.ea.erulabs.local/agent-manager/api/v1/agents"
+AINU_MANAGER_URL="http://api.ea.erulabs.local/ainu-manager/api/v1/users"
+JOB_ENGINE_URL="http://api.ea.erulabs.local/job-api/api/v1/jobs"
 
 
 # Fetch the list of agents

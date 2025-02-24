@@ -55,12 +55,13 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
-  annotations: {}
+  className: "kong"
+  annotations: 
+    konghq.com/strip-path: 'true'
   hosts:
-    - host: agent-manager.ea.erulabs.local
-      paths:
-        - path: /
+    - host: 
+      paths: 
+        - path: /agent-manager
           pathType: ImplementationSpecific
 
 livenessProbe:

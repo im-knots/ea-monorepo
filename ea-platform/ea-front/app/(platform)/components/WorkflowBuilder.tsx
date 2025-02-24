@@ -18,7 +18,7 @@ import CustomNode from "./CustomNode";
 import "reactflow/dist/style.css";
 
 // API URL for job status
-const AINU_MANAGER_URL = "http://ainu-manager.ea.erulabs.local/api/v1";
+const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
 
 interface JobNode {
   alias: string;

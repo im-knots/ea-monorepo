@@ -125,8 +125,6 @@ minikube delete # Clean up previous minikube setups
 minikube start --driver=docker --extra-config=kubelet.max-pods=1000
 
 # WITH GPU
-minikube start     #set a large single node cluster for ease of use, allow lots of pods
-
 minikube start \
   --driver=docker \
   --container-runtime docker \
@@ -139,9 +137,7 @@ sudo sysctl -w fs.inotify.max_user_watches=10000
 sudo sysctl -w fs.inotify.max_user_instances=1000
 sudo sysctl -w fs.file-max=50000
 ulimit -n 50000
-fs.inotify.max_user_watches = 10000
-fs.inotify.max_user_instances = 1000
-fs.file-max = 50000
+
 exit
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development, seeds test data, runs smoke tests

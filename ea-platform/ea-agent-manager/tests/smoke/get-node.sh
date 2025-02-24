@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # API Endpoint
-API_ENDPOINT="http://agent-manager.ea.erulabs.local/api/v1/nodes"
+API_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/nodes"
 
 # Get all nodes
 ALL_NODES=$(curl -s "$API_ENDPOINT")
