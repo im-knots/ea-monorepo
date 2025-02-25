@@ -136,7 +136,14 @@ func loadAgentJob(filePath string) (Agent, error) {
 func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	// Step 1: Fetch the basic node list
 	nodesListURL := agentManagerURL + "/nodes"
-	resp, err := http.Get(nodesListURL)
+	req, err := http.NewRequest("GET", nodesListURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +168,14 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	var nodesLib NodesLibrary
 	for _, summary := range nodeSummaries {
 		nodeDetailURL := fmt.Sprintf("%s/nodes/%s", agentManagerURL, summary.ID)
-		resp, err := http.Get(nodeDetailURL)
+
+		req, err := http.NewRequest("GET", nodeDetailURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +183,7 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 
 		// Check response status
 		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("Failed to fetch node details: %d", resp.StatusCode)
+			return nil, fmt.Errorf("failed to fetch node details: %d", resp.StatusCode)
 		}
 
 		// Parse full node definition

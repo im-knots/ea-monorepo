@@ -58,71 +58,90 @@ type AgentJob struct {
 }
 
 // ---- USER HANDLERS ----
-
-func HandleCreateUser(c *gin.Context) {
-	metrics.StepCounter.WithLabelValues("/api/v1/users", "create_user", "request").Inc()
-
-	var input UserDefinition
-	if err := c.ShouldBindJSON(&input); err != nil {
-		metrics.StepCounter.WithLabelValues("/api/v1/users", "decode_error", "error").Inc()
-		logger.Slog.Error("Failed to parse request body", "error", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-		return
-	}
-
-	input.ID = uuid.New().String()
-	input.CreatedTime = time.Now()
-	for i := range input.ComputeDevices {
-		input.ComputeDevices[i].ID = uuid.New().String()
-		input.ComputeDevices[i].CreatedTime = time.Now()
-	}
-	for i := range input.Jobs {
-		input.Jobs[i].ID = uuid.New().String()
-		input.Jobs[i].CreatedTime = time.Now()
-	}
-
-	result, err := dbClient.InsertRecord("ainuUsers", "users", input)
-	if err != nil {
-		metrics.StepCounter.WithLabelValues("/api/v1/users", "db_insertion_error", "error").Inc()
-		logger.Slog.Error("Failed to insert user into database", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert user"})
-		return
-	}
-
-	metrics.StepCounter.WithLabelValues("/api/v1/users", "create_success", "success").Inc()
-	logger.Slog.Info("User inserted successfully", "ID", result.InsertedID)
-	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "id": input.ID, "user": input.Name, "creat_time": input.CreatedTime})
-}
-
 func HandleGetAllUsers(c *gin.Context) {
-	metrics.StepCounter.WithLabelValues("/api/v1/users", "get_all_users", "request").Inc()
+	path := c.FullPath()
+	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted")
+	} else {
+		// 🔹 Extract optional requested user ID from query params
+		requestedUserID := c.Query("user_id")
+
+		// 🔹 Enforce access control for non-internal users:
+		// - If `user_id` is provided, ensure it matches the authenticated user.
+		// - Otherwise, default to fetching the authenticated user's data.
+		if requestedUserID != "" && requestedUserID != authenticatedUserID {
+			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "requested", requestedUserID)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			return
+		}
+	}
+
+	// 🔹 Define which fields to return
 	projection := bson.M{"name": 1, "id": 1, "_id": 0}
+
 	users, err := dbClient.FindRecordsWithProjection("ainuUsers", "users", bson.M{}, projection)
 	if err != nil {
-		metrics.StepCounter.WithLabelValues("/api/v1/users", "db_retrieval_error", "error").Inc()
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve users", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues("/api/v1/users", "retrieval_success", "success").Inc()
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	logger.Slog.Info("Users retrieved successfully", "user", authenticatedUserID, "count", len(users))
 	c.JSON(http.StatusOK, users)
 }
 
 func HandleGetUser(c *gin.Context) {
+	path := c.FullPath()
 	userID := c.Param("user_id")
-	metrics.StepCounter.WithLabelValues("/api/v1/users/:user_id", "get_user", "request").Inc()
+	metrics.StepCounter.WithLabelValues(path, "get_user", "request").Inc()
 
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for user data", "requested_user", userID)
+	} else {
+		// 🔹 Enforce access control for non-internal users:
+		// - Ensure the authenticated user can only fetch their own data.
+		if userID != authenticatedUserID {
+			logger.Slog.Error("Unauthorized access attempt detected", "authenticated", authenticatedUserID, "requested", userID)
+			metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+
+	// 🔹 Retrieve user data
 	user, err := dbClient.FindRecordByID("ainuUsers", "users", userID)
 	if err != nil {
-		metrics.StepCounter.WithLabelValues("/api/v1/users/:user_id", "db_retrieval_error", "error").Inc()
+		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve user", "user_id", userID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user"})
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues("/api/v1/users/:user_id", "retrieval_success", "success").Inc()
+	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	logger.Slog.Info("User data retrieved successfully", "user_id", userID, "requested_by", authenticatedUserID)
 	c.JSON(http.StatusOK, user)
 }
 
@@ -133,7 +152,29 @@ func HandleAddComputeDevice(c *gin.Context) {
 	userID := c.Param("user_id")
 	metrics.StepCounter.WithLabelValues(path, "add_device", "request").Inc()
 
-	// Parse request body
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for adding compute device", "requested_user", userID)
+	} else {
+		// 🔹 Enforce access control for non-internal users:
+		// - Ensure the authenticated user can only modify their own devices.
+		if userID != authenticatedUserID {
+			logger.Slog.Error("Unauthorized modification attempt detected", "authenticated", authenticatedUserID, "requested", userID)
+			metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+
+	// 🔹 Parse request body
 	var newDevice ComputeNode
 	if err := c.ShouldBindJSON(&newDevice); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
@@ -142,11 +183,11 @@ func HandleAddComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Assign ID and timestamp
+	// 🔹 Assign ID and timestamp
 	newDevice.ID = uuid.New().String()
 	newDevice.CreatedTime = time.Now()
 
-	// Update user record in MongoDB
+	// 🔹 Update user record in MongoDB
 	update := bson.M{"$push": bson.M{"compute_devices": newDevice}}
 	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"id": userID}, update)
 	if err != nil {
@@ -163,7 +204,7 @@ func HandleAddComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Success response
+	// 🔹 Success response
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
 	logger.Slog.Info("Compute device added successfully", "user_id", userID, "device", newDevice)
 	c.JSON(http.StatusOK, gin.H{"message": "Compute device added successfully", "device": newDevice})
@@ -176,7 +217,29 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues(path, "delete_device", "request").Inc()
 
-	// Retrieve user record
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for deleting compute device", "requested_user", userID)
+	} else {
+		// 🔹 Enforce access control for non-internal users:
+		// - Ensure the authenticated user can only delete their own devices.
+		if userID != authenticatedUserID {
+			logger.Slog.Error("Unauthorized deletion attempt detected", "authenticated", authenticatedUserID, "requested", userID)
+			metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+
+	// 🔹 Retrieve user record
 	user, err := dbClient.FindRecordByID("ainuUsers", "users", userID)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -185,7 +248,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Ensure compute_devices exists and is an array
+	// 🔹 Ensure compute_devices exists and is an array
 	computeDevicesRaw, exists := user["compute_devices"]
 	if !exists {
 		logger.Slog.Error("Compute devices field missing", "user_id", userID)
@@ -193,7 +256,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Convert compute_devices to a JSON-compatible structure and re-decode
+	// 🔹 Convert compute_devices to a JSON-compatible structure and re-decode
 	computeDevicesBytes, err := json.Marshal(computeDevicesRaw)
 	if err != nil {
 		logger.Slog.Error("Failed to marshal compute devices", "error", err, "user_id", userID)
@@ -208,7 +271,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Locate the device name
+	// 🔹 Locate the device name
 	var deviceName string
 	for _, dev := range computeDevices {
 		if id, ok := dev["id"].(string); ok && id == deviceID {
@@ -226,6 +289,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Remove the compute device from MongoDB
 	filter := bson.M{"id": userID}
 	update := bson.M{"$pull": bson.M{"compute_devices": bson.M{"id": deviceID}}}
 
@@ -244,7 +308,7 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 		return
 	}
 
-	// Success response
+	// 🔹 Success response
 	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
 	logger.Slog.Info("Compute device removed successfully", "user_id", userID, "device_id", deviceID)
 	c.JSON(http.StatusOK, gin.H{
@@ -262,7 +326,29 @@ func HandleAddJob(c *gin.Context) {
 	userID := c.Param("user_id")
 	metrics.StepCounter.WithLabelValues(path, "add_job", "request").Inc()
 
-	// Parse request body
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for adding job", "requested_user", userID)
+	} else {
+		// 🔹 Enforce access control for non-internal users:
+		// - Ensure the authenticated user can only modify their own jobs.
+		if userID != authenticatedUserID {
+			logger.Slog.Error("Unauthorized job addition attempt detected", "authenticated", authenticatedUserID, "requested", userID)
+			metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+
+	// 🔹 Parse request body
 	var newJob AgentJob
 	if err := c.ShouldBindJSON(&newJob); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
@@ -271,17 +357,17 @@ func HandleAddJob(c *gin.Context) {
 		return
 	}
 
-	// Assign ID and timestamp
+	// 🔹 Assign ID and timestamp
 	newJob.ID = uuid.New().String()
 	newJob.CreatedTime = time.Now()
 
-	// Update user record in MongoDB
+	// 🔹 Update user record in MongoDB
 	update := bson.M{"$push": bson.M{"jobs": newJob}}
 	result, err := dbClient.UpdateRecord("ainuUsers", "users", bson.M{"id": userID}, update)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
-		logger.Slog.Error("Failed to add user Job", "user_id", userID, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add user Job"})
+		logger.Slog.Error("Failed to add user job", "user_id", userID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add user job"})
 		return
 	}
 
@@ -292,12 +378,12 @@ func HandleAddJob(c *gin.Context) {
 		return
 	}
 
-	// Success response
+	// 🔹 Success response
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
-	logger.Slog.Info("User Job added successfully", "user_id", userID, "device", newJob)
+	logger.Slog.Info("User job added successfully", "user_id", userID, "job", newJob)
 	c.JSON(http.StatusOK, gin.H{
-		"message": "User Job added successfully",
-		"device":  newJob,
+		"message": "User job added successfully",
+		"job":     newJob,
 		"user_id": userID,
 	})
 }
@@ -310,7 +396,29 @@ func HandleDeleteJob(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues(path, "delete_job", "request").Inc()
 
-	// Retrieve user record
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services to bypass restrictions
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for deleting job", "requested_user", userID)
+	} else {
+		// 🔹 Enforce access control for non-internal users:
+		// - Ensure the authenticated user can only delete their own jobs.
+		if userID != authenticatedUserID {
+			logger.Slog.Error("Unauthorized job deletion attempt detected", "authenticated", authenticatedUserID, "requested", userID)
+			metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+	}
+
+	// 🔹 Retrieve user record
 	user, err := dbClient.FindRecordByID("ainuUsers", "users", userID)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -319,7 +427,7 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Ensure jobs exist and are an array
+	// 🔹 Ensure jobs exist and are an array
 	jobsRaw, exists := user["jobs"]
 	if !exists {
 		logger.Slog.Error("Jobs field missing", "user_id", userID)
@@ -327,7 +435,7 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Convert jobs to a JSON-compatible structure and re-decode
+	// 🔹 Convert jobs to a JSON-compatible structure and re-decode
 	jobsBytes, err := json.Marshal(jobsRaw)
 	if err != nil {
 		logger.Slog.Error("Failed to marshal jobs", "error", err, "user_id", userID)
@@ -342,7 +450,7 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Locate the job name
+	// 🔹 Locate the job name
 	var jobName string
 	for _, job := range userJobs {
 		if id, ok := job["id"].(string); ok && id == jobID {
@@ -360,7 +468,7 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Remove the job from the jobs array
+	// 🔹 Remove the job from the jobs array
 	filter := bson.M{"id": userID}
 	update := bson.M{"$pull": bson.M{"jobs": bson.M{"id": jobID}}}
 
@@ -379,7 +487,7 @@ func HandleDeleteJob(c *gin.Context) {
 		return
 	}
 
-	// Success response
+	// 🔹 Success response
 	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
 	logger.Slog.Info("Job removed successfully", "user_id", userID, "job_id", jobID)
 	c.JSON(http.StatusOK, gin.H{
@@ -390,14 +498,23 @@ func HandleDeleteJob(c *gin.Context) {
 	})
 }
 
-// HandleUpdateComputeCredits updates a user's compute credits
+// HandleUpdateComputeCredits updates a user's compute credits (internal use only)
 func HandleUpdateComputeCredits(c *gin.Context) {
 	path := "/api/v1/users/:user_id/credits"
 	userID := c.Param("user_id")
 
 	metrics.StepCounter.WithLabelValues(path, "update_credits", "request").Inc()
 
-	// Parse JSON request body
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID != "internal" {
+		logger.Slog.Error("Unauthorized attempt to update compute credits", "authenticated", authenticatedUserID, "user_id", userID)
+		metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
+
+	// 🔹 Parse JSON request body
 	var requestBody struct {
 		ComputeCredits int `json:"compute_credits"`
 	}
@@ -408,7 +525,7 @@ func HandleUpdateComputeCredits(c *gin.Context) {
 		return
 	}
 
-	// Validate input (ensure compute credits are not negative)
+	// 🔹 Validate input (ensure compute credits are not negative)
 	if requestBody.ComputeCredits < 0 {
 		logger.Slog.Warn("Invalid compute credits value", "user_id", userID, "compute_credits", requestBody.ComputeCredits)
 		metrics.StepCounter.WithLabelValues(path, "invalid_value", "warning").Inc()
@@ -416,7 +533,7 @@ func HandleUpdateComputeCredits(c *gin.Context) {
 		return
 	}
 
-	// Update user record with the new compute credits
+	// 🔹 Update user record with the new compute credits
 	filter := bson.M{"id": userID}
 	update := bson.M{"$set": bson.M{"compute_credits": requestBody.ComputeCredits}}
 
@@ -435,7 +552,7 @@ func HandleUpdateComputeCredits(c *gin.Context) {
 		return
 	}
 
-	// Success response
+	// 🔹 Success response
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
 	logger.Slog.Info("Compute credits updated successfully", "user_id", userID, "compute_credits", requestBody.ComputeCredits)
 
