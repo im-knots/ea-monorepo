@@ -21,13 +21,11 @@ func RegisterRoutes() *gin.Engine {
 		c.Writer.Header().Set("Content-Type", "text/plain")
 		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 	})
-	
 
 	// User routes
 	users := router.Group("/api/v1/users")
 	{
 		users.GET("", handlers.HandleGetAllUsers)      // List all users
-		users.POST("", handlers.HandleCreateUser)      // Create new user
 		users.GET("/:user_id", handlers.HandleGetUser) // Get user by ID
 		users.PUT("/:user_id/credits", handlers.HandleUpdateComputeCredits)
 

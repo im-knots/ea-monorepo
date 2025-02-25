@@ -18,6 +18,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY package.json next.config.ts postcss.config.js tailwind.config.ts tsconfig.json ./
 COPY public/ public/
 COPY app/ app/
+COPY lib/ lib/
 
 RUN pnpm run build
 

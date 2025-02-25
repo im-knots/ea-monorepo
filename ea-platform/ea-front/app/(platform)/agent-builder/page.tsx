@@ -7,8 +7,18 @@ import WorkflowBuilder from "../components/WorkflowBuilder";
 import { Node, Edge } from "reactflow";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-// API URL
-const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
+// Function to fetch JWT from `/api/auth/token`
+const fetchToken = async () => {
+  try {
+    const res = await fetch("/api/auth/token", { credentials: "include" });
+    if (!res.ok) throw new Error("Failed to fetch token");
+    const data = await res.json();
+    return data.token;
+  } catch (error) {
+    console.error("Error fetching token:", error);
+    return null;
+  }
+};
 
 export default function AgentBuilderPage() {
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
@@ -18,25 +28,32 @@ export default function AgentBuilderPage() {
   const [jsonText, setJsonText] = useState("");
   const [agentName, setAgentName] = useState("My Agent");
   const [agentDescription, setAgentDescription] = useState("An awesome AI agent");
-  const [creator, setCreator] = useState("");  
+  const [creator, setCreator] = useState("");
   const [descOpen, setDescOpen] = useState(false);
   const [agentId, setAgentId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [runningJobId, setRunningJobId] = useState<string | null>(null);
 
-  // Fetch first user from API and update the creator field
+  // Fetch and set creator ID from JWT token
   useEffect(() => {
     const fetchCreatorId = async () => {
       try {
-        const response = await fetch(`${AINU_MANAGER_URL}/users`);
-        const users = await response.json();
-        if (users.length > 0) {
-          setCreator(users[0].id);
+        const token = await fetchToken();
+        if (!token) {
+          console.error("No token found.");
+          return;
+        }
+
+        // Decode JWT payload and extract the `iss` field (which is the userId)
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload.iss) {
+          setCreator(payload.iss); // ✅ Extract UUID from `iss` field
         }
       } catch (error) {
-        console.error("Error fetching users:", error);
+        console.error("Error fetching or decoding token:", error);
       }
     };
+
     fetchCreatorId();
   }, []);
 
@@ -91,7 +108,7 @@ export default function AgentBuilderPage() {
       {/* ✅ Title Bar Hack - Only Extends Across Textbox */}
       <div 
         className="absolute top-0 left-4 bg-neutral-900 p-3 flex items-center shadow-md z-50 rounded-lg pointer-events-auto transition-all duration-300"
-        style={{ maxWidth: "400px" }} // Hack: Title bar only extends across the input box
+        style={{ maxWidth: "400px" }}
       >
         <input
           type="text"
@@ -108,7 +125,7 @@ export default function AgentBuilderPage() {
         </button>
       </div>
 
-      {/* ✅ Description Box - No Overlap Issues */}
+      {/* ✅ Description Box */}
       {descOpen && (
         <div className="absolute top-14 left-4 bg-neutral-800 p-3 rounded-lg shadow-lg z-50 w-96 pointer-events-auto">
           <textarea
@@ -120,7 +137,7 @@ export default function AgentBuilderPage() {
         </div>
       )}
 
-      {/* ✅ Workflow Builder - No Black Margins */}
+      {/* ✅ Workflow Builder */}
       <div className={`flex-1 flex flex-col relative transition-all duration-300`}>
         <WorkflowBuilder
           nodes={workflowNodes}
@@ -136,10 +153,10 @@ export default function AgentBuilderPage() {
         />
       </div>
 
-      {/* ✅ Node Library - Auto Adjusts */}
+      {/* ✅ Node Library */}
       <NodeLibrary sidebarOpen={sidebarOpen} addNodeToFlow={addNodeToFlow} />
 
-      {/* ✅ JSON Editor - Sidebar Maintained and Toggle Button is Fully Visible */}
+      {/* ✅ JSON Editor */}
       <div
         className="absolute top-0 right-0 h-full bg-neutral-900 transition-all duration-300 z-40"
         style={{ width: jsonEditorOpen ? jsonEditorWidth : "0" }}

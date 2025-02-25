@@ -43,6 +43,9 @@ serviceAccount:
   annotations: {}
   name: ""
 
+rbac:
+  enabled: true
+
 podAnnotations: {}
 
 podLabels: {}

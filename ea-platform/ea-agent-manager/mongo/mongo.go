@@ -104,13 +104,11 @@ func (m *MongoClient) UpdateRecord(database, collection string, filter, update i
 	return coll.UpdateOne(ctx, filter, update)
 }
 
-// DeleteRecordByID deletes a record from a collection by its UUID ID.
-func (m *MongoClient) DeleteRecordByID(database, collection, id string) (*mongo.DeleteResult, error) {
+// DeleteRecord deletes a record from a collection based on a given filter.
+func (m *MongoClient) DeleteRecord(database, collection string, filter bson.M) (*mongo.DeleteResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	coll := m.client.Database(database).Collection(collection)
-	filter := bson.M{"id": id}
-
 	return coll.DeleteOne(ctx, filter)
 }

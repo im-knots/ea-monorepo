@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import JobList from "./JobList";
 
 const AGENT_MANAGER_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/agents";
@@ -30,13 +30,39 @@ export default function AgentRow({
   const [isStarting, setIsStarting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [jobs, setJobs] = useState<any[]>([]);
+  const [token, setToken] = useState<string | null>(null);
+
+  // 🔹 Fetch JWT token from /api/auth/token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch token");
+        const data = await res.json();
+        setToken(data.token);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        setToken(null);
+      }
+    };
+
+    fetchToken();
+  }, []);
 
   // ✅ DELETE Agent & Refresh Full List
   const deleteAgent = async () => {
+    if (!token) {
+      console.error("No token available for authentication.");
+      return;
+    }
+
     setIsDeleting(true);
     try {
       const response = await fetch(`${AGENT_MANAGER_URL}/${agent.id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token for authentication
+        },
       });
 
       if (!response.ok) throw new Error("Failed to delete agent");
@@ -51,7 +77,10 @@ export default function AgentRow({
 
   // ✅ Start Agent Job
   const startAgentJob = async () => {
-    if (!userId) return;
+    if (!userId || !token) {
+      console.error("Missing userId or token.");
+      return;
+    }
 
     setIsStarting(true);
     try {
@@ -59,6 +88,7 @@ export default function AgentRow({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token for authentication
         },
         body: JSON.stringify({
           agent_id: agent.id,

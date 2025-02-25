@@ -112,6 +112,15 @@ func HandleCreateNodeDef(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Node definition creation request received")
 
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Parse the request body
 	if err := c.ShouldBindJSON(&input); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
 		logger.Slog.Error("Failed to parse request body", "error", err)
@@ -119,6 +128,18 @@ func HandleCreateNodeDef(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Allow internal services unrestricted access
+	if authenticatedUserID != "internal" {
+		// Enforce creator identity for non-internal users
+		if input.Creator != authenticatedUserID {
+			logger.Slog.Error("User ID mismatch", "authenticated", authenticatedUserID, "request_creator", input.Creator)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			return
+		}
+	}
+
+	// 🔹 Assign a unique ID and timestamps
 	input.ID = uuid.New().String()
 	input.Metadata.CreatedAt = time.Now().UTC()
 	input.Metadata.UpdatedAt = time.Now().UTC()
@@ -137,18 +158,45 @@ func HandleCreateNodeDef(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Node definition created", "node_id": input.ID, "creator": input.Creator})
 }
 
-// HandleGetAllNodeDefs retrieves all node definitions.
+// HandleGetAllNodeDefs retrieves all node definitions for the authenticated user or internal services.
 func HandleGetAllNodeDefs(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	creatorID := c.Query("creator_id")
-	filter := bson.M{}
-	if creatorID != "" {
-		filter["creator"] = creatorID
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
 	}
 
+	// 🔹 Extract optional creator ID from query params
+	requestedCreatorID := c.Query("creator_id")
+
+	var filter bson.M
+
+	// 🔹 Allow internal services unrestricted access
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for fetching all node definitions")
+		filter = bson.M{} // No filtering; fetch all node definitions
+	} else {
+		// 🔹 Enforce creator filtering for non-internal users:
+		// - If `creator_id` is provided, ensure it matches the authenticated user.
+		// - If `creator_id` is absent, default to fetching the authenticated user's node definitions.
+		if requestedCreatorID != "" && requestedCreatorID != authenticatedUserID {
+			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "requested", requestedCreatorID)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Creator ID does not match authenticated user"})
+			return
+		}
+		filter = bson.M{"creator": authenticatedUserID}
+	}
+
+	// 🔹 Define projection to limit returned fields
 	projection := bson.M{"id": 1, "type": 1, "creator": 1, "_id": 0}
+
+	// 🔹 Retrieve records from MongoDB
 	nodeDefs, err := dbClient.FindRecordsWithProjection("nodeDefs", "nodes", filter, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -158,6 +206,7 @@ func HandleGetAllNodeDefs(c *gin.Context) {
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	logger.Slog.Info("Node definitions retrieved successfully", "user", authenticatedUserID, "count", len(nodeDefs))
 	c.JSON(http.StatusOK, nodeDefs)
 }
 
@@ -173,9 +222,18 @@ func HandleGetNodeDef(c *gin.Context) {
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
-	logger.Slog.Info("Fetching node definition", "node_id", nodeID)
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Fetching node definition", "node_id", nodeID, "user", authenticatedUserID)
+
+	// 🔹 Retrieve the node definition
 	nodeDef, err := dbClient.FindRecordByID("nodeDefs", "nodes", nodeID)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -191,8 +249,29 @@ func HandleGetNodeDef(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Extract creator field from retrieved node definition
+	creatorID, ok := nodeDef["creator"].(string)
+	if !ok || creatorID == "" {
+		logger.Slog.Error("Node definition missing creator field", "node_id", nodeID)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Node definition missing creator field"})
+		return
+	}
+
+	// 🔹 Allow internal services unrestricted access
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for fetching node definition", "node_id", nodeID)
+	} else {
+		// 🔹 Enforce creator verification for non-internal users
+		if creatorID != authenticatedUserID {
+			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "creator", creatorID)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied: You do not own this node definition"})
+			return
+		}
+	}
+
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	logger.Slog.Info("Node definition retrieved successfully", "node_id", nodeID)
+	logger.Slog.Info("Node definition retrieved successfully", "node_id", nodeID, "user", authenticatedUserID)
 	c.JSON(http.StatusOK, nodeDef)
 }
 
@@ -208,6 +287,15 @@ func HandleUpdateNodeDef(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Parse request body
 	var input NodeDefinition
 	if err := c.ShouldBindJSON(&input); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
@@ -218,9 +306,20 @@ func HandleUpdateNodeDef(c *gin.Context) {
 
 	input.Metadata.UpdatedAt = time.Now().UTC()
 
-	filter := bson.M{"id": nodeID}
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for updating node definition", "node_id", nodeID)
+		filter = bson.M{"id": nodeID} // No ownership filtering for internal services
+	} else {
+		// 🔹 Enforce ownership validation for non-internal users
+		filter = bson.M{"id": nodeID, "creator": authenticatedUserID}
+		input.Creator = authenticatedUserID // Force creator field to match authenticated user
+	}
+
 	update := bson.M{"$set": input}
 
+	// 🔹 Attempt to update the record
 	result, err := dbClient.UpdateRecord("nodeDefs", "nodes", filter, update)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
@@ -230,18 +329,18 @@ func HandleUpdateNodeDef(c *gin.Context) {
 	}
 
 	if result.MatchedCount == 0 {
-		metrics.StepCounter.WithLabelValues(path, "node_not_found", "error").Inc()
-		logger.Slog.Warn("Node definition not found", "node_id", nodeID)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Node definition not found"})
+		metrics.StepCounter.WithLabelValues(path, "node_not_found_or_unauthorized", "error").Inc()
+		logger.Slog.Warn("Node definition not found or unauthorized update attempt", "node_id", nodeID, "user", authenticatedUserID)
+		c.JSON(http.StatusForbidden, gin.H{"error": "Node definition not found or unauthorized update attempt"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
-	logger.Slog.Info("Node definition updated successfully", "node_id", nodeID)
+	logger.Slog.Info("Node definition updated successfully", "node_id", nodeID, "user", authenticatedUserID)
 	c.JSON(http.StatusOK, gin.H{"message": "Node definition updated successfully", "node_id": nodeID})
 }
 
-// HandleDeleteNode deletes a node definition by ID.
+// HandleDeleteNodeDef deletes a node definition by ID.
 func HandleDeleteNodeDef(c *gin.Context) {
 	path := c.FullPath()
 	nodeID := c.Param("node_id")
@@ -253,26 +352,45 @@ func HandleDeleteNodeDef(c *gin.Context) {
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
-	logger.Slog.Info("Deleting node definition", "node_id", nodeID)
+	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
-	deleteResult, err := dbClient.DeleteRecordByID("nodeDefs", "nodes", nodeID)
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Attempting to delete node definition", "node_id", nodeID, "user", authenticatedUserID)
+
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for deleting node definition", "node_id", nodeID)
+		filter = bson.M{"id": nodeID} // No ownership filtering for internal services
+	} else {
+		// 🔹 Enforce ownership validation for non-internal users
+		filter = bson.M{"id": nodeID, "creator": authenticatedUserID}
+	}
+
+	// 🔹 Attempt to delete the record
+	deleteResult, err := dbClient.DeleteRecord("nodeDefs", "nodes", filter)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_deletion_error", "error").Inc()
-		logger.Slog.Error("Failed to delete node definition", "node_id", nodeID, "error", err)
+		logger.Slog.Error("Failed to delete node definition", "node_id", nodeID, "user", authenticatedUserID, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete node definition"})
 		return
 	}
 
 	if deleteResult.DeletedCount == 0 {
-		metrics.StepCounter.WithLabelValues(path, "node_not_found", "error").Inc()
-		logger.Slog.Warn("Node definition not found", "node_id", nodeID)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Node definition not found"})
+		metrics.StepCounter.WithLabelValues(path, "node_not_found_or_unauthorized", "error").Inc()
+		logger.Slog.Warn("Node definition not found or unauthorized delete attempt", "node_id", nodeID, "user", authenticatedUserID)
+		c.JSON(http.StatusForbidden, gin.H{"error": "Node definition not found or unauthorized delete attempt"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
-	logger.Slog.Info("Node definition deleted successfully", "node_id", nodeID)
+	logger.Slog.Info("Node definition deleted successfully", "node_id", nodeID, "user", authenticatedUserID)
 	c.JSON(http.StatusOK, gin.H{"message": "Node definition deleted successfully", "node_id": nodeID})
 }
 
@@ -288,6 +406,15 @@ func HandleCreateAgent(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Agent creation request received")
 
+	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Parse request body
 	if err := c.ShouldBindJSON(&input); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
 		logger.Slog.Error("Failed to parse request body", "error", err)
@@ -295,7 +422,18 @@ func HandleCreateAgent(c *gin.Context) {
 		return
 	}
 
-	// Ensure each node has an alias
+	// 🔹 Allow internal services unrestricted access
+	if authenticatedUserID != "internal" {
+		// Enforce creator validation for non-internal users
+		if input.Creator != authenticatedUserID {
+			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "request_creator", input.Creator)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			return
+		}
+	}
+
+	// 🔹 Ensure each node has an alias
 	for i, node := range input.Nodes {
 		if node.Alias == "" {
 			logger.Slog.Warn("Missing alias in node, assigning default alias", "node_type", node.Type)
@@ -303,8 +441,11 @@ func HandleCreateAgent(c *gin.Context) {
 		}
 	}
 
+	// 🔹 Set metadata and generate ID
 	input.ID = uuid.New().String()
 	input.Metadata = Metadata{CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC()}
+
+	// 🔹 Insert the agent into the database
 	result, err := dbClient.InsertRecord("userAgents", "agents", input)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_insertion_error", "error").Inc()
@@ -323,13 +464,37 @@ func HandleGetAllAgents(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	creatorID := c.Query("creator_id")
-	filter := bson.M{}
-	if creatorID != "" {
-		filter["creator"] = creatorID
+	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
 	}
 
+	// 🔹 Extract optional creator_id from query param
+	creatorID := c.Query("creator_id")
+
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for fetching all agents")
+		filter = bson.M{} // No filtering; fetch all agents
+	} else {
+		// 🔹 Enforce creator filtering for non-internal users
+		if creatorID != "" && creatorID != authenticatedUserID {
+			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "query_creator", creatorID)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			return
+		}
+		filter = bson.M{"creator": authenticatedUserID}
+	}
+
+	// 🔹 Define projection to limit returned fields
 	projection := bson.M{"creator": 1, "id": 1, "name": 1, "_id": 0}
+
+	// 🔹 Retrieve records from MongoDB
 	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", filter, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
@@ -339,6 +504,7 @@ func HandleGetAllAgents(c *gin.Context) {
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
+	logger.Slog.Info("Agents retrieved successfully", "user", authenticatedUserID, "count", len(agents))
 	c.JSON(http.StatusOK, agents)
 }
 
@@ -347,6 +513,7 @@ func HandleGetAgent(c *gin.Context) {
 	path := c.FullPath()
 	agentID := c.Param("agent_id")
 
+	// 🔹 Validate agent ID
 	if agentID == "" {
 		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
 		logger.Slog.Error("Missing agent ID in request")
@@ -354,10 +521,32 @@ func HandleGetAgent(c *gin.Context) {
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
-	logger.Slog.Info("Fetching agent details", "agent_id", agentID)
+	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
-	agent, err := dbClient.FindRecordByID("userAgents", "agents", agentID)
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Fetching agent details", "agent_id", agentID, "user", authenticatedUserID)
+
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for fetching agent", "agent_id", agentID)
+		filter = bson.M{"id": agentID} // No ownership filtering for internal services
+	} else {
+		// 🔹 Enforce creator validation for non-internal users
+		filter = bson.M{"id": agentID, "creator": authenticatedUserID}
+	}
+
+	// 🔹 Define projection to limit returned fields
+	projection := bson.M{"id": 1, "name": 1, "creator": 1, "description": 1, "nodes": 1, "edges": 1, "_id": 0}
+
+	// 🔹 Retrieve agent from MongoDB
+	agents, err := dbClient.FindRecordsWithProjection("userAgents", "agents", filter, projection)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve agent", "agent_id", agentID, "error", err)
@@ -365,15 +554,24 @@ func HandleGetAgent(c *gin.Context) {
 		return
 	}
 
-	if agent == nil {
+	// 🔹 Ensure only one agent is returned
+	if len(agents) == 0 {
 		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
-		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		logger.Slog.Warn("Agent not found or user does not have access", "agent_id", agentID, "user_id", authenticatedUserID)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+		return
+	} else if len(agents) > 1 {
+		metrics.StepCounter.WithLabelValues(path, "multiple_agents_found", "error").Inc()
+		logger.Slog.Error("Multiple agents found for the same ID", "agent_id", agentID, "user_id", authenticatedUserID, "count", len(agents))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Data integrity error: multiple agents found"})
 		return
 	}
 
+	// 🔹 Extract the single agent from the array
+	agent := agents[0]
+
 	metrics.StepCounter.WithLabelValues(path, "retrieval_success", "success").Inc()
-	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID)
+	logger.Slog.Info("Agent retrieved successfully", "agent_id", agentID, "creator", authenticatedUserID)
 	c.JSON(http.StatusOK, agent)
 }
 
@@ -382,6 +580,7 @@ func HandleUpdateAgent(c *gin.Context) {
 	path := c.FullPath()
 	agentID := c.Param("agent_id")
 
+	// 🔹 Validate agent ID
 	if agentID == "" {
 		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
 		logger.Slog.Error("Missing agent ID in request")
@@ -389,6 +588,42 @@ func HandleUpdateAgent(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for updating agent", "agent_id", agentID)
+		filter = bson.M{"id": agentID} // No ownership filtering for internal services
+	} else {
+		// 🔹 Enforce creator validation for non-internal users
+		filter = bson.M{"id": agentID, "creator": authenticatedUserID}
+
+		// 🔹 Verify the user is the creator of the agent
+		existingAgent, err := dbClient.FindRecordByID("userAgents", "agents", agentID)
+		if err != nil {
+			metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+			logger.Slog.Error("Failed to retrieve agent for update", "agent_id", agentID, "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve agent"})
+			return
+		}
+
+		// 🔹 If no matching agent is found, return 404
+		if existingAgent == nil || existingAgent["creator"] != authenticatedUserID {
+			metrics.StepCounter.WithLabelValues(path, "agent_not_found_or_unauthorized", "error").Inc()
+			logger.Slog.Warn("Agent not found or user does not have permission", "agent_id", agentID, "user_id", authenticatedUserID)
+			c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+			return
+		}
+	}
+
+	// 🔹 Parse request body for update
 	var input Agent
 	if err := c.ShouldBindJSON(&input); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "decode_error", "error").Inc()
@@ -397,11 +632,13 @@ func HandleUpdateAgent(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Ensure the updated agent maintains the correct creator
 	input.Metadata.UpdatedAt = time.Now().UTC()
+	input.Creator = authenticatedUserID
 
-	filter := bson.M{"id": agentID}
 	update := bson.M{"$set": input}
 
+	// 🔹 Attempt to update the agent in MongoDB
 	result, err := dbClient.UpdateRecord("userAgents", "agents", filter, update)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_update_error", "error").Inc()
@@ -412,13 +649,13 @@ func HandleUpdateAgent(c *gin.Context) {
 
 	if result.MatchedCount == 0 {
 		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
-		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		logger.Slog.Warn("Agent not found or user is unauthorized", "agent_id", agentID, "user_id", authenticatedUserID)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "update_success", "success").Inc()
-	logger.Slog.Info("Agent updated successfully", "agent_id", agentID)
+	logger.Slog.Info("Agent updated successfully", "agent_id", agentID, "creator", authenticatedUserID)
 	c.JSON(http.StatusOK, gin.H{"message": "Agent updated successfully", "agent_id": agentID})
 }
 
@@ -427,6 +664,7 @@ func HandleDeleteAgent(c *gin.Context) {
 	path := c.FullPath()
 	agentID := c.Param("agent_id")
 
+	// 🔹 Validate agent ID
 	if agentID == "" {
 		metrics.StepCounter.WithLabelValues(path, "missing_id", "error").Inc()
 		logger.Slog.Error("Missing agent ID in request")
@@ -434,10 +672,46 @@ func HandleDeleteAgent(c *gin.Context) {
 		return
 	}
 
-	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
-	logger.Slog.Info("Deleting agent", "agent_id", agentID)
+	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
-	deleteResult, err := dbClient.DeleteRecordByID("userAgents", "agents", agentID)
+	// 🔹 Allow internal services unrestricted access
+	var filter bson.M
+	if authenticatedUserID == "internal" {
+		logger.Slog.Info("Internal service access granted for deleting agent", "agent_id", agentID)
+		filter = bson.M{"id": agentID} // No ownership filtering for internal services
+	} else {
+		// 🔹 Enforce creator validation for non-internal users
+		filter = bson.M{"id": agentID, "creator": authenticatedUserID}
+
+		// 🔹 Verify the user is the creator of the agent
+		existingAgent, err := dbClient.FindRecordByID("userAgents", "agents", agentID)
+		if err != nil {
+			metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
+			logger.Slog.Error("Failed to retrieve agent for deletion", "agent_id", agentID, "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve agent"})
+			return
+		}
+
+		// 🔹 If no matching agent is found, return 404
+		if existingAgent == nil || existingAgent["creator"] != authenticatedUserID {
+			metrics.StepCounter.WithLabelValues(path, "agent_not_found_or_unauthorized", "error").Inc()
+			logger.Slog.Warn("Agent not found or user does not have permission", "agent_id", agentID, "user_id", authenticatedUserID)
+			c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
+			return
+		}
+	}
+
+	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
+	logger.Slog.Info("Deleting agent", "agent_id", agentID, "creator", authenticatedUserID)
+
+	// 🔹 Perform deletion
+	deleteResult, err := dbClient.DeleteRecord("userAgents", "agents", filter)
 	if err != nil {
 		metrics.StepCounter.WithLabelValues(path, "db_deletion_error", "error").Inc()
 		logger.Slog.Error("Failed to delete agent", "agent_id", agentID, "error", err)
@@ -447,13 +721,13 @@ func HandleDeleteAgent(c *gin.Context) {
 
 	if deleteResult.DeletedCount == 0 {
 		metrics.StepCounter.WithLabelValues(path, "agent_not_found", "error").Inc()
-		logger.Slog.Warn("Agent not found", "agent_id", agentID)
+		logger.Slog.Warn("Agent not found or user is unauthorized", "agent_id", agentID, "user_id", authenticatedUserID)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Agent not found"})
 		return
 	}
 
 	metrics.StepCounter.WithLabelValues(path, "delete_success", "success").Inc()
-	logger.Slog.Info("Agent deleted successfully", "agent_id", agentID)
+	logger.Slog.Info("Agent deleted successfully", "agent_id", agentID, "creator", authenticatedUserID)
 	c.JSON(http.StatusOK, gin.H{"message": "Agent deleted successfully", "agent_id": agentID})
 }
 

@@ -56,11 +56,28 @@ type AgentMetadata struct {
 }
 
 // HandleCreateJob handles job creation requests.
+
 func HandleCreateJob(c *gin.Context) {
 	path := c.FullPath()
 
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Job creation request received")
+
+	// Log all incoming request headers for debugging
+	logger.Slog.Info("Request Headers:")
+	for key, values := range c.Request.Header {
+		for _, value := range values {
+			logger.Slog.Info("Header", "key", key, "value", value)
+		}
+	}
+
+	// Extract authenticated user ID from Kong's header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
 	var req CreateJobRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -70,15 +87,47 @@ func HandleCreateJob(c *gin.Context) {
 		return
 	}
 
+	// 🔹 Ensure non-internal users can only create jobs for themselves
+	if authenticatedUserID != "internal" {
+		if req.UserID != authenticatedUserID {
+			logger.Slog.Error("User ID mismatch", "authenticated", authenticatedUserID, "request", req.UserID)
+			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			return
+		}
+	}
+
+	// Ensure agent ID is provided
 	if req.AgentID == "" {
 		logger.Slog.Error("Missing agent ID in request body")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing agent ID"})
 		return
 	}
 
+	// Fetch the agent details from the Agent Manager **using the user's ID**
 	cfg := config.LoadConfig()
 	agentURL := fmt.Sprintf("%s%s", cfg.AgentManagerUrl, req.AgentID)
-	resp, err := http.Get(agentURL)
+
+	// Create the request to the Agent Manager
+	agentReq, err := http.NewRequest("GET", agentURL, nil)
+	if err != nil {
+		logger.Slog.Error("Failed to create request to Agent Manager", "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create request"})
+		return
+	}
+
+	// Pass along the user's authorization token (so the agent manager applies user-based access controls)
+	authHeader := c.GetHeader("Authorization")
+	if authHeader != "" {
+		agentReq.Header.Set("Authorization", authHeader)
+	}
+
+	// Pass the user's ID as a security measure (instead of using `internal`)
+	agentReq.Header.Set("X-Consumer-Username", authenticatedUserID)
+
+	// Send the request
+	agentClient := &http.Client{}
+	resp, err := agentClient.Do(agentReq)
 	if err != nil {
 		logger.Slog.Error("Failed to reach agent manager", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve agent"})
@@ -86,13 +135,16 @@ func HandleCreateJob(c *gin.Context) {
 	}
 	defer resp.Body.Close()
 
+	// Check response status
 	if resp.StatusCode != http.StatusOK {
 		logger.Slog.Error("Agent manager returned non-200 response", "status", resp.StatusCode)
 		c.JSON(resp.StatusCode, gin.H{"error": "Failed to retrieve agent"})
 		return
 	}
 
+	// Parse the response body
 	body, err := io.ReadAll(resp.Body)
+	logger.Slog.Info("agent manager response body", "body", resp.Body)
 	if err != nil {
 		logger.Slog.Error("Failed to read response body", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse agent data"})

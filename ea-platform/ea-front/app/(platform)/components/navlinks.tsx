@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import HomeIcon from '@mui/icons-material/Home';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
@@ -15,8 +16,6 @@ import clsx from 'clsx';
 import { usePathname } from 'next/navigation';
 import { Box } from '@mui/material';
 
-
-
 const links = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Agent Builder', href: '/agent-builder', icon: SmartToyIcon },
@@ -27,13 +26,26 @@ const links = [
   { name: 'Leaderboards', href: '/leaderboards', icon: LeaderboardIcon },
   { name: 'Settings', href: '/settings', icon: SettingsIcon },
   { name: 'Help', href: '/help', icon: HelpCenterIcon },
-  { name: 'Sign Out', href: '/signout', icon: LogoutIcon },
 ];
-
 
 export default function NavLinks() {
   const pathname = usePathname();
-  
+  const router = useRouter();
+
+  // Handle Logout Function
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include', // Ensures the cookie is included in the request
+      });
+
+      router.push('/login'); // Redirect to login page after logout
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
   return (
     <Box>
       {links.map((link) => {
@@ -54,6 +66,15 @@ export default function NavLinks() {
           </Link>
         );
       })}
+
+      {/* Logout Button (Not a Link) */}
+      <button
+        onClick={handleLogout}
+        className="flex w-full h-[48px] items-center justify-center rounded-[0.5vw] gap-2 p-3 text-sm font-medium hover:bg-gray-700 md:flex-none md:justify-start md:p-2 md:px-3"
+      >
+        <LogoutIcon className="w-6" />
+        <p className="hidden md:block">Sign Out</p>
+      </button>
     </Box>
   );
 }

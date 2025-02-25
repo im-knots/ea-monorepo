@@ -3,32 +3,39 @@
 import { useEffect, useState } from "react";
 import AgentTable from "../components/AgentTable";
 
-const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
-
 export default function AgentManagerPage() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUserId = async () => {
-      try {
-        const res = await fetch(`${AINU_MANAGER_URL}/users`);
-        const users = await res.json();
-        const user = users.find((u: any) => u.name === "marco@erulabs.ai"); // Match by name or email
-        if (user) {
-          setUserId(user.id);
-        }
-      } catch (error) {
-        console.error("Error fetching user ID:", error);
+  // Fetch JWT token from the server
+  const fetchToken = async () => {
+    try {
+      const res = await fetch("/api/auth/token", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch token");
+      const data = await res.json();
+      setToken(data.token);
+
+      // Decode the token and extract the user ID
+      const payload = JSON.parse(atob(data.token.split(".")[1])); // Decode JWT payload
+      if (payload.iss) {
+        setUserId(payload.iss); // ✅ Extract UUID from `iss` field
       }
-    };
+    } catch (error) {
+      console.error("Error fetching or decoding token:", error);
+      setToken(null);
+      setUserId(null);
+    }
+  };
 
-    fetchUserId();
+  // Fetch token on component mount
+  useEffect(() => {
+    fetchToken();
   }, []);
 
   return (
     <div className="flex">
       <main className="flex-grow p-4">
-        <AgentTable userId={userId} /> {/* ✅ Remove `agents` prop */}
+        <AgentTable userId={userId} /> {/* ✅ Pass extracted userId directly */}
       </main>
     </div>
   );
