@@ -25,7 +25,7 @@ interface Node {
 export default function JobList({
   agentId,
   userId,
-  refreshJobs, // 🔥 Refreshes job count in AgentRow
+  refreshJobs,
 }: {
   agentId: string;
   userId: string | null;
@@ -34,11 +34,44 @@ export default function JobList({
   const [jobs, setJobs] = useState<Job[]>([]);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Fetch jobs for the agent
+  // 🔹 Fetch JWT token from /api/auth/token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch token");
+        const data = await res.json();
+        setToken(data.token);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        setToken(null);
+      }
+    };
+
+    fetchToken();
+  }, []);
+
+  // 🔹 Fetch jobs for the agent with JWT token
   const fetchJobs = async () => {
+    if (!token) {
+      console.error("No token available for authentication.");
+      return;
+    }
+
     try {
-      const res = await fetch(`${AINU_MANAGER_URL}/users/${userId}`);
+      const res = await fetch(`${AINU_MANAGER_URL}/users/${userId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error(`Failed to fetch jobs: ${res.status}`);
+
       const data = await res.json();
       const filteredJobs = (data.jobs || []).filter((job: Job) => job.agent_id === agentId);
 
@@ -50,10 +83,10 @@ export default function JobList({
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, [agentId, userId]);
+    if (token) fetchJobs();
+  }, [agentId, userId, token]);
 
-  // Auto-refresh job details when expanded
+  // 🔹 Auto-refresh job details when expanded
   useEffect(() => {
     if (!autoRefresh) return;
 

@@ -8,7 +8,7 @@ import { Node } from "reactflow";
 interface NodeDefinition {
   id: string;
   name: string;
-  type: string; // ✅ Ensure this gets passed to WorkflowBuilder
+  type: string;
   parameters: { key: string; type: string; default: any; enum?: string[] }[];
   metadata?: { description?: string };
 }
@@ -16,28 +16,67 @@ interface NodeDefinition {
 const API_BASE_URL = "http://api.ea.erulabs.local/agent-manager/api/v1/nodes";
 
 export default function NodeLibrary({
-    sidebarOpen,
-    addNodeToFlow,
-  }: {
-    sidebarOpen: boolean;
-    addNodeToFlow: (node: Node) => void;
-  }) {
+  sidebarOpen,
+  addNodeToFlow,
+}: {
+  sidebarOpen: boolean;
+  addNodeToFlow: (node: Node) => void;
+}) {
   const [isOpen, setIsOpen] = useState(true);
   const [nodes, setNodes] = useState<NodeDefinition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch JWT token from the server
+  const fetchToken = async () => {
+    try {
+      const res = await fetch("/api/auth/token", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch token");
+      const data = await res.json();
+      return data.token;
+    } catch (error) {
+      console.error("Error fetching token:", error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     const fetchNodes = async () => {
       try {
-        const response = await fetch(API_BASE_URL);
+        const token = await fetchToken();
+        if (!token) {
+          console.error("No token found.");
+          setError("Authentication error: No token found.");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch list of node IDs
+        const response = await fetch(API_BASE_URL, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`, // Attach JWT token
+          },
+          credentials: "include",
+        });
+
         if (!response.ok) throw new Error(`Failed to fetch node IDs: ${response.status}`);
         const nodeList: { id: string }[] = await response.json();
 
+        // Fetch node details in parallel
         const nodeDetails = await Promise.all(
           nodeList.map(async (node) => {
             try {
-              const nodeResponse = await fetch(`${API_BASE_URL}/${node.id}`);
+              const nodeResponse = await fetch(`${API_BASE_URL}/${node.id}`, {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`, // Attach JWT token
+                },
+                credentials: "include",
+              });
+
               if (!nodeResponse.ok) throw new Error(`Failed to fetch node ${node.id}`);
               return (await nodeResponse.json()) as NodeDefinition;
             } catch (error) {
@@ -59,12 +98,12 @@ export default function NodeLibrary({
   }, []);
 
   return (
-      <div
-        className="absolute bottom-0 bg-neutral-900 text-white shadow-2xl transition-all duration-300"
-        style={{
-          width: `calc(100% - ${sidebarOpen ? "16rem" : "4rem"})`,
-        }}
-      >
+    <div
+      className="absolute bottom-0 bg-neutral-900 text-white shadow-2xl transition-all duration-300"
+      style={{
+        width: `calc(100% - ${sidebarOpen ? "16rem" : "4rem"})`,
+      }}
+    >
       {/* Node Library Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -92,7 +131,7 @@ export default function NodeLibrary({
                 key={node.id}
                 className="bg-neutral-800 p-4 rounded-lg shadow-md hover:bg-neutral-700 transition cursor-pointer"
                 onClick={() => {
-                  const uniqueId = `${node.id}-${Math.random().toString(36).substr(2, 9)}`; // Generate unique ID
+                  const uniqueId = `${node.id}-${Math.random().toString(36).substr(2, 9)}`;
                   const newNode: Node = {
                     id: uniqueId,
                     type: "custom",
@@ -111,7 +150,7 @@ export default function NodeLibrary({
                       ),
                     },
                   };
-                  addNodeToFlow(newNode); // Call addNodeToFlow from props
+                  addNodeToFlow(newNode);
                 }}
               >
                 <h3 className="text-base font-semibold">{node.name}</h3>

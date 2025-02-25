@@ -62,11 +62,35 @@ func HandleCreateJob(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Job creation request received")
 
+	// Log all incoming request headers for debugging
+	logger.Slog.Debug("Request Headers:")
+	for key, values := range c.Request.Header {
+		for _, value := range values {
+			logger.Slog.Debug("Header", "key", key, "value", value)
+		}
+	}
+
+	// Extract authenticated user ID from Kong's header
+	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Missing X-Consumer-Username header")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	var req CreateJobRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		metrics.StepCounter.WithLabelValues(path, "invalid_request_body", "error").Inc()
 		logger.Slog.Error("Failed to decode request body", "error", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Ensure the user ID from the request matches the authenticated user
+	if req.UserID != authenticatedUserID {
+		logger.Slog.Error("User ID mismatch", "authenticated", authenticatedUserID, "request", req.UserID)
+		metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
+		c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
 		return
 	}
 

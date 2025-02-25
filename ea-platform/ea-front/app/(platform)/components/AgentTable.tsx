@@ -10,13 +10,44 @@ export default function AgentTable({ userId }: { userId: string | null }) {
   const router = useRouter();
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+
+  // 🔹 Fetch JWT token from /api/auth/token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch token");
+        const data = await res.json();
+        setToken(data.token);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        setToken(null);
+      }
+    };
+
+    fetchToken();
+  }, []);
 
   // ✅ Fetch all agent IDs, then fetch full agent details
   const fetchAgents = async () => {
+    if (!token) {
+      console.error("No token available for authentication.");
+      return;
+    }
+
     setLoading(true);
     try {
       // 🔥 Step 1: Get basic agent list (IDs)
-      const response = await fetch(AGENT_MANAGER_URL);
+      const response = await fetch(AGENT_MANAGER_URL, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
       if (!response.ok) throw new Error("Failed to fetch agents");
 
       const agentList = await response.json();
@@ -26,7 +57,15 @@ export default function AgentTable({ userId }: { userId: string | null }) {
       const detailedAgents = await Promise.all(
         agentList.map(async (agent: any) => {
           try {
-            const detailsRes = await fetch(`${AGENT_MANAGER_URL}/${agent.id}`);
+            const detailsRes = await fetch(`${AGENT_MANAGER_URL}/${agent.id}`, {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+            });
+
             if (!detailsRes.ok) throw new Error(`Failed to fetch details for agent ${agent.id}`);
             const details = await detailsRes.json();
             return {
@@ -52,8 +91,8 @@ export default function AgentTable({ userId }: { userId: string | null }) {
 
   // ✅ Fetch agents on component mount
   useEffect(() => {
-    if (userId) fetchAgents();
-  }, [userId]);
+    if (userId && token) fetchAgents();
+  }, [userId, token]);
 
   // ✅ Refresh agent list after deletion
   const refreshAgents = () => {

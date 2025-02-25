@@ -58,6 +58,7 @@ ingress:
   className: "kong"
   annotations:
     konghq.com/strip-path: 'true'
+    konghq.com/plugins: global-jwt-auth, global-cors 
   hosts:
     - host: 
       paths:

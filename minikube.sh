@@ -177,7 +177,7 @@ case "$1" in
 
         k8s_ingress_dns
         k8s_port_forward
-        seed_test_data
+        # seed_test_data
         # run_tests
 
         echo "All apps processed and deployed successfully."

@@ -15,7 +15,7 @@ interface JsonEditorProps {
   agentId: string | null;
   updateAgentId: (id: string) => void;
   creatorId: string;
-  onJobStarted?: (jobId: string) => void; // New callback for job started events
+  onJobStarted?: (jobId: string) => void;
 }
 
 export default function JsonEditor({
@@ -33,10 +33,27 @@ export default function JsonEditor({
   const [isValidJson, setIsValidJson] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-  // Set localJson whenever jsonText changes
+  // 🔹 Fetch JWT token from /api/auth/token
+  useEffect(() => {
+    const fetchToken = async () => {
+      try {
+        const res = await fetch("/api/auth/token", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to fetch token");
+        const data = await res.json();
+        setToken(data.token);
+      } catch (error) {
+        console.error("Error fetching token:", error);
+        setToken(null);
+      }
+    };
+
+    fetchToken();
+  }, []);
+
+  // 🔹 Update local JSON state when parent jsonText changes
   useEffect(() => {
     setLocalJson(jsonText);
   }, [jsonText]);
@@ -58,7 +75,7 @@ export default function JsonEditor({
   };
 
   const handleSave = async () => {
-    if (!isValidJson || isLoading) return;
+    if (!isValidJson || isLoading || !token) return;
 
     try {
       setIsLoading(true);
@@ -77,6 +94,7 @@ export default function JsonEditor({
         method,
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
         },
         body: JSON.stringify(jsonPayload),
       });
@@ -107,30 +125,31 @@ export default function JsonEditor({
   };
 
   const handleStartJob = async () => {
-    if (!agentId) return;
-  
+    if (!agentId || !token) return;
+
     try {
       setIsLoading(true);
       setSaveStatus(null);
-  
+
       const response = await fetch(EA_JOB_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
         },
         body: JSON.stringify({
           agent_id: agentId,
           user_id: creatorId,
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         console.log("Job started successfully:", data.job_name);
         setJobId(data.job_name);
-        setSaveStatus(`Job submitted successfully`);
-  
+        setSaveStatus("Job submitted successfully");
+
         // Notify parent component
         if (onJobStarted) {
           onJobStarted(data.job_name);
@@ -144,7 +163,7 @@ export default function JsonEditor({
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div
       className="fixed right-0 top-0 h-screen bg-neutral-800 text-white shadow-2xl transition-all flex flex-col"
@@ -212,7 +231,9 @@ export default function JsonEditor({
             <button
               onClick={handleStartJob}
               disabled={!agentId || isLoading}
-              className={`flex-1 py-2 ${agentId ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 cursor-not-allowed"} transition rounded-lg text-white font-medium`}
+              className={`flex-1 py-2 ${
+                agentId ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 cursor-not-allowed"
+              } transition rounded-lg text-white font-medium`}
             >
               Start
             </button>

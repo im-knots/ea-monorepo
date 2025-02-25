@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ReactFlow, {
   Background,
   applyNodeChanges,
@@ -59,6 +59,21 @@ export default function WorkflowBuilder({
   setRunningJobId,
   sidebarOpen,
 }: WorkflowBuilderProps) {
+  const [token, setToken] = useState<string | null>(null);
+
+  // Fetch JWT token from the server
+  const fetchToken = async () => {
+    try {
+      const res = await fetch("/api/auth/token", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch token");
+      const data = await res.json();
+      setToken(data.token);
+    } catch (error) {
+      console.error("Error fetching token:", error);
+      setToken(null);
+    }
+  };
+
   // 🆕 Function to reset node status and outputs when a new job starts
   const resetNodes = useCallback(() => {
     setNodes((prevNodes) =>
@@ -98,13 +113,22 @@ export default function WorkflowBuilder({
 
   // Fetch job status periodically
   const fetchJobStatus = useCallback(async () => {
-    if (!creatorId || !runningJobId) return;
+    if (!creatorId || !runningJobId || !token) return;
 
     try {
-      const response = await fetch(`${AINU_MANAGER_URL}/users/${creatorId}`);
+      const response = await fetch(`${AINU_MANAGER_URL}/users/${creatorId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`, // Attach JWT token
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch job status: ${response.status}`);
       const data = await response.json();
 
-      if (response.ok && data.jobs) {
+      if (data.jobs) {
         const job: Job | undefined = data.jobs.find((j: Job) => j.job_name === runningJobId);
 
         if (job) {
@@ -145,7 +169,7 @@ export default function WorkflowBuilder({
     } catch (error) {
       console.error("Error fetching job status:", error);
     }
-  }, [creatorId, runningJobId, setNodes, setRunningJobId]);
+  }, [creatorId, runningJobId, token, setNodes, setRunningJobId]);
 
   // 🔄 **Reintroduce polling every 5 seconds when a job is running**
   useEffect(() => {
@@ -163,6 +187,11 @@ export default function WorkflowBuilder({
       resetNodes();
     }
   }, [runningJobId, resetNodes]);
+
+  // Fetch token on component mount
+  useEffect(() => {
+    fetchToken();
+  }, []);
 
   // Generate JSON representation of the workflow
   useEffect(() => {
@@ -220,13 +249,13 @@ export default function WorkflowBuilder({
   );
 
   return (
-      <div 
-        className="relative flex-1 h-full bg-neutral-900 transition-all duration-300"
-        style={{ 
-          marginTop: "70px" // ✅ Ensure it moves below the header bar
-        }} 
-      >
-        <ReactFlow
+    <div 
+      className="relative flex-1 h-full bg-neutral-900 transition-all duration-300"
+      style={{ 
+        marginTop: "70px" // ✅ Ensure it moves below the header bar
+      }} 
+    >
+      <ReactFlow
         nodes={initializedNodes.map((node) => ({
           ...node,
           data: {
