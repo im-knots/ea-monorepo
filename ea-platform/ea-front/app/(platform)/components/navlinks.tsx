@@ -35,16 +35,24 @@ export default function NavLinks() {
   // Handle Logout Function
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include', // Ensures the cookie is included in the request
+        credentials: 'include', // Ensures cookies are sent
       });
-
-      router.push('/login'); // Redirect to login page after logout
+  
+      const data = await response.json();
+      console.log("🔹 Logout API Response:", data);
+  
+      if (response.ok) {
+        router.push('/login'); // Redirect after successful logout
+      } else {
+        console.error('❌ Logout failed:', data);
+      }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('❌ Logout request error:', error);
     }
   };
+  
 
   return (
     <Box>
