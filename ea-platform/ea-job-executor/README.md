@@ -4,7 +4,6 @@
 The EA Job Executor is responsible for executing AI workflows by processing interconnected nodes in a directed acyclic graph (DAG). The executor loads a predefined agent job, constructs an execution graph, and processes each node according to its dependencies and parameters. The execution framework is designed to handle API calls, resolve state references, and support dynamic input/output processing.
 
 This executor runs as part of the ea-job-engine as a Kubernetes Job pod. The agentjob.json file is populated by the ea-job-operator from the AgentJob Custom Resource, ensuring that the executor always receives the latest job configuration and executes within the job's lifecycle.
-Table of Contents
 
 ## Architecture
 
