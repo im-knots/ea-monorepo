@@ -1,4 +1,4 @@
-# Ea Agent Manager API
+o# Ea Agent Manager API
 
 The Ea Platform Agent Manager API manages the creation of AI agents via an API that powers a Node-based Agent Builder UI. An Agent is a collection of Nodes and Edges that define a workflow to accomplish a specific task. This document outlines how nodes are categorized, how edges link them, and how our schema distinguishes between Node Definitions (“templates”) and Agent Nodes (“instances”).
 
@@ -95,8 +95,8 @@ Edges connect nodes and define the workflow's data flow and execution order.
 
 | Property   | Description                             | Examples                  |
 |------------|-----------------------------------------|--------------------------|
-| **from**   | ID(s) of the source node.                 | `"from": ["input.text"]`   |
-| **to**     | ID(s) of the destination node(s).       | `"to": ["worker.train"]` |
+| **from**   | alias of the source node.                 | `"from": ["input"]`   |
+| **to**     | aliad of the destination node(s).       | `"to": ["ollama"]` |
 
 
 ## Schema and Data Model
@@ -112,13 +112,6 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 -   References Node Definitions via a definition_ref.
 -   Only overrides or provides values for the parameters needed.
 -   Stores a graph of Node Instances (nodes) and Edges (edges) that define the workflow.
-
-## Reasoning
-- Maintainability: Centralizing each node’s API logic (parameters, endpoints, etc.) in a single definition means that if the underlying API changes, you only update the Node Definition once—rather than in every Agent that uses it.
-- Simplicity in Agent: Agent documents only store the minimal data—which node definition they reference, plus any parameter values. This keeps the agent’s JSON lightweight.
-- Scalability: Multiple agents can reuse the same Node Definition. For example, “worker.inference.llm.ollama” can appear in hundreds of different Agent workflows without duplicating configuration.
-- Consistency: By enumerating possible parameter values (enum) or providing defaults in the Node Definition, you guide users to valid settings. The Agent just overrides them if needed.
-- Versatility: If you decide to add new Node Definitions (like “worker.inference.llm.openai”), you don’t need to alter the schema—just create a new Node Definition. Agents can reference it immediately.
 
 ## API Documentation
 
