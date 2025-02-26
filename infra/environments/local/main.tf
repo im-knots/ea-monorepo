@@ -99,3 +99,8 @@ module "eru_labs_brand_app_deployment" {
 module "kong" {
   source = "../../modules/kong"
 }
+
+module "kong_config" {
+  source = "../../modules/kong-config"
+  depends_on = [ module.kong ]
+}
