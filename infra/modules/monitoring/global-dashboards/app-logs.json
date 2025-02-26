@@ -1,437 +1,584 @@
 {
-    "annotations": {
-      "list": [
-        {
-          "builtIn": 1,
-          "datasource": {
-            "type": "grafana",
-            "uid": "-- Grafana --"
-          },
-          "enable": true,
-          "hide": true,
-          "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Annotations & Alerts",
-          "type": "dashboard"
-        }
-      ]
-    },
-    "editable": true,
-    "fiscalYearStartMonth": 0,
-    "graphTooltip": 0,
-    "id": 4,
-    "links": [],
-    "panels": [
+  "annotations": {
+    "list": [
       {
-        "collapsed": false,
-        "gridPos": {
-          "h": 1,
-          "w": 24,
-          "x": 0,
-          "y": 0
-        },
-        "id": 2,
-        "panels": [],
-        "repeat": "apis",
-        "title": "$apis",
-        "type": "row"
-      },
-      {
+        "builtIn": 1,
         "datasource": {
-          "type": "loki",
-          "uid": "P8E80F9AEF21F6940"
+          "type": "grafana",
+          "uid": "-- Grafana --"
         },
-        "fieldConfig": {
-          "defaults": {
-            "color": {
-              "mode": "palette-classic"
-            },
-            "custom": {
-              "axisBorderShow": false,
-              "axisCenteredZero": false,
-              "axisColorMode": "text",
-              "axisLabel": "",
-              "axisPlacement": "auto",
-              "barAlignment": 0,
-              "barWidthFactor": 0.6,
-              "drawStyle": "line",
-              "fillOpacity": 0,
-              "gradientMode": "none",
-              "hideFrom": {
-                "legend": false,
-                "tooltip": false,
-                "viz": false
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 6,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 2,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
               },
-              "insertNulls": false,
-              "lineInterpolation": "linear",
-              "lineWidth": 1,
-              "pointSize": 5,
-              "scaleDistribution": {
-                "type": "linear"
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": true,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
               },
-              "showPoints": "auto",
-              "spanNulls": true,
-              "stacking": {
-                "group": "A",
-                "mode": "none"
-              },
-              "thresholdsStyle": {
-                "mode": "off"
+              "mappings": [],
+              "noValue": "0",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
               }
             },
-            "mappings": [],
-            "noValue": "0",
-            "thresholds": {
-              "mode": "absolute",
-              "steps": [
-                {
-                  "color": "green",
-                  "value": null
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "{}"
                 },
-                {
-                  "color": "red",
-                  "value": 80
-                }
-              ]
-            }
-          },
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "{}"
-              },
-              "properties": [
-                {
-                  "id": "color",
-                  "value": {
-                    "fixedColor": "dark-orange",
-                    "mode": "fixed"
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "dark-orange",
+                      "mode": "fixed"
+                    }
                   }
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "success"
+                ]
               },
-              "properties": [
-                {
-                  "id": "color",
-                  "value": {
-                    "fixedColor": "dark-green",
-                    "mode": "fixed"
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "dark-green",
+                      "mode": "fixed"
+                    }
                   }
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "unauthorized"
+                ]
               },
-              "properties": [
-                {
-                  "id": "color",
-                  "value": {
-                    "fixedColor": "dark-orange",
-                    "mode": "fixed"
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "unauthorized"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "dark-orange",
+                      "mode": "fixed"
+                    }
                   }
-                }
-              ]
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "bad request"
+                ]
               },
-              "properties": [
-                {
-                  "id": "color",
-                  "value": {
-                    "fixedColor": "dark-yellow",
-                    "mode": "fixed"
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "bad request"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "dark-yellow",
+                      "mode": "fixed"
+                    }
                   }
-                }
-              ]
-            }
-          ]
-        },
-        "gridPos": {
-          "h": 7,
-          "w": 24,
-          "x": 0,
-          "y": 1
-        },
-        "id": 1,
-        "options": {
-          "legend": {
-            "calcs": [],
-            "displayMode": "list",
-            "placement": "bottom",
-            "showLegend": true
-          },
-          "tooltip": {
-            "hideZeros": false,
-            "mode": "single",
-            "sort": "none"
-          }
-        },
-        "pluginVersion": "11.5.2",
-        "targets": [
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "code",
-            "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `200|201|202` [$__auto]))",
-            "legendFormat": "success",
-            "queryType": "range",
-            "refId": "A"
-          },
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "code",
-            "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `401|403` [$__auto]))",
-            "hide": false,
-            "legendFormat": "unauthorized",
-            "queryType": "range",
-            "refId": "B"
-          },
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "code",
-            "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `400` [$__auto]))",
-            "hide": false,
-            "legendFormat": "bad request",
-            "queryType": "range",
-            "refId": "C"
-          },
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "code",
-            "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `5` [$__auto]))",
-            "hide": false,
-            "legendFormat": "server error",
-            "queryType": "range",
-            "refId": "D"
-          }
-        ],
-        "title": "HTTP Responses",
-        "type": "timeseries"
-      },
-      {
-        "datasource": {
-          "type": "loki",
-          "uid": "P8E80F9AEF21F6940"
-        },
-        "fieldConfig": {
-          "defaults": {},
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "{}"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "success"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "unauthorized"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "bad request"
-              },
-              "properties": []
-            }
-          ]
-        },
-        "gridPos": {
-          "h": 7,
-          "w": 24,
-          "x": 0,
-          "y": 8
-        },
-        "id": 3,
-        "options": {
-          "dedupStrategy": "none",
-          "enableInfiniteScrolling": false,
-          "enableLogDetails": true,
-          "prettifyLogMessage": false,
-          "showCommonLabels": false,
-          "showLabels": false,
-          "showTime": false,
-          "sortOrder": "Descending",
-          "wrapLogMessage": false
-        },
-        "pluginVersion": "11.5.2",
-        "targets": [
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "builder",
-            "expr": "{app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"`",
-            "legendFormat": "success",
-            "queryType": "range",
-            "refId": "A"
-          }
-        ],
-        "title": "Gin Logs",
-        "type": "logs"
-      },
-      {
-        "datasource": {
-          "type": "loki",
-          "uid": "P8E80F9AEF21F6940"
-        },
-        "fieldConfig": {
-          "defaults": {},
-          "overrides": [
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "{}"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "success"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "unauthorized"
-              },
-              "properties": []
-            },
-            {
-              "matcher": {
-                "id": "byName",
-                "options": "bad request"
-              },
-              "properties": []
-            }
-          ]
-        },
-        "gridPos": {
-          "h": 7,
-          "w": 24,
-          "x": 0,
-          "y": 15
-        },
-        "id": 4,
-        "options": {
-          "dedupStrategy": "none",
-          "enableInfiniteScrolling": false,
-          "enableLogDetails": true,
-          "prettifyLogMessage": false,
-          "showCommonLabels": false,
-          "showLabels": false,
-          "showTime": false,
-          "sortOrder": "Descending",
-          "wrapLogMessage": false
-        },
-        "pluginVersion": "11.5.2",
-        "targets": [
-          {
-            "datasource": {
-              "type": "loki",
-              "uid": "P8E80F9AEF21F6940"
-            },
-            "direction": "backward",
-            "editorMode": "builder",
-            "expr": "{app=\"$apis\"} !~ `/metrics` != `[GIN]` | json",
-            "legendFormat": "success",
-            "queryType": "range",
-            "refId": "A"
-          }
-        ],
-        "title": "Slog Logs",
-        "type": "logs"
-      }
-    ],
-    "preload": false,
-    "refresh": "",
-    "schemaVersion": 40,
-    "tags": [],
-    "templating": {
-      "list": [
-        {
-          "allowCustomValue": false,
-          "current": {
-            "text": [
-              "$__all"
-            ],
-            "value": [
-              "$__all"
+                ]
+              }
             ]
           },
-          "includeAll": true,
-          "multi": true,
-          "name": "apis",
-          "options": [
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 47
+          },
+          "id": 1,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "hideZeros": false,
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "11.5.2",
+          "targets": [
             {
-              "selected": false,
-              "text": "ea-agent-manager",
-              "value": "ea-agent-manager"
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `200|201|202` [$__auto]))",
+              "legendFormat": "success",
+              "queryType": "range",
+              "refId": "A"
             },
             {
-              "selected": false,
-              "text": "ea-ainu-manager",
-              "value": "ea-ainu-manager"
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `401|403` [$__auto]))",
+              "hide": false,
+              "legendFormat": "unauthorized",
+              "queryType": "range",
+              "refId": "B"
             },
             {
-              "selected": false,
-              "text": "ea-job-api",
-              "value": "ea-job-api"
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `400` [$__auto]))",
+              "hide": false,
+              "legendFormat": "bad request",
+              "queryType": "range",
+              "refId": "C"
+            },
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "sum(count_over_time({app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"` | response_code =~ `5` [$__auto]))",
+              "hide": false,
+              "legendFormat": "server error",
+              "queryType": "range",
+              "refId": "D"
             }
           ],
-          "query": "ea-agent-manager, ea-ainu-manager, ea-job-api",
-          "type": "custom"
+          "title": "HTTP Responses",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "{}"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "unauthorized"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "bad request"
+                },
+                "properties": []
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 54
+          },
+          "id": 3,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "11.5.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "builder",
+              "expr": "{app=\"$apis\"} !~ `/metrics` |= `[GIN]` | pattern `[<_>] <date> - <time> | <response_code> |     <response_time> |     <ip> | <http_method>      \"<request>\"`",
+              "legendFormat": "success",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Gin Logs",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "{}"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "success"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "unauthorized"
+                },
+                "properties": []
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "bad request"
+                },
+                "properties": []
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 61
+          },
+          "id": 4,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "11.5.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "builder",
+              "expr": "{app=\"$apis\"} !~ `/metrics` != `[GIN]` | json",
+              "legendFormat": "success",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Slog Logs",
+          "type": "logs"
         }
-      ]
+      ],
+      "repeat": "apis",
+      "title": "$apis",
+      "type": "row"
     },
-    "time": {
-      "from": "2025-02-25T11:26:27.846Z",
-      "to": "2025-02-25T23:26:27.846Z"
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 7,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 10,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 8,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "11.5.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "builder",
+              "expr": "{job=~\"ea-platform/executor\"} |= `` | json",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Panel Title",
+          "type": "logs"
+        }
+      ],
+      "title": "ea-job-executor",
+      "type": "row"
     },
-    "timepicker": {},
-    "timezone": "browser",
-    "title": "ea logs overview",
-    "uid": "ea-logs-overview",
-    "version": 12,
-    "weekStart": ""
-  }
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 5,
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 24,
+            "x": 0,
+            "y": 1
+          },
+          "id": 6,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "11.5.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "builder",
+              "expr": "{app=\"$operators\"} !~ `/metrics`",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Panel Title",
+          "type": "logs"
+        }
+      ],
+      "repeat": "operators",
+      "title": "$operators",
+      "type": "row"
+    }
+  ],
+  "preload": false,
+  "refresh": "5s",
+  "schemaVersion": 40,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": "blank = All",
+        "allowCustomValue": false,
+        "current": {
+          "text": [
+            "$__all"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "includeAll": true,
+        "multi": true,
+        "name": "apis",
+        "options": [
+          {
+            "selected": false,
+            "text": "ea-agent-manager",
+            "value": "ea-agent-manager"
+          },
+          {
+            "selected": false,
+            "text": "ea-ainu-manager",
+            "value": "ea-ainu-manager"
+          },
+          {
+            "selected": false,
+            "text": "ea-job-api",
+            "value": "ea-job-api"
+          }
+        ],
+        "query": "ea-agent-manager, ea-ainu-manager, ea-job-api",
+        "type": "custom"
+      },
+      {
+        "allValue": "blank = All",
+        "allowCustomValue": false,
+        "current": {
+          "text": [
+            "$__all"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "includeAll": true,
+        "multi": true,
+        "name": "operators",
+        "options": [
+          {
+            "selected": false,
+            "text": "ea-job-operator",
+            "value": "ea-job-operator"
+          },
+          {
+            "selected": false,
+            "text": "ea-ainu-operator",
+            "value": "ea-ainu-operator"
+          }
+        ],
+        "query": "ea-job-operator, ea-ainu-operator",
+        "type": "custom"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Ea Logs Overview",
+  "uid": "ea-logs-overview",
+  "version": 13,
+  "weekStart": ""
+}
