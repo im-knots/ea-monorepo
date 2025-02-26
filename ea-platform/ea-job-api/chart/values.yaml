@@ -56,6 +56,9 @@ service:
   type: ClusterIP
   port: 8080
 
+networkPolicy:
+  enabled: true 
+
 ingress:
   enabled: true
   className: "kong"

@@ -54,7 +54,7 @@ service:
   port: 8080
 
 networkPolicy:
-  enabled: false  # Enforce in cluster network traffic controlls for the deployement
+  enabled: true  # Enforce in cluster network traffic controlls for the deployement
 
 ingress:
   enabled: true
