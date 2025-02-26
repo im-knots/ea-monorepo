@@ -122,6 +122,6 @@ resource "kubernetes_config_map" "global_dashboards" {
   }
 
   data = {
-    "dashboard.json" = file("${path.module}/global-dashboards/${each.value}")
+    "${each.value}" = file("${path.module}/global-dashboards/${each.value}")
   }
 }

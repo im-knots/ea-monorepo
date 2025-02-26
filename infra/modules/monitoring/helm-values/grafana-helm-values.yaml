@@ -1,34 +1,14 @@
 
 grafana.ini:
-  security:
-    disable_initial_admin_creation: true
   auth:
     disable_login_form: true
   auth.anonymous:
     enabled: true
     org_role: Editor
   auth.basic:
-    enabled: false
-
-## ✅ Fix dashboards configuration (remove `enabled: true`, use proper structure)
-dashboards:
-  default:
-    prometheus:
-      gnetId: 1860
-      revision: 30
-      datasource: Prometheus
-    kubernetes-pods:
-      gnetId: 3131
-      revision: 2
-      datasource: Prometheus
-    loki-logs:
-      gnetId: 13639
-      revision: 1
-      datasource: Loki
-    trivy-operator:
-      gnetId: 17813
-      revision: 2
-      datasource: Prometheus
+    enabled: true
+  dataproxy:
+    timeout: 600
 
 ## Data Sources: Use Alloy for Metrics and Loki for Logs
 datasources:
