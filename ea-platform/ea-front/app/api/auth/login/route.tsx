@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { randomBytes } from 'crypto';
 import { connectToDatabase } from '@/lib/mongodb';
 import * as k8s from '@kubernetes/client-node';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 const KUBERNETES_NAMESPACE = process.env.KUBERNETES_NAMESPACE || 'ea-platform';
 
 // Load Kubernetes Configuration
@@ -45,8 +45,11 @@ export async function POST(req: Request) {
       if (!passwordMatch) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
-  
-      // 🔹 Generate JWT with UUID as 'iss'
+
+      // 🔹 Generate a unique JWT secret for this user
+      const JWT_SECRET = randomBytes(32).toString('hex');
+
+      // 🔹 Generate JWT with the unique secret
       const token = jwt.sign(
         {
           userId: user.id,
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
       const response = NextResponse.json({ message: 'Login successful' }, { status: 200 });
       response.cookies.set('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, //when running the k8s build it sets NODE_ENV to production which will prevent non https traffic from storing the jwt. set to false explicitly for now for local testing
         sameSite: 'strict',
         maxAge: 6 * 60 * 60, // 6 hours
         path: '/',
@@ -84,10 +87,9 @@ export async function POST(req: Request) {
         stringData: {
           algorithm: "HS256",  // ✅ Required by Kong
           key: user.id,        // ✅ This must match the `iss` field in the JWT
-          secret: JWT_SECRET,  // ✅ Used for verifying JWTs in Kong
+          secret: JWT_SECRET,  // ✅ Unique secret used for verifying JWTs in Kong
         },
       };
-      
   
       await createK8sObject(k8sSecret);
   
@@ -114,5 +116,4 @@ export async function POST(req: Request) {
       console.error('Login error:', error);
       return NextResponse.json({ error: 'Server error' }, { status: 500 });
     }
-  }
-  
+}
