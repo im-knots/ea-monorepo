@@ -469,6 +469,9 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      jobName,
 						Namespace: namespace,
+						Labels: map[string]string{
+							"job-group": "ea-agent-executor-job",
+						},
 					},
 					Spec: batchv1.JobSpec{
 						BackoffLimit: &backoffLimit,

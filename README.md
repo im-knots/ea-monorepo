@@ -123,14 +123,15 @@ sudo nvidia-ctk runtime configure --runtime=docker && sudo systemctl restart doc
 minikube delete # Clean up previous minikube setups
 
 # WITHOUT GPU
-minikube start --driver=docker --extra-config=kubelet.max-pods=1000
+minikube start --driver=docker --extra-config=kubelet.max-pods=1000 --cni calico
 
 # WITH GPU
 minikube start \
   --driver=docker \
   --container-runtime docker \
   --gpus all \
-  --extra-config=kubelet.max-pods=1000 
+  --extra-config=kubelet.max-pods=1000 \
+  --cni calico
 
 # need to increase the filesystem user watches
 minikube ssh
