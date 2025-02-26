@@ -149,16 +149,10 @@ The script will update your /etc/hosts file and these domains should be avialabl
 
 | Domain | Description | 
 |----------|-----------|
-| agent-manager.ea.erulabs.local | The ea-agent-manager API |
-| ainu-manager.ea.erulabs.local | The ea-ainu-manager API |
-| job-api.ea.erulabs.local | The ea-job-api |
-| ollama.ea.erulabs.local | The internal LLM provider for the Ea Platform |
-| ea.erulabs.local | The ea-frontend |
-| backend.erulabs.local | The brand-backend for the Eru Labs brand webpage |
+| api.ea.erulabs.local | The ea-platfor api gatewway |
+| ea.erulabs.local | The Ea frontend UI |
 | erulabs.local | The brand-frontend Eru Labs brand webpage |
 | grafana.erulabs.local | Grafana for visualizing system metric and log data |
-| prometheus.erulabs.local | Prometheus for checking metrics and alerting rules |
-
 
 ### Adding new services
 To add a new service to the startup script simple create a new directory `<ea-platform|brand>/app`. Add a Dockerfile and `chart` directory that contains the standard helm chart. Then update the local terraform environment in `infra/environments/local/main.tf` in the `locals` section
