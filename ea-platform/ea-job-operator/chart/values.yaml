@@ -55,6 +55,9 @@ service:
   type: ClusterIP
   port: 8080
 
+networkPolicy:
+  enabled: true 
+
 ingress:
   enabled: false # has no external calls coming into an api so we can leave disabled
   className: "nginx"

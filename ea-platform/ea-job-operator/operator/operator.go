@@ -469,13 +469,15 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      jobName,
 						Namespace: namespace,
-						Labels: map[string]string{
-							"job-group": "ea-agent-executor-job",
-						},
 					},
 					Spec: batchv1.JobSpec{
 						BackoffLimit: &backoffLimit,
 						Template: corev1.PodTemplateSpec{
+							ObjectMeta: metav1.ObjectMeta{
+								Labels: map[string]string{
+									"job-group": "ea-agent-executor-job",
+								},
+							},
 							Spec: corev1.PodSpec{
 								ServiceAccountName: "ea-job-executor-sa",
 								RestartPolicy:      corev1.RestartPolicyNever,
