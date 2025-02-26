@@ -1,7 +1,7 @@
 # EA Ainu Manager API Documentation
 
 ## Overview
-The **EA Ainu Manager** is a RESTful API service that manages users, compute devices, and AI jobs status on the ea platform. It is the primary driver of the frontend. This service allows users to, register compute devices, track compute credits, and receive job status updates
+The **EA Ainu Manager** is a RESTful API service that fetches users, compute devices, and AI jobs status on the ea platform. It is the primary driver of the frontend. This service also allows users to, register compute devices, and track compute credits.
 
 ## Data Model
 The API operates with the following primary entities:
@@ -41,26 +41,6 @@ The API operates with the following primary entities:
 ## API Endpoints
 
 ### Users
-#### Create User
-**POST** `/api/v1/users`
-##### Request Body
-```json
-{
-    "name": "John Doe",
-    "compute_credits": 1000,
-    "compute_devices": [],
-    "jobs": []
-}
-```
-##### Response
-```json
-{
-    "message": "User created successfully",
-    "id": "UUID",
-    "user": "John Doe",
-    "create_time": "ISO 8601 datetime"
-}
-```
 
 #### Get All Users
 **GET** `/api/v1/users`
