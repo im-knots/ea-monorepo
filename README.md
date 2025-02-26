@@ -55,8 +55,9 @@ Our platform will be built in multiple phases. These phases are tracked as Githu
 - ea-agent-engine to manage creation of node and agent definitions
 - ea-data-engine to manage user datasets and data
 - The framework for the rest of the Ea platform engines to come
+- **closed alpha launch**
 
-### Phase 2: Commerce Engine, Credit System, user limits and Gamification
+### Phase 2: Commerce Engine, Credit System, Enterprise features, and Gamification
 - ea-frontend marketplace
 - ea-frontend leaderboards, ranks, challenges
 - ea-commerce-engine for driving the marketplace
@@ -64,9 +65,12 @@ Our platform will be built in multiple phases. These phases are tracked as Githu
 - Implement user tiers
 - Implement limits based on tiers
 - Implement compute credits cost system for jobs
+- Implement enterprise branding and dedicated deployment model
+- **open beta**
 
 ### Phase 3: Distributed Job Engine
 - ainulindale client software for linux, mac, windows, mobile, ect
+- **ga release**
 
 The actual novel tech and selling point of the Ea platform.
 
@@ -76,9 +80,6 @@ Distribute jobs to client devices running the Ainulindale client for running inf
 Build new model parallelism protocols on top of existing p2p protocols like bittorrent to allow p2p updating of model weights rather than relying on a central sharing platform.
 
 Implement meshnet protocols like BATMAN on the Ainulindale clients to allow localized p2p communications?
-
-### Phase 5: Cloud deployment and Production readiness
-Do the SRE needful to scale this thing to millions of users
 
 
 ## Ea Platform Architecture
