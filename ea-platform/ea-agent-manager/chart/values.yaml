@@ -53,6 +53,9 @@ service:
   type: ClusterIP
   port: 8080
 
+networkPolicy:
+  enabled: false  # Enforce in cluster network traffic controlls for the deployement
+
 ingress:
   enabled: true
   className: "kong"
