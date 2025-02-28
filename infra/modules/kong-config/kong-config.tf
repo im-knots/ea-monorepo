@@ -28,7 +28,7 @@ resource "kubernetes_manifest" "kong_cluster_plugin_cors" {
     plugin = "cors"
     config = {
       origins         = ["*"]
-      methods         = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+      methods         = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
       headers         = ["Accept", "Accept-Version", "Content-Length", "Content-MD5", "Content-Type", "Date", "X-Auth-Token", "Authorization"]
       exposed_headers = ["X-Auth-Token", "Authorization"]
       credentials     = true

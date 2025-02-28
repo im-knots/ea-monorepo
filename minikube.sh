@@ -151,6 +151,7 @@ cleanup() {
 case "$1" in
     start)
         kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+        
         minikube addons enable ingress
         minikube addons enable registry
         minikube addons enable metrics-server

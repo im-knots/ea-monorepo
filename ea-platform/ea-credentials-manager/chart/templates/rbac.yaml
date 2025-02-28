@@ -3,31 +3,26 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: ea-front-role
+  name: ea-credentials-manager-role
   namespace: {{ .Release.Namespace }}
 rules:
   # 🔹 Allow creating, reading, updating, and deleting Kubernetes Secrets
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["create", "delete"]
-
-  # 🔹 Allow managing KongConsumers (Kong CRD)
-  - apiGroups: ["configuration.konghq.com"]
-    resources: ["kongconsumers"]
-    verbs: ["create", "delete"]
+    verbs: ["patch"]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: ea-front-rolebinding
+  name: ea-credentials-manager-rolebinding
   namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "ea-front.serviceAccountName" . }}
+    name: {{ include "ea-credentials-manager.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: Role
-  name: ea-front-role
+  name: ea-credentials-manager-role
   apiGroup: rbac.authorization.k8s.io
 {{- end }}

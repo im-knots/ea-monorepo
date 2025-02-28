@@ -40,6 +40,15 @@ gateway:
                 number: 80 
       - host: api.ea.erulabs.local
         paths:
+        - path: /credentials-manager
+          pathType: ImplementationSpecific
+          backend:                                                                                                                                                                                      
+            service:
+              name: kong-ingress-gateway-proxy                                                                                                                                                                                                                                                                                                                                           
+              port:                                                                                                                                                                                     
+                number: 80 
+      - host: api.ea.erulabs.local
+        paths:
         - path: /ainu-manager
           pathType: ImplementationSpecific
           backend:                                                                                                                                                                                      
