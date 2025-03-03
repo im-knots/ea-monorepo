@@ -6,10 +6,30 @@ metadata:
   name: ea-front-role
   namespace: {{ .Release.Namespace }}
 rules:
-  # 🔹 Allow creating, reading, updating, and deleting Kubernetes Secrets
+  # 🔹 Allow creating and deleting Kubernetes Secrets (for user credentials)
   - apiGroups: [""]
     resources: ["secrets"]
+    verbs: ["create", "get", "list", "delete"]
+
+  # 🔹 Allow creating ServiceAccounts for user isolation
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
     verbs: ["create", "delete"]
+
+  # 🔹 Allow managing RBAC Roles for user-specific access control
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles"]
+    verbs: ["create", "delete"]
+
+  # 🔹 Allow managing RoleBindings to link ServiceAccounts to RBAC Roles
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["rolebindings"]
+    verbs: ["create", "delete"]
+
+  # 🔹 Allow creation of user RBAC roles with k8s events permissions
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch", "update"]
 
   # 🔹 Allow managing KongConsumers (Kong CRD)
   - apiGroups: ["configuration.konghq.com"]

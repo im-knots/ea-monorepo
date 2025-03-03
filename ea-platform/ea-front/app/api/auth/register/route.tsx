@@ -39,6 +39,100 @@ async function createK8sSecret(secretName: string) {
   }
 }
 
+// 🔹 Function to create Kubernetes Service Account
+async function createK8sServiceAccount(serviceAccountName: string) {
+  const serviceAccount = {
+    apiVersion: 'v1',
+    kind: 'ServiceAccount',
+    metadata: {
+      name: serviceAccountName,
+      namespace: KUBERNETES_NAMESPACE,
+    },
+  };
+
+  try {
+    await k8sApi.create(serviceAccount);
+    console.log(`✅ Created Kubernetes Service Account: ${serviceAccountName}`);
+  } catch (error: any) {
+    if (error.body?.reason === 'AlreadyExists') {
+      console.log(`⚠️ Service Account ${serviceAccountName} already exists. Skipping creation.`);
+      return;
+    }
+    throw error;
+  }
+}
+
+// 🔹 Function to create RBAC Role for the user
+async function createK8sRole(roleName: string, secretName: string) {
+  const role = {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'Role',
+    metadata: {
+      name: roleName,
+      namespace: KUBERNETES_NAMESPACE,
+    },
+    rules: [
+      {
+        apiGroups: [""], // Core API group
+        resources: ["secrets"],
+        resourceNames: [secretName], // Restrict access to only this user's secret
+        verbs: ["get", "list"], // Read-only permissions
+      },
+      {
+        apiGroups: [""],
+        resources: ["events"],
+        verbs: ["create", "patch", "update"],
+      },
+    ],
+  };
+
+  try {
+    await k8sApi.create(role);
+    console.log(`✅ Created Kubernetes Role: ${roleName}`);
+  } catch (error: any) {
+    if (error.body?.reason === 'AlreadyExists') {
+      console.log(`⚠️ Role ${roleName} already exists. Skipping creation.`);
+      return;
+    }
+    throw error;
+  }
+}
+
+// 🔹 Function to create RoleBinding for the user
+async function createK8sRoleBinding(roleBindingName: string, roleName: string, serviceAccountName: string) {
+  const roleBinding = {
+    apiVersion: 'rbac.authorization.k8s.io/v1',
+    kind: 'RoleBinding',
+    metadata: {
+      name: roleBindingName,
+      namespace: KUBERNETES_NAMESPACE,
+    },
+    subjects: [
+      {
+        kind: "ServiceAccount",
+        name: serviceAccountName,
+        namespace: KUBERNETES_NAMESPACE,
+      },
+    ],
+    roleRef: {
+      kind: "Role",
+      name: roleName,
+      apiGroup: "rbac.authorization.k8s.io",
+    },
+  };
+
+  try {
+    await k8sApi.create(roleBinding);
+    console.log(`✅ Created Kubernetes RoleBinding: ${roleBindingName}`);
+  } catch (error: any) {
+    if (error.body?.reason === 'AlreadyExists') {
+      console.log(`⚠️ RoleBinding ${roleBindingName} already exists. Skipping creation.`);
+      return;
+    }
+    throw error;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { name, email, password, alphaCode } = await req.json();
@@ -74,9 +168,17 @@ export async function POST(req: Request) {
 
     await db.collection('users').insertOne(newUser);
 
-    // 🔹 Create Kubernetes Secret for storing third-party API credentials
+    // 🔹 Kubernetes resource names
     const secretName = `third-party-user-creds-${userId}`;
+    const serviceAccountName = `sa-user-${userId}`;
+    const roleName = `role-user-${userId}`;
+    const roleBindingName = `rb-user-${userId}`;
+
+    // 🔹 Create Kubernetes resources for the user
     await createK8sSecret(secretName);
+    await createK8sServiceAccount(serviceAccountName);
+    await createK8sRole(roleName, secretName);
+    await createK8sRoleBinding(roleBindingName, roleName, serviceAccountName);
 
     return NextResponse.json({ 
       message: 'User created successfully', 
