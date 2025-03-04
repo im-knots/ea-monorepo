@@ -25,10 +25,6 @@
         "description": "Prompts (user, developer, system) to be sent to the model.",
         "default": [
             {
-                "role": "developer",
-                "content": "You are a helpful assistant."
-            },
-            {
                 "role": "user",
                 "content": "Hello!"
             }

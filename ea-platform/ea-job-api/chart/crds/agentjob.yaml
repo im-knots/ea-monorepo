@@ -48,8 +48,8 @@ spec:
                         description: "Reference to the worker type"
                       parameters:
                         type: object
-                        additionalProperties: true
-                        description: "Key-value parameters for the node"
+                        additionalProperties:
+                          x-kubernetes-preserve-unknown-fields: true 
                 edges:
                   type: array
                   description: "Node connections"
