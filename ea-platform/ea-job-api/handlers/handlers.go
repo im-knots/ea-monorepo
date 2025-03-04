@@ -191,6 +191,34 @@ func HandleCreateJob(c *gin.Context) {
 		Resource: "agentjobs",
 	}
 
+	// Ensure parameters field retains complex structure
+	var nodes []map[string]interface{}
+	for _, node := range agent.Nodes {
+		// Explicitly treat parameters as a deeply nested map[string]interface{}
+		parametersMap := make(map[string]interface{})
+
+		// Convert Parameters into JSON and back to preserve structure
+		parametersJSON, err := json.Marshal(node.Parameters)
+		if err != nil {
+			logger.Slog.Error("Failed to marshal node parameters", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process node parameters"})
+			return
+		}
+		if err := json.Unmarshal(parametersJSON, &parametersMap); err != nil {
+			logger.Slog.Error("Failed to unmarshal node parameters into map", "error", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process node parameters"})
+			return
+		}
+
+		// Construct the node map with properly formatted parameters
+		nodeMap := map[string]interface{}{
+			"alias":      node.Alias,
+			"type":       node.Type,
+			"parameters": parametersMap, // Ensures structured handling
+		}
+		nodes = append(nodes, nodeMap)
+	}
+
 	// Define the AgentJob Custom Resource
 	agentJob := &unstructured.Unstructured{
 		Object: map[string]interface{}{
@@ -205,7 +233,7 @@ func HandleCreateJob(c *gin.Context) {
 				"name":    agent.Name,
 				"user":    req.UserID,
 				"creator": agent.Creator,
-				"nodes":   agent.Nodes,
+				"nodes":   nodes, // Now properly formatted
 				"edges":   agent.Edges,
 				"metadata": map[string]interface{}{
 					"created_at": time.Now().Format(time.RFC3339),
