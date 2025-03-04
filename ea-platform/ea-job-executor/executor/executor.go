@@ -110,7 +110,7 @@ func ExecuteAgentJob(filePath string) {
 		handleError(err, "Failed to build execution graph")
 	}
 
-	finalOutput, err := executeGraph(agent.Metadata.AgentJobID, graph, nodesLib)
+	finalOutput, err := executeGraph(agent.Metadata.AgentJobID, agent.Creator, graph, nodesLib)
 	if err != nil {
 		handleError(err, "Graph execution failed")
 	}
@@ -285,7 +285,7 @@ func buildExecutionGraph(agent Agent) (ExecutionGraph, error) {
 	return graph, nil
 }
 
-func executeGraph(agentJobID string, graph ExecutionGraph, nodesLib []NodeDefinition) (interface{}, error) {
+func executeGraph(agentJobID string, agentCreator string, graph ExecutionGraph, nodesLib []NodeDefinition) (interface{}, error) {
 	state := &ExecutionState{Results: make(map[string]interface{})}
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(graph.ExecutionOrder))
@@ -317,7 +317,7 @@ func executeGraph(agentJobID string, graph ExecutionGraph, nodesLib []NodeDefini
 		for node := range nodeQueue {
 			logger.Slog.Info("Executing node", "node", node.Alias)
 
-			if err := executeNode(agentJobID, node, nodesLib, state); err != nil {
+			if err := executeNode(agentJobID, agentCreator, node, nodesLib, state); err != nil {
 				logger.Slog.Error("Node execution failed", "node", node.Alias, "error", err)
 				errCh <- err
 				return
@@ -399,7 +399,7 @@ func executeGraph(agentJobID string, graph ExecutionGraph, nodesLib []NodeDefini
 
 //--------------------- Node Execution ---------------------//
 
-func executeNode(agentJobID string, node NodeInstance, nodesLib []NodeDefinition, state *ExecutionState) error {
+func executeNode(agentJobID string, agentCreator string, node NodeInstance, nodesLib []NodeDefinition, state *ExecutionState) error {
 	nodeDef, err := findNodeDefinition(node.Type, nodesLib)
 	if err != nil {
 		return err
@@ -419,7 +419,7 @@ func executeNode(agentJobID string, node NodeInstance, nodesLib []NodeDefinition
 	var result interface{}
 	if nodeDef.API.BaseURL != "" {
 		// Execute API node with injected parameters
-		result, err = executeAPINode(node, nodeDef, state)
+		result, err = executeAPINode(agentCreator, node, nodeDef, state)
 		if err != nil {
 			return err
 		}
@@ -454,7 +454,7 @@ func executeNode(agentJobID string, node NodeInstance, nodesLib []NodeDefinition
 	return nil
 }
 
-func executeAPINode(node NodeInstance, def NodeDefinition, state *ExecutionState) (interface{}, error) {
+func executeAPINode(agentCreator string, node NodeInstance, def NodeDefinition, state *ExecutionState) (interface{}, error) {
 	// Inject inputs from state to resolve placeholders
 	params, err := injectInputsFromState(node.Parameters, state)
 	if err != nil {
@@ -499,9 +499,29 @@ func executeAPINode(node NodeInstance, def NodeDefinition, state *ExecutionState
 		return nil, err
 	}
 
-	// Add custom headers if present
-	for k, v := range def.API.Headers {
-		req.Header.Set(k, v)
+	// Handle Authorization header secret replacement
+	for key, value := range def.API.Headers {
+		updatedHeader := value
+		if strings.Contains(value, "((") && strings.Contains(value, "))") {
+			// Extract secret key from placeholder ((some_key))
+			secretKey := extractSecretKey(value)
+			if secretKey != "" {
+				// Fetch secret from Kubernetes
+				userSecret, err := fetchUserSecret(agentCreator)
+				if err != nil {
+					return nil, fmt.Errorf("failed to fetch user secret: %w", err)
+				}
+
+				// Replace ((some_key)) with actual secret value
+				if apiKey, exists := userSecret[secretKey]; exists {
+					updatedHeader = strings.ReplaceAll(value, fmt.Sprintf("((%s))", secretKey), apiKey)
+					logger.Slog.Info("Injected secret into Authorization header", "alias", node.Alias, "header_key", key)
+				} else {
+					return nil, fmt.Errorf("missing required API key: %s", secretKey)
+				}
+			}
+		}
+		req.Header.Set(key, updatedHeader)
 	}
 
 	// Execute the API call
@@ -533,6 +553,44 @@ func executeAPINode(node NodeInstance, def NodeDefinition, state *ExecutionState
 }
 
 //--------------------- Helper Functions ---------------------//
+
+// Extract secret key name from placeholder ((some_key))
+func extractSecretKey(headerValue string) string {
+	re := regexp.MustCompile(`\(\((.*?)\)\)`)
+	matches := re.FindStringSubmatch(headerValue)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
+
+// Fetch user's API secret from Kubernetes
+func fetchUserSecret(agentCreator string) (map[string]string, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		logger.Slog.Error("Failed to create Kubernetes config", "error", err)
+		return nil, err
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		logger.Slog.Error("Failed to create Kubernetes client", "error", err)
+		return nil, err
+	}
+
+	// Fetch the user's secret
+	secretName := fmt.Sprintf("third-party-user-creds-%s", agentCreator)
+	secret, err := clientset.CoreV1().Secrets("ea-platform").Get(context.TODO(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch secret: %w", err)
+	}
+
+	// Convert secret data from base64
+	decodedData := make(map[string]string)
+	for key, value := range secret.Data {
+		decodedData[key] = string(value)
+	}
+	return decodedData, nil
+}
 
 func handleError(err error, msg string) {
 	if err != nil {

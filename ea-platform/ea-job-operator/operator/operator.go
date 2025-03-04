@@ -417,6 +417,13 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 					}
 				}
 
+				// Extract `creator` field from AgentJob (user ID)
+				creator, found, err := unstructured.NestedString(job.Object, "spec", "creator")
+				if err != nil || !found || creator == "" {
+					logger.Slog.Error("Missing creator field in AgentJob, cannot determine user service account", "job", jobName)
+					return
+				}
+
 				// Set additional metadata
 				agentID, found, err := unstructured.NestedString(job.Object, "spec", "agentID")
 				if err != nil || !found {
@@ -463,6 +470,9 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 					return
 				}
 
+				// Generate User ServiceAccount Name
+				userServiceAccount := fmt.Sprintf("sa-user-%s", creator)
+
 				// Create Kubernetes Job for ea-job-executor
 				backoffLimit := int32(5) // Limit retries to 5
 				k8sJob := &batchv1.Job{
@@ -479,7 +489,7 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 								},
 							},
 							Spec: corev1.PodSpec{
-								ServiceAccountName: "ea-job-executor-sa",
+								ServiceAccountName: userServiceAccount,
 								RestartPolicy:      corev1.RestartPolicyNever,
 								Containers: []corev1.Container{{
 									Name:            "executor",
