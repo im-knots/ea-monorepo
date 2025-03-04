@@ -28,6 +28,7 @@ locals {
     "ea-front"               = "../../../ea-platform/ea-front/chart"
     "ea-job-api"             = "../../../ea-platform/ea-job-api/chart"
     "ea-job-operator"        = "../../../ea-platform/ea-job-operator/chart"
+    "ea-job-utils"           = "../../../ea-platform/ea-job-utils/chart"
   }
 
   eru_apps = {

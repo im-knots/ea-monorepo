@@ -1,0 +1,35 @@
+{
+    "type": "utils.internal.base64.decode",
+    "name": "Base64 Decoder",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "http://ea-job-utils.ea-platform.svc.cluster.local:8080",
+      "endpoint": "/api/v1/base64decode",
+      "method": "POST",
+      "headers": {}
+    },
+    "parameters": [
+      {
+        "key": "data",
+        "type": "string",
+        "description": "The base64 data to be decoded",
+        "default": ""
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "The decoded data"
+      }
+    ],
+    "metadata": {
+      "description": "Decodes base64 encoded data",
+      "tags": ["base64", "decode", "api", "utils", "internal"],
+      "additional": {
+        "documentation_url": "",
+        "timeout": 15
+      }
+    }
+  }
+  

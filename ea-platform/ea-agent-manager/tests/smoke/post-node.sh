@@ -15,6 +15,7 @@ fi
 
 # Fetch users from AINU manager
 AINU_RESPONSE=$(curl -s -H "Authorization: Bearer $JWT_TOKEN" "$AINU_URL")
+echo $AINU_RESPONSE
 
 # Extract the first user ID
 FIRST_USER_ID=$(echo "$AINU_RESPONSE" | jq -r '.[0].id')
