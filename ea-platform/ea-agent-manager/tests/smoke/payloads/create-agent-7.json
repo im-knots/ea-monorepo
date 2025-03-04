@@ -1,0 +1,269 @@
+{
+    "name": "3rd Party LLM Comparison",
+    "creator": "8cf87ae4-9f4f-4609-af78-4bd87fee5a46",
+    "description": "Compares google, openai, xai, and anthropic models with a single prompt",
+    "id": "b2bfc076-24d6-4f9e-bb83-3a9719c833be",
+    "nodes": [
+      {
+        "alias": "xai",
+        "type": "worker.inference.llm.xai",
+        "parameters": {
+          "model": "grok-2-latest",
+          "stream": false,
+          "temperature": 0,
+          "messages": [
+            {
+              "content": "{{in.input}}",
+              "role": "user"
+            }
+          ]
+        }
+      },
+      {
+        "alias": "in",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "given this go file give me a go unit test file. only output the code without commentary and do not put it in code blocks {{decode.decoded}}"
+        }
+      },
+      {
+        "alias": "xai-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{xai.choices}}"
+        }
+      },
+      {
+        "alias": "gpt",
+        "type": "worker.inference.llm.openai",
+        "parameters": {
+          "model": "gpt-4o-mini",
+          "messages": [
+            {
+              "content": "{{in.input}}",
+              "role": "user"
+            }
+          ],
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "google",
+        "type": "worker.inference.llm.google",
+        "parameters": {
+          "model": "gemini-2.0-flash",
+          "messages": [
+            {
+              "content": "{{in.input}}",
+              "role": "user"
+            }
+          ]
+        }
+      },
+      {
+        "alias": "anthropic",
+        "type": "worker.inference.llm.anthropic",
+        "parameters": {
+          "model": "claude-3-7-sonnet-20250219",
+          "max_tokens": 1024,
+          "messages": [
+            {
+              "content": "{{in.input}}",
+              "role": "user"
+            }
+          ]
+        }
+      },
+      {
+        "alias": "gpt-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{gpt.choices}}"
+        }
+      },
+      {
+        "alias": "google-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{google.choices}}"
+        }
+      },
+      {
+        "alias": "anthropic-out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{anthropic.content}}"
+        }
+      },
+      {
+        "alias": "judge-prompt",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "compare these go test files and give me your favoite and why. //solution 1: {{xai-out.input}} //solution 2: {{gpt-out.input}} //solution 3: {{google-out.input}} //solution 4: {{anthropic-out.input}}"
+        }
+      },
+      {
+        "alias": "judge",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2-ctx",
+          "prompt": "{{judge-prompt.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "out",
+        "type": "destination.internal.text",
+        "parameters": {
+          "input": "{{judge.response}}"
+        }
+      },
+      {
+        "alias": "git",
+        "type": "input.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-agent-manager/mongo/mongo.go"
+        }
+      },
+      {
+        "alias": "decode",
+        "type": "utils.internal.base64.decode",
+        "parameters": {
+          "data": "{{git.content}}"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": [
+          "in"
+        ],
+        "to": [
+          "xai"
+        ]
+      },
+      {
+        "from": [
+          "xai"
+        ],
+        "to": [
+          "xai-out"
+        ]
+      },
+      {
+        "from": [
+          "in"
+        ],
+        "to": [
+          "gpt"
+        ]
+      },
+      {
+        "from": [
+          "in"
+        ],
+        "to": [
+          "google"
+        ]
+      },
+      {
+        "from": [
+          "in"
+        ],
+        "to": [
+          "anthropic"
+        ]
+      },
+      {
+        "from": [
+          "gpt"
+        ],
+        "to": [
+          "gpt-out"
+        ]
+      },
+      {
+        "from": [
+          "google"
+        ],
+        "to": [
+          "google-out"
+        ]
+      },
+      {
+        "from": [
+          "anthropic"
+        ],
+        "to": [
+          "anthropic-out"
+        ]
+      },
+      {
+        "from": [
+          "xai-out"
+        ],
+        "to": [
+          "judge-prompt"
+        ]
+      },
+      {
+        "from": [
+          "gpt-out"
+        ],
+        "to": [
+          "judge-prompt"
+        ]
+      },
+      {
+        "from": [
+          "google-out"
+        ],
+        "to": [
+          "judge-prompt"
+        ]
+      },
+      {
+        "from": [
+          "anthropic-out"
+        ],
+        "to": [
+          "judge-prompt"
+        ]
+      },
+      {
+        "from": [
+          "judge-prompt"
+        ],
+        "to": [
+          "judge"
+        ]
+      },
+      {
+        "from": [
+          "judge"
+        ],
+        "to": [
+          "out"
+        ]
+      },
+      {
+        "from": [
+          "git"
+        ],
+        "to": [
+          "decode"
+        ]
+      },
+      {
+        "from": [
+          "decode"
+        ],
+        "to": [
+          "in"
+        ]
+      }
+    ]
+  }
