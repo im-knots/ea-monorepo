@@ -40,7 +40,7 @@ export default function CustomNode({ id, data }: NodeProps<CustomNodeData>) {
   // **Handle updates inside nested objects in arrays**
   const handleNestedUpdate = (arrayKey: string, index: number, field: string, value: any) => {
     const existingArray = Array.isArray(data.parametersState[arrayKey]) ? [...data.parametersState[arrayKey]] : [];
-    existingArray[index] = { ...existingArray[index], [field]: value }; // ✅ Modify specific field inside object
+    existingArray[index] = { ...existingArray[index], [field]: value }; 
     handleParameterUpdate(arrayKey, existingArray);
   };
 
@@ -52,13 +52,50 @@ export default function CustomNode({ id, data }: NodeProps<CustomNodeData>) {
       return (
         <label key={param.key} className="flex items-center space-x-2 text-xs">
           <span className="text-gray-400">{param.key}</span>
-          <input
-            type="checkbox"
-            checked={paramValue}
-            onChange={(e) => handleParameterUpdate(param.key, e.target.checked)}
-            className="h-4 w-4"
-          />
+          <button
+            onClick={() => handleParameterUpdate(param.key, !paramValue)}
+            className={`w-10 h-5 rounded-full flex items-center p-1 transition-colors ${
+              paramValue ? "bg-green-500" : "bg-gray-500"
+            }`}
+          >
+            <div className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-transform ${
+              paramValue ? "translate-x-5" : "translate-x-0"
+            }`} />
+          </button>
         </label>
+      );
+    }
+
+    if (param.enum) {
+      return (
+        <div key={param.key} className="text-xs">
+          <label className="block text-gray-400">{param.key}</label>
+          <select
+            value={paramValue}
+            onChange={(e) => handleParameterUpdate(param.key, e.target.value)}
+            className="bg-neutral-700 text-white text-xs p-1 rounded w-full border border-gray-600"
+          >
+            {param.enum.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+    }
+
+    if (data.type === "input.internal.text" && typeof paramValue === "string") {
+      return (
+        <div key={param.key} className="text-xs">
+          <label className="block text-gray-400">{param.key}</label>
+          <textarea
+            value={paramValue}
+            onChange={(e) => handleParameterUpdate(param.key, e.target.value)}
+            className="bg-neutral-700 text-white text-xs p-2 rounded w-full border border-gray-600 h-20 resize-none"
+            placeholder="Enter text..."
+          />
+        </div>
       );
     }
 
@@ -83,7 +120,6 @@ export default function CustomNode({ id, data }: NodeProps<CustomNodeData>) {
           {paramValue.map((item, index) => (
             <div key={index} className="pl-4 border-l border-gray-600 ml-2">
               {typeof item === "object" && item !== null ? (
-                // ✅ Render nested object fields inside the array item
                 Object.entries(item).map(([subKey, subValue]) => (
                   <div key={subKey} className="text-xs">
                     <label className="block text-gray-400">{`${param.key}[${index}].${subKey}`}</label>
@@ -96,7 +132,6 @@ export default function CustomNode({ id, data }: NodeProps<CustomNodeData>) {
                   </div>
                 ))
               ) : (
-                // ✅ Fallback for non-object items in arrays
                 <input
                   type="text"
                   value={item}
@@ -108,23 +143,8 @@ export default function CustomNode({ id, data }: NodeProps<CustomNodeData>) {
                   className="bg-neutral-700 text-white text-xs p-1 rounded w-full border border-gray-600"
                 />
               )}
-              <button
-                className="text-xs text-red-400 hover:text-red-500 ml-2"
-                onClick={() => {
-                  const updatedArray = paramValue.filter((_, i) => i !== index);
-                  handleParameterUpdate(param.key, updatedArray);
-                }}
-              >
-                Remove
-              </button>
             </div>
           ))}
-          <button
-            className="text-xs text-blue-400 hover:text-blue-500 mt-1"
-            onClick={() => handleParameterUpdate(param.key, [...paramValue, {}])} 
-          >
-            + Add Item
-          </button>
         </div>
       );
     }

@@ -1,25 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const API_URL = "http://api.ea.erulabs.local/credentials-manager/api/v1/credentials";
 
 const SUPPORTED_APIS = [
-  { name: "OpenAI", key: "openai_api_key" },
-  { name: "Anthropic", key: "anthropic_api_key" },
-  { name: "GitHub", key: "github_api_key" },
-  { name: "Jira", key: "jira_api_key" },
-  { name: "Custom", key: "custom" },
+  { name: "OpenAI", key: "openai_api_key", icon: "/openai-icon.png" },
+  { name: "Anthropic", key: "anthropic_api_key", icon: "/anthropic-icon.png" },
+  { name: "xAI", key: "xai_api_key", icon: "/xai-icon.png" },
+  { name: "Google Gemini", key: "google_api_key", icon: "/google-gemini-icon.png" },
+  { name: "GitHub", key: "github_api_key", icon: "/github-icon.png" },
+  { name: "Jira", key: "jira_api_key", icon: "/jira-icon.png" },
+  { name: "Custom", key: "custom", icon: "/logo.png" },
 ];
 
 export default function SettingsPage() {
-  const [selectedApi, setSelectedApi] = useState(SUPPORTED_APIS[0]); // Default: OpenAI
-  const [apiKey, setApiKey] = useState("");
-  const [customKeyName, setCustomKeyName] = useState(""); // Custom API key name
-  const [message, setMessage] = useState("");
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  const [keyInputs, setKeyInputs] = useState<Record<string, string>>({});
+  const [customKeys, setCustomKeys] = useState<Record<string, string>>({});
   const [jwtToken, setJwtToken] = useState<string | null>(null);
+  const [messages, setMessages] = useState<Record<string, string>>({});
 
-  // 🔹 Extract JWT token from cookies
   useEffect(() => {
     const fetchToken = async () => {
       try {
@@ -34,128 +36,109 @@ export default function SettingsPage() {
         }
       } catch (error) {
         console.error("Error fetching JWT token:", error);
-        setMessage("❌ Unable to authenticate. Please log in again.");
       }
     };
 
     fetchToken();
   }, []);
 
-  const handleApiChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selected = SUPPORTED_APIS.find((api) => api.key === e.target.value);
-    if (selected) {
-      setSelectedApi(selected);
-      setApiKey(""); // Reset API key field
-      setCustomKeyName(""); // Reset custom key field
-    }
+  const handleInputChange = (key: string, value: string) => {
+    setKeyInputs((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
+  const handleCustomKeyChange = (key: string, value: string) => {
+    setCustomKeys((prev) => ({ ...prev, [key]: value }));
+  };
 
+  const handleSubmit = async (apiKey: string, isCustom: boolean = false) => {
     if (!jwtToken) {
-      setMessage("❌ Unable to authenticate. Please log in again.");
+      setMessages((prev) => ({ ...prev, [apiKey]: "❌ Authentication error" }));
       return;
     }
 
-    if (selectedApi.key === "custom" && !customKeyName.trim()) {
-      setMessage("❌ Please provide a key name for your custom API.");
+    const keyName = isCustom ? customKeys[apiKey] || "" : apiKey;
+    if (isCustom && !keyName.trim()) {
+      setMessages((prev) => ({ ...prev, [apiKey]: "❌ Custom key name required" }));
       return;
     }
 
-    const payload =
-      selectedApi.key === "custom"
-        ? { [customKeyName]: apiKey }
-        : { [selectedApi.key]: apiKey };
+    const payload = { [keyName]: keyInputs[apiKey] || "" };
 
     try {
       const response = await fetch(API_URL, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json-patch+json",
-          Authorization: `Bearer ${jwtToken}`, // ✅ Inject JWT token
+          Authorization: `Bearer ${jwtToken}`,
         },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        setMessage("✅ Credentials updated successfully!");
+        setKeys((prev) => ({ ...prev, [apiKey]: "********" })); // Mask key
+        setMessages((prev) => ({ ...prev, [apiKey]: "✅ Saved successfully!" }));
       } else {
         const errorData = await response.json();
-        setMessage(`❌ Failed to update credentials: ${errorData.error}`);
+        setMessages((prev) => ({ ...prev, [apiKey]: `❌ Error: ${errorData.error}` }));
       }
     } catch (error) {
       console.error("Error saving credentials:", error);
-      setMessage("❌ An error occurred. Please try again.");
+      setMessages((prev) => ({ ...prev, [apiKey]: "❌ An error occurred. Try again." }));
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-neutral-900 text-white">
-      <div className="w-full max-w-lg bg-neutral-800 p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold text-center mb-6">User Settings</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-900 text-white p-6">
+      <div className="w-full max-w-3xl bg-neutral-800 p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold text-center mb-6">Third-Party API Keys</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* API Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-400">Select API</label>
-            <select
-              value={selectedApi.key}
-              onChange={handleApiChange}
-              className="w-full mt-1 px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-md text-white focus:ring focus:ring-blue-500"
-            >
-              {SUPPORTED_APIS.map((api) => (
-                <option key={api.key} value={api.key}>
-                  {api.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Custom Key Name Input (Only Shows If "Custom" is Selected) */}
-          {selectedApi.key === "custom" && (
-            <div>
-              <label className="block text-sm font-medium text-neutral-400">Custom Key Name</label>
-              <input
-                type="text"
-                value={customKeyName}
-                onChange={(e) => setCustomKeyName(e.target.value)}
-                className="w-full mt-1 px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-md text-white focus:ring focus:ring-blue-500"
-                placeholder="Enter your custom key name"
-                required
+        <div className="space-y-4">
+          {SUPPORTED_APIS.map((api) => (
+            <div key={api.key} className="bg-neutral-700 p-4 rounded-lg shadow-md flex items-center space-x-4">
+              {/* Provider Icon */}
+              <Image
+                src={api.icon}
+                alt={`${api.name} Logo`}
+                width={32}
+                height={32}
+                className="rounded-full"
               />
+
+              <div className="flex-1">
+                <h3 className="text-lg font-medium">{api.name}</h3>
+
+                {/* Custom Key Override Field */}
+                {api.key === "custom" && (
+                  <input
+                    type="text"
+                    value={customKeys[api.key] || ""}
+                    onChange={(e) => handleCustomKeyChange(api.key, e.target.value)}
+                    className="w-full mt-1 px-3 py-2 bg-neutral-600 border border-neutral-500 rounded-md text-white text-sm"
+                    placeholder="Custom key name"
+                    required
+                  />
+                )}
+
+                {/* API Key Input */}
+                <input
+                  type="text"
+                  value={keys[api.key] ? "********" : keyInputs[api.key] || ""}
+                  onChange={(e) => handleInputChange(api.key, e.target.value)}
+                  className="w-full mt-1 px-3 py-2 bg-neutral-600 border border-neutral-500 rounded-md text-white text-sm"
+                  placeholder={`Enter ${api.name} API key`}
+                />
+              </div>
+
+              {/* Save Button (Positioned on Right) */}
+              <button
+                onClick={() => handleSubmit(api.key, api.key === "custom")}
+                className="ml-4 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition"
+              >
+                {keys[api.key] ? "Update" : "Save"}
+              </button>
             </div>
-          )}
-
-          {/* API Key Input */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-400">
-              {selectedApi.key === "custom" ? "Custom API Key" : `${selectedApi.name} API Key`}
-            </label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="w-full mt-1 px-4 py-2 bg-neutral-700 border border-neutral-600 rounded-md text-white focus:ring focus:ring-blue-500"
-              placeholder={`Enter your ${selectedApi.key === "custom" ? "custom" : selectedApi.name} API key`}
-              required
-            />
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-md shadow-md transition"
-          >
-            Save Credentials
-          </button>
-
-          {/* Status Message */}
-          {message && (
-            <p className="text-sm text-center mt-2 font-medium text-neutral-300">{message}</p>
-          )}
-        </form>
+          ))}
+        </div>
       </div>
     </div>
   );
