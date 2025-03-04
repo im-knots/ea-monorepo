@@ -614,21 +614,19 @@ func injectInputsFromState(params map[string]interface{}, state *ExecutionState)
 	// Regex to detect all placeholders like {{ alias.key }}
 	placeholderRegex := regexp.MustCompile(`{{\s*([^{}]+?)\s*}}`)
 
-	for key, val := range params {
-		// Only process string values that may contain placeholders
-		if str, ok := val.(string); ok {
-			matches := placeholderRegex.FindAllStringSubmatch(str, -1)
+	var resolveValue func(interface{}) (interface{}, error)
 
-			// If no placeholders, keep the value as is
+	resolveValue = func(value interface{}) (interface{}, error) {
+		switch v := value.(type) {
+		case string:
+			matches := placeholderRegex.FindAllStringSubmatch(v, -1)
 			if len(matches) == 0 {
-				resolved[key] = str
-				continue
+				return v, nil
 			}
 
-			// Resolve each placeholder
-			resolvedStr := str
+			resolvedStr := v
 			for _, match := range matches {
-				ref := match[1] // e.g., "noaa.properties.periods[0].detailedForecast"
+				ref := match[1] // e.g., "gpt.choices"
 				parts := strings.Split(ref, ".")
 				alias := parts[0]
 
@@ -644,7 +642,7 @@ func injectInputsFromState(params map[string]interface{}, state *ExecutionState)
 				// Resolve nested properties
 				result := data
 				for _, part := range parts[1:] {
-					// Handle array index (e.g., periods[0])
+					// Handle array index (e.g., messages[0])
 					if strings.Contains(part, "[") {
 						key := part[:strings.Index(part, "[")]
 						idxStr := part[strings.Index(part, "[")+1 : strings.Index(part, "]")]
@@ -677,12 +675,41 @@ func injectInputsFromState(params map[string]interface{}, state *ExecutionState)
 				resolvedStr = strings.Replace(resolvedStr, match[0], fmt.Sprintf("%v", result), -1)
 			}
 
-			// Store the fully resolved string
-			resolved[key] = resolvedStr
-		} else {
-			// Non-string values are copied as-is
-			resolved[key] = val
+			return resolvedStr, nil
+
+		case map[string]interface{}:
+			newMap := make(map[string]interface{})
+			for k, v := range v {
+				newVal, err := resolveValue(v)
+				if err != nil {
+					return nil, err
+				}
+				newMap[k] = newVal
+			}
+			return newMap, nil
+
+		case []interface{}:
+			newSlice := make([]interface{}, len(v))
+			for i, item := range v {
+				newVal, err := resolveValue(item)
+				if err != nil {
+					return nil, err
+				}
+				newSlice[i] = newVal
+			}
+			return newSlice, nil
+
+		default:
+			return v, nil
 		}
+	}
+
+	for key, val := range params {
+		newVal, err := resolveValue(val)
+		if err != nil {
+			return nil, err
+		}
+		resolved[key] = newVal
 	}
 
 	return resolved, nil
