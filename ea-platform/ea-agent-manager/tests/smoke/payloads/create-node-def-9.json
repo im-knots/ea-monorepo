@@ -1,0 +1,62 @@
+{
+    "type": "worker.inference.llm.xai",
+    "name": "xAI LLM Inference",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "https://api.x.ai",
+      "endpoint": "/v1/chat/completions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ((xai_api_key))"
+      }
+    },
+    "parameters": [
+      {
+        "key": "model",
+        "type": "string",
+        "description": "Name of the model to use.",
+        "enum": ["grok-2-latest"],
+        "default": "grok-2-latest"
+      },
+      {
+        "key": "stream",
+        "type": "bool",
+        "description": "Enable streaming responses?",
+        "default": false
+      },
+      {
+        "key": "temperature",
+        "type": "number",
+        "description": "Model randomness",
+        "default": 0
+      },
+      {
+        "key": "messages",
+        "type": "array",
+        "description": "Prompts (user, developer, system) to be sent to the model.",
+        "default": [
+            {
+                "role": "user",
+                "content": "Hello!"
+            }
+        ] 
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "the result of the prompt",
+        "default": "someoutput"
+      }
+    ],
+    "metadata": {
+      "description": "Makes an inference call to xAI for text generation.",
+      "tags": ["worker", "llm", "xai", "inference"],
+      "additional": {
+        "documentation_url": "https://docs.x.ai/docs/tutorial#step-2-generate-an-api-key"
+      }
+    }
+  }
+  

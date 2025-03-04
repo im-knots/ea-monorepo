@@ -1,0 +1,50 @@
+{
+    "type": "worker.inference.llm.google",
+    "name": "Google LLM Inference",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "https://generativelanguage.googleapis.com",
+      "endpoint": "/v1beta/openai/chat/completions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ((google_api_key))"
+      }
+    },
+    "parameters": [
+      {
+        "key": "model",
+        "type": "string",
+        "description": "Name of the model to use.",
+        "enum": ["gemini-2.0-flash"],
+        "default": "gemini-2.0-flash"
+      },
+      {
+        "key": "messages",
+        "type": "array",
+        "description": "Prompts (user, developer, system) to be sent to the model.",
+        "default": [
+            {
+                "role": "user",
+                "content": "Hello!"
+            }
+        ] 
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "the result of the prompt",
+        "default": "someoutput"
+      }
+    ],
+    "metadata": {
+      "description": "Makes an inference call to Google for text generation.",
+      "tags": ["worker", "llm", "google", "inference"],
+      "additional": {
+        "documentation_url": "https://ai.google.dev/gemini-api/docs/openai#rest_2"
+      }
+    }
+  }
+  
