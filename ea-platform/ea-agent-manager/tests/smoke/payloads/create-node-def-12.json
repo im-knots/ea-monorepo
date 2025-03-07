@@ -1,0 +1,51 @@
+{
+    "type": "utils.github.refs",
+    "name": "Github Ref Lookup",
+    "creator": "<UUID OF CREATOR USER>",
+    "api": {
+      "base_url": "https://api.github.com",
+      "endpoint": "/repos/{owner}/{repo}/git/matching-refs/heads/{branch}",
+      "method": "GET",
+      "headers": {
+        "Accept": "application/vnd.github+json",
+        "Authorization": "Bearer ((github_api_key))",
+        "X-Github-Api-Version": "2022-11-28"
+      }
+    },
+    "parameters": [
+      {
+        "key": "owner",
+        "type": "string",
+        "description": "The github owner of the repo",
+        "default": "testuser"
+      },
+      {
+        "key": "repo",
+        "type": "string",
+        "description": "The name of the github repo",
+        "default": "somerepo"
+      },
+      {
+        "key": "branch",
+        "type": "string",
+        "description": "the branch to lookup",
+        "default": "main"
+      }
+    ],
+    "outputs": [
+      {
+        "key": "textoutput",
+        "type": "string",
+        "description": "The weather forecast data."
+      }
+    ],
+    "metadata": {
+      "description": "Looks up github branch refs",
+      "tags": ["utils", "github", "api", "external", "refs"],
+      "additional": {
+        "documentation_url": "https://docs.github.com/en/rest/git/refs?apiVersion=2022-11-28",
+        "timeout": 15
+      }
+    }
+  }
+  

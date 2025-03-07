@@ -462,9 +462,9 @@ func executeAPINode(agentCreator string, node NodeInstance, def NodeDefinition, 
 	}
 	node.Parameters = params
 
-	// Replace placeholders in URL for GET and DELETE methods
+	// Replace placeholders in URL for GET, DELETE, and PUT methods
 	url := def.API.BaseURL + def.API.Endpoint
-	if def.API.Method == "GET" || def.API.Method == "DELETE" {
+	if def.API.Method == "GET" || def.API.Method == "DELETE" || def.API.Method == "PUT" || def.API.Method == "POST" {
 		for key, value := range node.Parameters {
 			placeholder := fmt.Sprintf("{%s}", key)
 			if strings.Contains(url, placeholder) {

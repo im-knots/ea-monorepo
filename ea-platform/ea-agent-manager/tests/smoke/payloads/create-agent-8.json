@@ -1,0 +1,313 @@
+{
+    "name": "generate mongo unit tests",
+    "creator": "<SOME USER UUID>",
+    "description": "Agentjob to generate mongo go unit tests for all ea-platform applications",
+    "nodes": [
+      {
+        "alias": "commit",
+        "type": "destination.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-ainu-manager/mongo/mongo_test.go",
+          "message": "Add generated tests for ea-ainu-manager",
+          "content": "{{encode.encoded}}",
+          "branch": "gen-unit-tests"
+        }
+      },
+      {
+        "alias": "pr",
+        "type": "utils.github.pr",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "title": "TESTS: Add AI generated mongo unit tests",
+          "body": "AI GENERATED - Review carefully!",
+          "head": "gen-unit-tests",
+          "base": "main"
+        }
+      },
+      {
+        "alias": "encode",
+        "type": "utils.internal.base64.encode",
+        "parameters": {
+          "data": "{{ollama.response}}"
+        }
+      },
+      {
+        "alias": "prompt",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "Given this mongo.go, write me a mongo_test.go file with unit tests for each function using mock db responses. do not provide any commentary just give the code without putting it in a code block. just the raw text\n{{decode.decoded}}"
+        }
+      },
+      {
+        "alias": "git",
+        "type": "input.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-ainu-manager/mongo/mongo.go"
+        }
+      },
+      {
+        "alias": "ollama",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2-ctx",
+          "prompt": "{{prompt.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "decode",
+        "type": "utils.internal.base64.decode",
+        "parameters": {
+          "data": "{{git.content}}"
+        }
+      },
+      {
+        "alias": "prompt2",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "some userGiven this mongo.go, write me a mongo_test.go file with unit tests for each function using mock db responses. do not provide any commentary just give the code without putting it in a code block. just the raw text prompt\n{{decode2.decoded}}"
+        }
+      },
+      {
+        "alias": "git2",
+        "type": "input.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-agent-manager/mongo/mongo.go"
+        }
+      },
+      {
+        "alias": "decode2",
+        "type": "utils.internal.base64.decode",
+        "parameters": {
+          "data": "{{git2.content}}"
+        }
+      },
+      {
+        "alias": "ollama2",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2-ctx",
+          "prompt": "{{prompt2.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "encode2",
+        "type": "utils.internal.base64.encode",
+        "parameters": {
+          "data": "{{ollama2.response}}"
+        }
+      },
+      {
+        "alias": "commit2",
+        "type": "destination.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-agent-manager/mongo/mongo_test.go",
+          "message": "Add generated mongo unit tests for ea-agent-manager",
+          "content": "{{encode2.encoded}}",
+          "branch": "gen-unit-tests"
+        }
+      },
+      {
+        "alias": "git3",
+        "type": "input.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-ainu-operator/mongo/mongo.go"
+        }
+      },
+      {
+        "alias": "decode3",
+        "type": "utils.internal.base64.decode",
+        "parameters": {
+          "data": "{{git3.content}}"
+        }
+      },
+      {
+        "alias": "prompt3",
+        "type": "input.internal.text",
+        "parameters": {
+          "input": "some userGiven this mongo.go, write me a mongo_test.go file with unit tests for each function using mock db responses. do not provide any commentary just give the code without putting it in a code block. just the raw text prompt\n{{decode3.decoded}}"
+        }
+      },
+      {
+        "alias": "ollama3",
+        "type": "worker.inference.llm.ollama",
+        "parameters": {
+          "model": "llama3.2-ctx",
+          "prompt": "{{prompt3.input}}",
+          "stream": false,
+          "temperature": 0.7
+        }
+      },
+      {
+        "alias": "encode3",
+        "type": "utils.internal.base64.encode",
+        "parameters": {
+          "data": "{{ollama3.response}}"
+        }
+      },
+      {
+        "alias": "commit3",
+        "type": "destination.external.github",
+        "parameters": {
+          "owner": "eru-labs",
+          "repo": "eru-labs-monorepo",
+          "path": "ea-platform/ea-ainu-operator/mongo/mongo_test.go",
+          "message": "Add generated mongo unit tests for ea-ainu-operator",
+          "content": "{{encode3.encoded}}",
+          "branch": "gen-unit-tests"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": [
+          "commit"
+        ],
+        "to": [
+          "pr"
+        ]
+      },
+      {
+        "from": [
+          "encode"
+        ],
+        "to": [
+          "commit"
+        ]
+      },
+      {
+        "from": [
+          "git"
+        ],
+        "to": [
+          "decode"
+        ]
+      },
+      {
+        "from": [
+          "decode"
+        ],
+        "to": [
+          "prompt"
+        ]
+      },
+      {
+        "from": [
+          "prompt"
+        ],
+        "to": [
+          "ollama"
+        ]
+      },
+      {
+        "from": [
+          "ollama"
+        ],
+        "to": [
+          "encode"
+        ]
+      },
+      {
+        "from": [
+          "git2"
+        ],
+        "to": [
+          "decode2"
+        ]
+      },
+      {
+        "from": [
+          "decode2"
+        ],
+        "to": [
+          "prompt2"
+        ]
+      },
+      {
+        "from": [
+          "prompt2"
+        ],
+        "to": [
+          "ollama2"
+        ]
+      },
+      {
+        "from": [
+          "ollama2"
+        ],
+        "to": [
+          "encode2"
+        ]
+      },
+      {
+        "from": [
+          "encode2"
+        ],
+        "to": [
+          "commit2"
+        ]
+      },
+      {
+        "from": [
+          "commit2"
+        ],
+        "to": [
+          "pr"
+        ]
+      },
+      {
+        "from": [
+          "git3"
+        ],
+        "to": [
+          "decode3"
+        ]
+      },
+      {
+        "from": [
+          "prompt3"
+        ],
+        "to": [
+          "ollama3"
+        ]
+      },
+      {
+        "from": [
+          "ollama3"
+        ],
+        "to": [
+          "encode3"
+        ]
+      },
+      {
+        "from": [
+          "encode3"
+        ],
+        "to": [
+          "commit3"
+        ]
+      },
+      {
+        "from": [
+          "commit3"
+        ],
+        "to": [
+          "pr"
+        ]
+      }
+    ]
+  }
