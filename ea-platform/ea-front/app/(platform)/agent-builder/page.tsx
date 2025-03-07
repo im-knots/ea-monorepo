@@ -71,6 +71,7 @@ export default function AgentBuilderPage() {
           alias: node.data.alias ?? node.id,
           type: node.data.type,
           parameters: node.data.parametersState || {},
+          position: node.position,
         })),
         edges: workflowEdges.map((edge) => ({
           from: [nodeAliasMap.get(edge.source) ?? edge.source],

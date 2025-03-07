@@ -75,6 +75,7 @@ type NodeInstance struct {
 	Alias      string                 `json:"alias,omitempty"`
 	Type       string                 `json:"type"`
 	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	Position   map[string]interface{} `json:"position,omitempty"`
 }
 
 // Edge represents a connection between nodes in an agent workflow.
