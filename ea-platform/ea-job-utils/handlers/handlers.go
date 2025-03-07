@@ -15,6 +15,11 @@ type Base64DecodeRequest struct {
 	Data string `json:"data"`
 }
 
+// Base64EncodeRequest represents the expected JSON payload
+type Base64EncodeRequest struct {
+	Data string `json:"data"`
+}
+
 // HandleBase64Decode handles decoding of a base64 string from a JSON payload
 func HandleBase64Decode(c *gin.Context) {
 	var req Base64DecodeRequest
@@ -52,5 +57,37 @@ func HandleBase64Decode(c *gin.Context) {
 	// Return JSON response
 	c.JSON(http.StatusOK, gin.H{
 		"decoded": decodedStr,
+	})
+}
+
+// HandleBase64Encode handles encoding a string to base64
+func HandleBase64Encode(c *gin.Context) {
+	var req Base64EncodeRequest
+
+	// Bind JSON input
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Slog.Error("Invalid request payload", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	if req.Data == "" {
+		logger.Slog.Error("Missing 'data' field in request payload")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing 'data' field in request payload"})
+		return
+	}
+
+	// Encode string to base64
+	encodedStr := base64.StdEncoding.EncodeToString([]byte(req.Data))
+
+	// Log the successful encoding
+	logger.Slog.Info("Successfully encoded string to base64", "encoded_value", encodedStr)
+
+	// Increment metrics
+	metrics.StepCounter.WithLabelValues("/api/v1/base64encode", "encode", "success").Inc()
+
+	// Return JSON response
+	c.JSON(http.StatusOK, gin.H{
+		"encoded": encodedStr,
 	})
 }

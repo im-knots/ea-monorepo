@@ -22,10 +22,15 @@ func RegisterRoutes() *gin.Engine {
 		promhttp.Handler().ServeHTTP(c.Writer, c.Request)
 	})
 
-	// Agents routes
+	// Utils routes
 	base64decode := router.Group("/api/v1/base64decode")
 	{
-		base64decode.POST("", handlers.HandleBase64Decode) // Add a credential to a user secret
+		base64decode.POST("", handlers.HandleBase64Decode)
+	}
+
+	base64encode := router.Group("/api/v1/base64encode")
+	{
+		base64encode.POST("", handlers.HandleBase64Encode)
 	}
 
 	return router
