@@ -16,7 +16,7 @@
         "key": "model",
         "type": "string",
         "description": "Name of the model to use.",
-        "enum": ["grok-2-latest"],
+        "enum": ["grok-2-latest", "grok-beta"],
         "default": "grok-2-latest"
       },
       {

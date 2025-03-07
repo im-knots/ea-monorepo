@@ -17,8 +17,8 @@
         "key": "model",
         "type": "string",
         "description": "Name of the model to use.",
-        "enum": ["claude-3-7-sonnet-20250219"],
-        "default": "claude-3-7-sonnet-20250219"
+        "enum": ["claude-3-7-sonnet-latest", "claude-3-5-haiku-latest", "claude-3-opus-latest"],
+        "default": "claude-3-7-sonnet-latest"
       },
       {
         "key": "max_tokens",
