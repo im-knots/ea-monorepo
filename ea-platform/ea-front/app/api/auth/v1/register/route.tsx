@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
-import { connectToDatabase } from '@/lib/mongodb';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import * as k8s from '@kubernetes/client-node';
 
 const ALPHA_ACCESS_CODE = 'some-alpha-string';

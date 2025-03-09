@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
-import { connectToDatabase } from '@/lib/mongodb';
+import { connectToDatabase } from '@/app/lib/mongodb';
 import * as k8s from '@kubernetes/client-node';
 
 const KUBERNETES_NAMESPACE = process.env.KUBERNETES_NAMESPACE || 'ea-platform';
