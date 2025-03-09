@@ -29,6 +29,24 @@ Tests:       2 passed, 2 total
 Snapshots:   0 total
 Time:        1.062 s
 Ran all test suites.
+```
+
+Provide the required environment variables, with examples available in `.env.example` 
+```
+$ cp .env.example .env
+$ cat .env
+DATABASE_URL="postgresql://admin:password@localhost:5432/ea?schema=public"
+JWT_SECRET=super-secret
+```
+
+Run Prisma migrations to prepare your PostgreSQL instance, then run the project:
+
+```
+$ npx prisma migrate dev
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "ea", schema "public" at "localhost:5432"
+...
 
 $ pnpm run dev
 > ea-front@1.0.0 dev
@@ -40,6 +58,7 @@ $ pnpm run dev
 
  ✓ Starting...
  ✓ Ready in 887ms
+```
 ```
 
 ## Production build
