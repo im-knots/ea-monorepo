@@ -11,8 +11,20 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password
-
+  postgresql:
+    image: postgres:latest
+    container_name: local-postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: ea
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
 volumes:
   mongo-data:
+    driver: local
+  postgres-data:
     driver: local
