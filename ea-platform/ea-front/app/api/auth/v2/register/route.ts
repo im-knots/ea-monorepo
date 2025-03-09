@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
-    Register({ email, password });
+    await Register({ email, password });
     return NextResponse.json({ message: "User registered" }, { status: 201 });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
