@@ -186,8 +186,25 @@ case "$1" in
     stop)
         cleanup
         ;;
+    build)
+        for dir in "${BASE_DIRS[@]}"; do
+            if [[ ! -d "$dir" ]]; then
+                echo "Base directory $dir does not exist. Skipping."
+                continue
+            fi
+
+            # Process each app in the directory
+            echo "Iterating through apps in $dir..."
+            for app_path in "$dir"/*; do
+                # Skip if it's not a directory
+                if [[ -d "$app_path" ]]; then
+                    build_and_push "$app_path"
+                fi
+            done
+        done
+        ;;
     *)
-        echo "Usage: $0 {start|stop} [version]"
+        echo "Usage: $0 {start|stop|build} [version]"
         exit 1
         ;;
 esac
