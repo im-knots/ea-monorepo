@@ -44,7 +44,7 @@ export async function login(prevState: string | undefined,formData: FormData) {
     return "Invalid form data";
   }
   try {
-    Login({
+    await Login({
       email: validatedForm.data.email,
       password: validatedForm.data.password
     });
