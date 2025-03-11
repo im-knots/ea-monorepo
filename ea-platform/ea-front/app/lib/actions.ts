@@ -28,11 +28,11 @@ export async function register(prevState: string | undefined, formData: FormData
       email: validatedForm.data.email,
       password: validatedForm.data.password
     })
-    redirect('/dashboard');
   } catch (error) {
      console.error('Registration error:', error);
      return "Server error";
   }
+  redirect('/dashboard');
 }
 
 export async function login(prevState: string | undefined,formData: FormData) {
@@ -47,10 +47,10 @@ export async function login(prevState: string | undefined,formData: FormData) {
     await Login({
       email: validatedForm.data.email,
       password: validatedForm.data.password
-    });
-    redirect('/dashboard');
+    });  
   } catch (error) {
      console.error('Login error:', error);
      return "Server error";
   }
+  redirect('/dashboard');
 }
