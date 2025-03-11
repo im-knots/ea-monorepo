@@ -4,6 +4,7 @@ import { Box, Button, TextField, Typography } from "@mui/material";
 import Image from "next/image";
 import { register } from "../lib/actions";
 import { useActionState } from "react";
+import { redirect } from "next/navigation";
 
 export default function Page() {
 
@@ -36,6 +37,7 @@ export default function Page() {
               className="bg-neutral-700 rounded-md"
             />
             <Button type="submit" variant="contained" color="primary" className="w-full">Register</Button>
+            <Button variant='contained' color='secondary' className='w-full' onClick={() => redirect('/login')}>Login</Button>
           </form>
           {errorMessage && (
             <>
