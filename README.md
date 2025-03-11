@@ -18,11 +18,15 @@ We make this possible with the **Ea Platform**. A system that allows users to do
 ## Core features
 Core features of the Ea Platform are:
 - The Ainulindale client software that allows users to connect their idle device compute to the Ea network in exchange for compute credits
-- A Node based AI agent/workflow builder
+- A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with their own APIs or 3rd parties. 
 - A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
 - A marketplace for users to buy and sell Agent workflows, datasets, or their earned compute credits 
 - Leaderboards and gamification challenges for users to show off and earn more compute credits by completing challenges and gaining ranks
 - Dataset storage for users models, datasets, outputs, ect
+
+## UI Screenshots
+![Agent Builder UI Example](docs/screenshots/agent-builder.png)
+
 
 ## Repo Contents
 

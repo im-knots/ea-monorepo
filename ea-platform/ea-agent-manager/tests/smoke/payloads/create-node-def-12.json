@@ -1,5 +1,5 @@
 {
-    "type": "utils.github.refs",
+    "type": "utils.external.github.refs",
     "name": "Github Ref Lookup",
     "creator": "<UUID OF CREATOR USER>",
     "api": {

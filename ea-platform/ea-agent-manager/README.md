@@ -13,15 +13,16 @@ The Ea Platform Agent Manager API manages the creation of AI agents via an API t
 
 Nodes are grouped into general types depending on what they do. 
 
-| Type              | Use                                              | Examples                                                              |
-|-------------------|--------------------------------------------------|-----------------------------------------------------------------------|
-| **Trigger**       | Initiates an agent workflow.                     | `timed`, `manual`, `loop`                                             |
-| **Input**         | Provides input data to the workflow.             | `text`, `image`, `video`, `audio`                                     |
-| **Worker**        | Processes data or performs specific actions.     | `ollama`, `chatgpt`, `stable-diffusion`, custom scripts or models     |
-| **Destination**   | Outputs results to external systems or storage.  | `cloud storage`, `Ea storage`, `social media`                        |
+| Type              | Use                                              | 
+|-------------------|--------------------------------------------------|
+| **Trigger**       | Initiates an agent workflow. (ROADMAP)                    | 
+| **Input**         | Provides input data to the workflow.             | 
+| **Worker**        | Processes data or performs specific actions.     | 
+| **Utils**         | Utility nodes for various small tasks in a workflow | 
+| **Destination**   | Outputs results to internal/external systems or storage.  |
 
 
-### Trigger Nodes
+### Trigger Nodes (ROADMAP)
 
 | Name                           | Use                                                               |
 |--------------------------------|-------------------------------------------------------------------|
@@ -44,14 +45,14 @@ Nodes are grouped into general types depending on what they do.
 | Name            | Use                                              |
 |-----------------|--------------------------------------------------|
 | **input.internal.text**  | Accepts a text input for the agent workflow. Can be used to pass prompts or other textual data. |
-| **input.external.image** | Accepts an image input for the agent workflow. Used for tasks like image generation or classification. |
-| **input.external.video** | Accepts a video input for the agent workflow. Used for tasks like video processing or analysis. |
-| **input.external.audio** | Accepts an audio input for the agent workflow. Used for tasks like transcription or audio analysis. |
-| **input.external.model** | Accepts a model as input for the agent workflow. Used for training or fine tuning workflows. Accepts .safetensors. TODO other formats |
-| **input.external.file** | Accepts an abritrary file input for the agent workflow. Used for more general tasks such as importing data via csv or tfrecord files|
+| **input.external.image** | (ROADMAP) Accepts an image input for the agent workflow. Used for tasks like image generation or classification. |
+| **input.external.video** | (ROADMAP) Accepts a video input for the agent workflow. Used for tasks like video processing or analysis. |
+| **input.external.audio** | (ROADMAP) Accepts an audio input for the agent workflow. Used for tasks like transcription or audio analysis. |
+| **input.external.model** | (ROADMAP) Accepts a model as input for the agent workflow. Used for training or fine tuning workflows. Accepts .safetensors. TODO other formats |
+| **input.external.file** | (ROADMAP) Accepts an abritrary file input for the agent workflow. Used for more general tasks such as importing data via csv or tfrecord files|
 | **input.external.github** | Accepts a github repo URL and takes the contents of a github repo as input. Used for coding tasks. Private repos require github API key setup under user profile |
-| **input.external.jira** | Accepts jira stories as input. Usually used in combination with input.external.github and triggers to do coding tasks. Requires Jira API key setup under user profile |
-| **input.external.web** | Accepts an arbitrary public webpage as input. |
+| **input.external.jira** | (ROADMAP) Accepts jira stories as input. Usually used in combination with input.external.github and triggers to do coding tasks. Requires Jira API key setup under user profile |
+| **input.external.web** | (ROADMAP) Accepts an arbitrary public webpage as input. |
 
 
 
@@ -62,32 +63,43 @@ Nodes are grouped into general types depending on what they do.
 | **worker.inference.llm.ollama**       | Uses an LLM powered by Ollama for tasks like generating text or extracting tags. |
 | **worker.inference.llm.openai**      | Uses OpenAI's models to perform tasks like generating descriptions or answering questions. |
 | **worker.inference.llm.anthropic**   | Uses Anthropic's models to perform tasks like generating descriptions or answering questions. |
-| **worker.inference.stable-diffusion.video** | Leverages Stable Diffusion to generate videos from text prompts. Supports model-specific settings. |
-| **worker.inference.stable-diffusion.image** | Leverages Stable Diffusion to generate images from text prompts. Supports model-specific settings. |
-| **worker.train**            | Executes a model training operation |
-| **worker.finetune**            | Executes a model tuning operation |
-| **worker.custom**           | Executes custom scripts or AI models for specific use cases. Requires user-provided code or configuration. |
+| **worker.inference.llm.google**   | Uses Google's Gemini models to perform tasks like generating descriptions or answering questions. |
+| **worker.inference.llm.xai**   | Uses xAI's models to perform tasks like generating descriptions or answering questions. |
+| **worker.inference.stable-diffusion.video** | (ROADMAP) Leverages Stable Diffusion to generate videos from text prompts. Supports model-specific settings. |
+| **worker.inference.stable-diffusion.image** | (ROADMAP) Leverages Stable Diffusion to generate images from text prompts. Supports model-specific settings. |
+| **worker.train**            | (ROADMAP) Executes a model training operation |
+| **worker.finetune**            | (ROADMAP) Executes a model tuning operation |
+| **worker.custom**           | (ROADMAP) Executes custom scripts or AI models for specific use cases. Requires user-provided code or configuration. |
+
+### Utility Nodes
+
+| Name                              | Use                                              |
+|----------------------------------|--------------------------------------------------|
+| **utils.internal.base64.encode** | Takes data and encodes it to base64 |
+| **utils.internal.base64.decode** | Takes base64 encoded data and decodes it |
+| **utils.external.github.pr**     | Creates a github pull request |
+
 
 
 ### Destination Nodes
 
 | Name                              | Use                                              |
 |----------------------------------|--------------------------------------------------|
-| **destination.external.social.instagram** | Posts content (e.g., videos, images, text) to Instagram. |
-| **destination.external.social.facebook** | Posts content (e.g., videos, images, text) to Facebook. |
-| **destination.external.social.x** | Posts content (e.g., videos, images, text) to x.com. |
-| **destination.external.social.reddit** | Posts content (e.g., videos, images, text) to Reddit. |
-| **destination.external.social.linkedin** | Posts content (e.g., videos, images, text) to Linkedin. |
-| **destination.external.social.pinterest** | Posts content (e.g., videos, images, text) to Pinterest. |
-| **destination.external.social.tiktok** | Posts content (e.g., videos, images, text) to TikTok. |
-| **destination.external.cloud**    | Stores output files in a cloud storage solution (e.g., S3, GCS). |
-| **destination.external.github**  | Posts output to a github repository
-| **destination.external.webhook** | Sends output to an external system via a webhook. |
-| **destination.internal.ea**       | Stores output files within the Ea platform's storage system. |
+| **destination.external.social.instagram** | (ROADMAP) Posts content (e.g., videos, images, text) to Instagram. |
+| **destination.external.social.facebook** | (ROADMAP) Posts content (e.g., videos, images, text) to Facebook. |
+| **destination.external.social.x** | (ROADMAP) Posts content (e.g., videos, images, text) to x.com. |
+| **destination.external.social.reddit** | (ROADMAP) Posts content (e.g., videos, images, text) to Reddit. |
+| **destination.external.social.linkedin** | (ROADMAP) Posts content (e.g., videos, images, text) to Linkedin. |
+| **destination.external.social.pinterest** | (ROADMAP) Posts content (e.g., videos, images, text) to Pinterest. |
+| **destination.external.social.tiktok** | (ROADMAP) Posts content (e.g., videos, images, text) to TikTok. |
+| **destination.external.cloud._**    | (ROADMAP) Stores output files in a cloud storage solution (e.g., S3, GCS). |
+| **destination.external.github**  | Posts output to a github repository as a git commit
+| **destination.external.webhook** | (ROADMAP) Sends output to an external system via a webhook. |
+| **destination.internal.ea**       | (ROADMAP) Stores output files within the Ea platform's storage system. |
 | **destination.internal.text**       | Shows text output in a text box in the workflow, used for debugging or intermediate checks |
-| **destination.internal.image**       | Shows image output in an image box in the workflow, used for debugging or intermediate checks |
-| **destination.internal.video**       | Shows video output in a video box in the workflow, used for debugging or intermediate checks |
-| **destination.internal.log**       | Shows log messages of connected nodes, used for debugging |
+| **destination.internal.image**       | (ROADMAP) Shows image output in an image box in the workflow, used for debugging or intermediate checks |
+| **destination.internal.video**       | (ROADMAP) Shows video output in a video box in the workflow, used for debugging or intermediate checks |
+
 
 
 ## Edges
@@ -129,6 +141,24 @@ To keep the workflow flexible yet maintainable, we separate a Node’s definitio
 | **POST**  | `/api/v1/agents`         | Create a new agent.                       |
 | **PUT**   | `/api/v1/agents/{id}`    | Update a specific agent by its `id`.      |
 | **DELETE** | `/api/v1/agents/{id}`   | Delete a specific agent by its `id`.      |
+
+---
+
+### Required Headers
+All requests to this API coming into the cluster via the api gateway must include an authorization header containing an authenticated user's JWT
+
+```
+Authorization: Bearer <YOUR JWT>
+```
+
+Internal systems within the cluster (behind Kong) can access this service by providing
+
+(**Note: network level access is restricted in the cluster via NetworkPolicies**)
+
+```
+x-consumer-username: internal
+```
+
 
 ---
 

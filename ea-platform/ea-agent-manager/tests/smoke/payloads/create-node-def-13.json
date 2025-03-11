@@ -1,5 +1,5 @@
 {
-    "type": "utils.github.pr",
+    "type": "utils.external.github.pr",
     "name": "Github Pull Request",
     "creator": "<UUID OF CREATOR USER>",
     "api": {
