@@ -13,15 +13,13 @@ export async function middleware(req: NextRequest) {
 
   try {
     if (!token && isProtectedRoute) {
-      console.log('No valid token. Redirecting to /login...');
       return NextResponse.redirect(new URL('/login', req.url));
     }
-    if (token) {
-      jwtVerify(token, JWT_SECRET_KEY);
+    if (token && isProtectedRoute) {
+      await jwtVerify(token, JWT_SECRET_KEY);
       return NextResponse.next();
     }
   } catch (error) {
-    console.log('Invalid or expired token:', error);
     return NextResponse.redirect(new URL('/login', req.url));
   }
   return NextResponse.next();
@@ -29,6 +27,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-     '/((?!api|_next/static|_next/image|favicon.ico).*)',
+     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$).*)',
   ]
 }
