@@ -4,7 +4,7 @@
   "description": "A NextJS Front-end client for all things EruLabs",
   "scripts": {
     "test": "jest",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "dev": "next dev --turbopack",
     "d": "next dev",
     "start": "next start",
