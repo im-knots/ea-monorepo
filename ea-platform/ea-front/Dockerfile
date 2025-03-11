@@ -15,7 +15,7 @@ WORKDIR /app
 RUN npm install -g pnpm
 COPY --from=deps /app/node_modules ./node_modules
 
-COPY package.json next.config.ts postcss.config.js tailwind.config.ts tsconfig.json ./
+COPY package.json next.config.ts postcss.config.js tailwind.config.ts middleware.ts tsconfig.json ./
 COPY public/ public/
 COPY prisma/ prisma/
 COPY app/ app/
