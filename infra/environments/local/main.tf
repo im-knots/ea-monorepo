@@ -66,6 +66,13 @@ module "mongodb_deployment" {
   depends_on = [ module.k8s_namespace ]
 }
 
+module "postgresql_deployment" {
+  for_each   = local.namespaces
+  source     = "../../modules/postgresql"
+  namespace  = each.key
+  depends_on = [ module.k8s_namespace ]
+}
+
 module "ea_app_deployment" {
   for_each = local.ea_apps
 

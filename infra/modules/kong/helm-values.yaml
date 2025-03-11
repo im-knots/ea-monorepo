@@ -17,9 +17,18 @@ gateway:
       hostname: 
       path: 
       # Each path in an Ingress is required to have a corresponding path type (when used with hostname above). (ImplementationSpecific/Exact/Prefix)
-      pathType: ImplementationSpecific
+      # pathType: ImplementationSpecific
       # Ingress hosts. Use this instead of or in combination with hostname to specify multiple ingress host configurations
       hosts:
+      - host: ea.erulabs.local
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kong-ingress-gateway-proxy
+                port:
+                  number: 80
       - host: api.ea.erulabs.local
         paths:
         - path: /agent-manager
