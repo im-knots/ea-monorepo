@@ -38,9 +38,11 @@ Core features of the Ea Platform are:
 | **Ea Agent Engine** | [ea-agent-manager](ea-platform/ea-agent-manager/README.md) | Manages agent + node creation and definitions |
 | **Ea Ainu Engine** | [ea-ainu-manager](ea-platform/ea-ainu-manager/README.md) | Manages user devices and agent jobs |
 |  | [ea-ainu-operator](ea-platform/ea-ainu-operator/README.md) | Operator to sync agent job status to frontend |
+|  | [ea-credentials-manager](ea-platform/ea-ainu-operator/README.md) | Securely stores 3rd party credentials |
 | **Ea Job Engine** | [ea-job-api](ea-platform/ea-job-api/README.md) | API for job execution |
 |  | [ea-job-operator](ea-platform/ea-job-operator/README.md) | Operator to process agent jobs |
 |  | [ea-job-executor](ea-platform/ea-job-executor/README.md) | Executor for executing agent jobs |
+|  | [ea-job-utils](ea-platform/ea-job-utils/README.md) | utilities API for in house node functionality |
 | **Ainulindale Client Software** | [Ainulindale Clients](ainulindale-client/README.md) | Distributed compute client for AI workloads |
 | **Infrastructure & Deployment** | [infra](infra/README.md) | Terraform configurations for local and cloud deployments |
 | **Documentation** | [diagrams](docs/diagrams/README.md) | Diagrams managed as code |
