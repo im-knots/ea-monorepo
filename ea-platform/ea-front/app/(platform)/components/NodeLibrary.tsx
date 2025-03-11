@@ -42,7 +42,8 @@ export default function NodeLibrary({
       return null;
     }
   };
-
+  // Shad says: Never ever access the token from the client side.
+  // Use a server side component as shown in the NodeList.tsx file
   useEffect(() => {
     const fetchNodes = async () => {
       try {
@@ -152,6 +153,9 @@ export default function NodeLibrary({
 
           {/* Node List */}
           <div className="flex-1 p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* This block of code should be using a NodeList  wrapped in a Suspense component */}
+            {/* This will allow the component to be rendered on the server side using the credentials in cookies */}
+            {/* Suspense will also make a neat loading spinner while the data is being fetched */}
             {loading && <p className="text-gray-400 text-center">Loading nodes...</p>}
             {error && <p className="text-red-400 text-center">{error}</p>}
             {!loading &&
