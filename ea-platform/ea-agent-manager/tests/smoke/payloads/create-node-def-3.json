@@ -1,5 +1,5 @@
 {
-    "type": "worker.api.weather.noaa",
+    "type": "input.external.weather.noaa",
     "name": "NOAA Weather API",
     "creator": "<UUID OF CREATOR USER>",
     "api": {
