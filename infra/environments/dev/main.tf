@@ -30,6 +30,8 @@ locals {
         "compute.googleapis.com",
         "container.googleapis.com",
         "containerscanning.googleapis.com",
+        "iam.googleapis.com",
+        "sts.googleapis.com",
     ])
 
 }
@@ -39,12 +41,24 @@ provider "google" {
   region      = local.region
 }
 
-module project_setup {
-  source   = "../../modules/project"
+module project_apis {
+  source   = "../../modules/project-apis"
   
   project  = local.project
   gcp_apis = local.gcp_apis
 
+}
+
+module "gh_actions_workload_idenity" {
+  source = "../../modules/gh-workload-idenity"
+
+  project = local.project
+}
+
+module "artifactregistry" {
+  source = "../../modules/artifactregistry"
+
+  region = local.region
 }
 
 # module gke {
@@ -80,14 +94,6 @@ module project_setup {
 
 # module monitoring {
 #   source = "../../modules/monitoring"
-  
-#   depends_on = [
-#     module.gke
-#   ]
-# }
-
-# module ollama {
-#   source = "../../modules/ollama"
   
 #   depends_on = [
 #     module.gke
