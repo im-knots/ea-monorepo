@@ -32,7 +32,7 @@ jobs:
 
   build-and-push:
     needs: detect-changes
-    if: needs.detect-changes.outputs.services == true  # Skip if no changes
+    # if: needs.detect-changes.outputs.services == true  # Skip if no changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
