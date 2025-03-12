@@ -13,7 +13,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   description                        = "GitHub Actions identity pool provider for image build + push"
   disabled                           = false
   attribute_condition = <<EOT
-    attribute.repository.startsWith("eru-labs/")
+    attribute.repository == "eru-labs/eru-labs-monorepo"
 EOT
   attribute_mapping = {
     "google.subject"       = "assertion.sub"

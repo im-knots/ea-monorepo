@@ -3,9 +3,9 @@ name: Build & Push
 on:
   push:
     # paths:
-    #   - 'ea-platform/ea-agent-manager/**'
-    # branches:
-    #   - main
+    # #   - 'ea-platform/ea-agent-manager/**'
+    # # branches:
+    # #   - main
 
 permissions:
   id-token: write
@@ -18,23 +18,18 @@ jobs:
       id-token: 'write'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - id: auth
+        name: authenticate to google cloud
         uses: google-github-actions/auth@v2
         with:
-          token_format: access_token
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker Login (explicit token via docker/login-action)
-        uses: docker/login-action@v3
-        with:
-          registry: us-central1-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
-
-      - name: Build and push Docker image
+      - name: docker build and push
         run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
           docker build -t us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest ea-platform/ea-agent-manager
           docker push us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
