@@ -31,15 +31,15 @@ jobs:
       - name: Docker build and push (with git hash and date tags)
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-          
+
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
 
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
 
-          docker build -t ${IMAGE_TAG}:${DATE_TAG}-${GIT_HASH} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
-          
-          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_HASH}
+          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
+
+          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
           docker push ${IMAGE_BASE}:latest
         env:
           IMAGE_BASE: us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager
