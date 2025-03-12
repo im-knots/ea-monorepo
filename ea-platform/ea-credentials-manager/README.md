@@ -13,8 +13,6 @@ The **Ea Credentials Manager** service securely manages and updates user-specifi
 POST /api/v1/credentials
 ```
 
-
-
 ### Request Headers
 
 - **`X-Consumer-Username`** *(Required)*: The user identifier injected by the API gateway (Kong).
