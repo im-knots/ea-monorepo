@@ -15,7 +15,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.filter.outputs.services && toJson(github.event.commits.*.modified) || '[]' }}
+      services: ${{ steps.filter.outputs.services }}
 
     steps:
       - name: Checkout code
@@ -27,6 +27,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
+          list-files: json
           filters: |
             services: 
               - 'ea-platform/**'
@@ -37,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.services || '[]') }}
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
