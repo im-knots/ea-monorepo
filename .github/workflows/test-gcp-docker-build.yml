@@ -1,4 +1,4 @@
-name: Build & Push Docker Image
+name: Build & Push
 
 on:
   push:
@@ -21,14 +21,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - id: auth
+        name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker build and push (Single Step!)
+      - name: Docker build and push (with git hash and date tags)
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-          docker build -t us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest ea-platform/ea-agent-manager
-          docker push us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
+          
+          DATE_TAG=$(date '+%Y%m%d')
+          GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+
+          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
+
+          docker build -t ${IMAGE_TAG}:${DATE_TAG}-${GIT_HASH} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
+          
+          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_HASH}
+          docker push ${IMAGE_BASE}:latest
+        env:
+          IMAGE_BASE: us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager
+          GIT_HASH: ${{ github.sha }}
