@@ -2,11 +2,11 @@ name: Build & Push
 
 on:
   push:
-    # branches:
-    #   - main
-    # paths:
-    #   - 'ea-platform/**'  # Only trigger for changes inside ea-platform/
-    #   - 'brands/**'        # Only trigger for changes inside brands/
+    branches:
+      - main
+    paths:
+      - 'ea-platform/**'
+      - 'brands/**'
 
 permissions:
   contents: write
@@ -96,9 +96,9 @@ jobs:
           IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
-          # docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
-          # docker push ${IMAGE_BASE}:${IMAGE_VERSION}
-          # docker push ${IMAGE_BASE}:latest
+          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
+          docker push ${IMAGE_BASE}:latest
 
           echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
           echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
