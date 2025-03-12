@@ -27,8 +27,8 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            services:
-              - 'ea-platform/*/*'
+            services: 
+              - 'ea-platform/**'
 
   build-and-push:
     needs: detect-changes
