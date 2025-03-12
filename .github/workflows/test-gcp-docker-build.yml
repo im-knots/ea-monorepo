@@ -34,7 +34,7 @@ jobs:
           
           if [[ "$dirs" == "[]" ]] || [[ -z "$dirs" ]]; then
             echo "No relevant changes detected. Skipping workflow."
-            exit 0
+            exit 1
           fi
 
           echo "changed_dirs=$dirs" >> $GITHUB_ENV
