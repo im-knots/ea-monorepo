@@ -30,6 +30,7 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           list-files: 'json'
+          predicate-quantifier: 'every'
           filters: |
             brand/brand-frontend: 
               - 'brand/brand-frontend/**'
