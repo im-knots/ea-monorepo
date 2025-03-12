@@ -11,9 +11,9 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   workload_identity_pool_provider_id = "github-provider"
   display_name                       = "Github Provider"
   description                        = "GitHub Actions identity pool provider for image build + push"
-  disabled                           = true
+  disabled                           = false
   attribute_condition = <<EOT
-    attribute.repository == "eru-labs/"
+    attribute.repository.startsWith("eru-labs/")
 EOT
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
@@ -34,6 +34,12 @@ resource "google_service_account" "gh_actions" {
 resource "google_service_account_iam_member" "github_actions_impersonation" {
   service_account_id = google_service_account.gh_actions.name
   role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/eru-labs/*"
+}
+
+resource "google_service_account_iam_member" "github_actions_token_creator" {
+  service_account_id = google_service_account.gh_actions.name
+  role               = "roles/iam.serviceAccountTokenCreator"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/eru-labs/*"
 }
 
