@@ -42,23 +42,11 @@ provider "google" {
 }
 
 module project_apis {
-  source   = "../../modules/project-apis"
+  source   = "../../../modules/project-apis"
   
   project  = local.project
   gcp_apis = local.gcp_apis
 
-}
-
-module "gh_actions_workload_idenity" {
-  source = "../../modules/gh-workload-idenity"
-
-  project = local.project
-}
-
-module "artifactregistry" {
-  source = "../../modules/artifactregistry"
-
-  region = local.region
 }
 
 # module gke {
