@@ -66,7 +66,6 @@ jobs:
               - 'ea-platform/ea-job-utils/**'
               - '!ea-platform/ea-job-utils/**/*.md'
 
-
   build-and-push:
     needs: detect-changes
     if: needs.detect-changes.outputs.changes != '[]'
@@ -85,30 +84,37 @@ jobs:
           workload_identity_provider: 'projects/115597884357/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-mgmt.iam.gserviceaccount.com'
 
-      - name: Docker build and push
+      - name: Configure Artifact Registry Auth
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
+      - name: Docker build and push
+        run: |
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
           SERVICE=$(basename "${{ matrix.service }}")
+          IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
-          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
-          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
+          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
           docker push ${IMAGE_BASE}:latest
 
           echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
-          echo "DATE_TAG=${DATE_TAG}" >> "$GITHUB_ENV"
-          echo "GIT_COMMIT_TAG=${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
 
       - name: Build and Push Helm Chart (if present)
         run: |
           CHART_DIR="${{ matrix.service }}/chart"
           CHART_REGISTRY="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images"
+          IMAGE_VERSION="${{ env.IMAGE_VERSION }}"
 
           if [ -d "$CHART_DIR" ]; then
-            echo "Found Helm chart in $CHART_DIR. Packaging and pushing..."
+            echo "Found Helm chart in $CHART_DIR. Updating version and pushing..."
+
+            # Update Chart.yaml version to match the image version
+            sed -i "s/^version: .*/version: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
+            sed -i "s/^appVersion: .*/appVersion: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
 
             helm package $CHART_DIR
             CHART_PACKAGE=$(ls *.tgz)
@@ -120,5 +126,5 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "${{ env.SERVICE }}-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
-          name: "${{ env.SERVICE }} Release - ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
+          tag_name: "${{ env.SERVICE }}-${{ env.IMAGE_VERSION }}"
+          name: "${{ env.SERVICE }} Release - ${{ env.IMAGE_VERSION }}"
