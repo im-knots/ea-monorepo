@@ -105,11 +105,14 @@ module "eru_labs_brand_app_deployment" {
   ]
 }
 
-module "kong" {
-  source = "../../modules/kong"
+module "istio" {
+  source = "../../modules/istio"
+  depends_on = [ module.k8s_namespace ]
 }
 
-module "kong_config" {
-  source = "../../modules/kong-config"
-  depends_on = [ module.kong ]
+resource helm_release "ea-gateway" {
+  name      = "ea-gateway"
+  chart     = "../../charts/gateway"
+  namespace = "ea-platform"
+  depends_on = [ module.k8s_namespace, module.istio ]
 }
