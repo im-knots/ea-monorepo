@@ -109,7 +109,8 @@ jobs:
           CHART_REGISTRY="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images"
           IMAGE_VERSION="${{ env.IMAGE_VERSION }}"
           SERVICE_NAME=$(basename "${{ matrix.service }}")
-          CHART_REPO="${CHART_REGISTRY}/${SERVICE_NAME}-chart"
+          CHART_NAME="${SERVICE_NAME}-chart"
+          CHART_REPO="${CHART_REGISTRY}/${CHART_NAME}"
 
           if [ -d "$CHART_DIR" ]; then
             echo "Found Helm chart in $CHART_DIR. Updating version and pushing..."
@@ -118,9 +119,11 @@ jobs:
             sed -i "s/^version: .*/version: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
             sed -i "s/^appVersion: .*/appVersion: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
 
-            # Package and push the chart with the modified name
-            helm package --destination . $CHART_DIR
-            CHART_PACKAGE=$(ls *.tgz)
+            # Package the chart with the modified name
+            helm package --destination . --app-version $IMAGE_VERSION --version $IMAGE_VERSION --name-template "$CHART_NAME" $CHART_DIR
+
+            # Push the renamed chart to the correct OCI registry path
+            CHART_PACKAGE=$(ls ${CHART_NAME}-*.tgz)
             helm push $CHART_PACKAGE oci://$CHART_REPO
           else
             echo "No Helm chart found in $CHART_DIR, skipping..."
