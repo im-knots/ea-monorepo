@@ -67,6 +67,7 @@ curl -X POST http://<service-url>/api/v1/base64encode \
 -d '{"data": "plain-string-to-encode"}'
 ```
 
+
 ### Responses
 
 - **Success (200 OK):**
@@ -76,8 +77,6 @@ curl -X POST http://<service-url>/api/v1/base64encode \
   "encoded_value": "base64-encoded-result"
 }
 ```
-
-
 
 - **Error (400 Bad Request):**
 
