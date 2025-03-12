@@ -22,7 +22,8 @@ jobs:
         with:
           fetch-depth: 0  # Needed for git diff
 
-      - id: filter
+      - name: Detect changed services
+        id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -30,8 +31,12 @@ jobs:
               - 'ea-platform/**'
 
   build-and-push:
+    needs: detect-changes
     if: steps.filter.outputs.services == true  # Skip if no changes
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
