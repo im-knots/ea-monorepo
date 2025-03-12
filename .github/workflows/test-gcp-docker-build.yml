@@ -29,8 +29,24 @@ jobs:
         with:
           list-files: 'json'
           filters: |
-            services: 
-              - 'ea-platform/**'
+            ea-platform/ea-agent-manager: 
+              - 'ea-platform/ea-agent-manager/**'
+            ea-platform/ea-ainu-manager: 
+              - 'ea-platform/ea-ainu-manager/**'
+            ea-platform/ea-ainu-operator: 
+              - 'ea-platform/ea-ainu-operator/**'
+            ea-platform/ea-credentials-manager: 
+              - 'ea-platform/ea-credentials-manager/**'
+            ea-platform/ea-front: 
+              - 'ea-platform/ea-front/**'
+            ea-platform/ea-job-api: 
+              - 'ea-platform/ea-job-api/**'
+            ea-platform/ea-job-executor: 
+              - 'ea-platform/ea-job-executor/**'
+            ea-platform/ea-job-operator: 
+              - 'ea-platform/ea-job-operator/**'
+            ea-platform/ea-job-utils: 
+              - 'ea-platform/ea-job-utils/**'
 
   build-and-push:
     needs: detect-changes

@@ -77,6 +77,8 @@ curl -X POST http://<service-url>/api/v1/base64encode \
 }
 ```
 
+
+
 - **Error (400 Bad Request):**
 
 ```json
