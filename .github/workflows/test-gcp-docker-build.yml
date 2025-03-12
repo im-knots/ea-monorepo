@@ -1,4 +1,4 @@
-name: Build & Push (Dynamic)
+name: Build & Push
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
-          list-files: json
+          list-files: 'json'
           filters: |
             services: 
               - 'ea-platform/**'
