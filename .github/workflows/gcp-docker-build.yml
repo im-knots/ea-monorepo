@@ -92,7 +92,7 @@ jobs:
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
           SERVICE=$(basename "${{ matrix.service }}")
-          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/${SERVICE}"
+          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
           docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
           docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
