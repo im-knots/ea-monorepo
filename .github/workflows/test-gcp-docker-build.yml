@@ -12,32 +12,34 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-push:
-    permissions:
-      contents: write
-      id-token: write
+  detect-changes:
     runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.services }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for git diff to work correctly
+          fetch-depth: 0  # Needed for git diff
 
-      - name: Detect changed directories
-        id: changed
-        run: |
-          dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | \
-            grep '^ea-platform/' | \
-            awk -F'/' '{print $1"/"$2}' | \
-            sort -u | \
-            jq -R -s -c 'split("\n")[:-1]')
-          
-          if [[ "$dirs" == "[]" ]] || [[ -z "$dirs" ]]; then
-            echo "No relevant changes detected. Skipping workflow."
-            exit 1
-          fi
+      - name: Detect changed services
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            services:
+              - 'ea-platform/*/*'
 
-          echo "changed_dirs=$dirs" >> $GITHUB_ENV
+  build-and-push:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.services != '[]' }}  # Skip if no changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - id: auth
         name: Authenticate to Google Cloud
@@ -46,30 +48,24 @@ jobs:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Build & Push Docker Images
+      - name: Docker build and push
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+          SERVICE=$(basename "${{ matrix.service }}")
+          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/${SERVICE}"
 
-          for DIR in $(echo '${{ env.changed_dirs }}' | jq -r '.[]'); do
-            SERVICE=$(basename $DIR)
-            IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/${SERVICE}"
+          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
+          docker push ${IMAGE_BASE}:latest
 
-            echo "Building and pushing ${SERVICE}..."
-
-            docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest $DIR
-            docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
-            docker push ${IMAGE_BASE}:latest
-
-            echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
-          done
-
+          echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
           echo "DATE_TAG=${DATE_TAG}" >> "$GITHUB_ENV"
           echo "GIT_COMMIT_TAG=${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
 
-      - name: Create GitHub Releases
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: "${{ env.SERVICE }}-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
