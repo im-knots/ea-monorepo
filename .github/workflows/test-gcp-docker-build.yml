@@ -28,7 +28,7 @@ jobs:
         with:
           filters: |
             services:
-              - 'ea-platform/**'
+              - 'ea-platform/*/*'
 
   build-and-push:
     needs: detect-changes
