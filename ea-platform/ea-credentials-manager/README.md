@@ -4,7 +4,6 @@ The **Ea Credentials Manager** service securely manages and updates user-specifi
 
 ---
 
-
 ## API Endpoint
 
 ### Add or Update Credentials
