@@ -13,7 +13,6 @@ The Ea Platform Agent Manager API manages the creation of AI agents via an API t
 
 Nodes are grouped into general types depending on what they do. 
 
-
 | Type              | Use                                              | 
 |-------------------|--------------------------------------------------|
 | **Trigger**       | Initiates an agent workflow. (ROADMAP)                    | 
