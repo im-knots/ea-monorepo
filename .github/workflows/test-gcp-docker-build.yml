@@ -22,8 +22,7 @@ jobs:
         with:
           fetch-depth: 0  # Needed for git diff
 
-      - name: Detect changed services
-        id: filter
+      - id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
