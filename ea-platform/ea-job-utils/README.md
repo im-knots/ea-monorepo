@@ -67,6 +67,7 @@ curl -X POST http://<service-url>/api/v1/base64encode \
 -d '{"data": "plain-string-to-encode"}'
 ```
 
+
 ### Responses
 
 - **Success (200 OK):**
@@ -100,3 +101,5 @@ Metrics:
 - Labels indicate the endpoint, operation type (`encode` or `decode`), and status (`success`).
 
 ---
+
+

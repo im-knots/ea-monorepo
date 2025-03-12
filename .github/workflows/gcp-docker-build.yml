@@ -2,10 +2,11 @@ name: Build & Push
 
 on:
   push:
-    # branches:
-    #   - main
-    # paths:
-    #   - 'ea-platform/**'
+    branches:
+      - main
+    paths:
+      - 'ea-platform/**'
+      - 'brand/**'
 
 permissions:
   contents: write
@@ -29,12 +30,33 @@ jobs:
         with:
           list-files: 'json'
           filters: |
-            services: 
-              - 'ea-platform/**'
+            brand/brand-frontend: 
+              - 'brand/brand-frontend/**'
+            brand/brand-backend: 
+              - 'brand/brand-backend/**'
+            ea-platform/ea-agent-manager: 
+              - 'ea-platform/ea-agent-manager/**'
+            ea-platform/ea-ainu-manager: 
+              - 'ea-platform/ea-ainu-manager/**'
+            ea-platform/ea-ainu-operator: 
+              - 'ea-platform/ea-ainu-operator/**'
+            ea-platform/ea-credentials-manager: 
+              - 'ea-platform/ea-credentials-manager/**'
+            ea-platform/ea-front: 
+              - 'ea-platform/ea-front/**'
+            ea-platform/ea-job-api: 
+              - 'ea-platform/ea-job-api/**'
+            ea-platform/ea-job-executor: 
+              - 'ea-platform/ea-job-executor/**'
+            ea-platform/ea-job-operator: 
+              - 'ea-platform/ea-job-operator/**'
+            ea-platform/ea-job-utils: 
+              - 'ea-platform/ea-job-utils/**'
+
 
   build-and-push:
     needs: detect-changes
-    # if: needs.detect-changes.outputs.services == true  # Skip if no changes
+    if: needs.detect-changes.outputs.changes != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
