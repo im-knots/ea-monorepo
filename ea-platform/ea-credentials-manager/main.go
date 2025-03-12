@@ -26,6 +26,5 @@ func main() {
 	// Start the server
 	serverAddr := "0.0.0.0:" + config.Port
 	logger.Slog.Info("Server starting", "address", serverAddr)
-
 	log.Fatal(router.Run(serverAddr))
 }
