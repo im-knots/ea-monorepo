@@ -9,13 +9,13 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   build-and-push:
     permissions:
-      contents: 'read'
-      id-token: 'write'
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -37,10 +37,27 @@ jobs:
 
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
 
-          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
+          docker build \
+            -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} \
+            -t ${IMAGE_BASE}:latest \
+            ea-platform/ea-agent-manager
 
           docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
           docker push ${IMAGE_BASE}:latest
+
+          echo "TAG_NAME=${DATE_TAG}-${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
         env:
           IMAGE_BASE: us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager
-          GIT_HASH: ${{ github.sha }}
+          DATE_TAG: $(date '+%Y%m%d')
+          GIT_COMMIT_TAG: $(git rev-parse --short HEAD)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ea-agent-manager-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
+          name: "ea-agent-manager Release ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
