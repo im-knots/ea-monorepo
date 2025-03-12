@@ -2,11 +2,11 @@ name: Build & Push
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'ea-platform/**'  # Only trigger for changes inside ea-platform/
-      - 'brands/**'        # Only trigger for changes inside brands/
+    # branches:
+    #   - main
+    # paths:
+    #   - 'ea-platform/**'  # Only trigger for changes inside ea-platform/
+    #   - 'brands/**'        # Only trigger for changes inside brands/
 
 permissions:
   contents: write
@@ -82,8 +82,8 @@ jobs:
         name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
-          service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
+          workload_identity_provider: 'projects/115597884357/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
+          service_account: 'github-actions@eru-labs-mgmt.iam.gserviceaccount.com'
 
       - name: Docker build and push
         run: |

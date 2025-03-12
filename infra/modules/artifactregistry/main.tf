@@ -11,5 +11,5 @@ resource "google_artifact_registry_repository_iam_member" "docker_push" {
   location   = google_artifact_registry_repository.docker_repo.location
   repository = google_artifact_registry_repository.docker_repo.name
   role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:github-actions@eru-labs-dev-446616.iam.gserviceaccount.com"
+  member     = "serviceAccount:${var.service_account_email}"
 }
