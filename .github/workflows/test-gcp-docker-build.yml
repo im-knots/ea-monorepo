@@ -1,11 +1,11 @@
-name: Build & Push
+name: Build & Push (Dynamic)
 
 on:
   push:
     # branches:
     #   - main
     # paths:
-    #   - 'ea-platform/ea-agent-manager/**'
+    #   - 'ea-platform/**'
 
 permissions:
   contents: write
@@ -14,12 +14,30 @@ permissions:
 jobs:
   build-and-push:
     permissions:
-      contents: 'write'
-      id-token: 'write'
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for git diff to work correctly
+
+      - name: Detect changed directories
+        id: changed
+        run: |
+          dirs=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | \
+            grep '^ea-platform/' | \
+            awk -F'/' '{print $1"/"$2}' | \
+            sort -u | \
+            jq -R -s -c 'split("\n")[:-1]')
+          
+          if [[ "$dirs" == "[]" ]] || [[ -z "$dirs" ]]; then
+            echo "No relevant changes detected. Skipping workflow."
+            exit 0
+          fi
+
+          echo "changed_dirs=$dirs" >> $GITHUB_ENV
 
       - id: auth
         name: Authenticate to Google Cloud
@@ -28,26 +46,31 @@ jobs:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker build and push
+      - name: Build & Push Docker Images
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
 
-          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
-          docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
-          docker push ${IMAGE_BASE}:latest
+          for DIR in $(echo '${{ env.changed_dirs }}' | jq -r '.[]'); do
+            SERVICE=$(basename $DIR)
+            IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/${SERVICE}"
 
-          # Export for subsequent GitHub Actions steps
+            echo "Building and pushing ${SERVICE}..."
+
+            docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest $DIR
+            docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
+            docker push ${IMAGE_BASE}:latest
+
+            echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
+          done
+
           echo "DATE_TAG=${DATE_TAG}" >> "$GITHUB_ENV"
           echo "GIT_COMMIT_TAG=${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
 
-      - name: Create GitHub Release
+      - name: Create GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ea-agent-manager-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
-          name: ea-agent-manager Release - ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
-          draft: false
-          prerelease: false
+          tag_name: "${{ env.SERVICE }}-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
+          name: "${{ env.SERVICE }} Release - ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
