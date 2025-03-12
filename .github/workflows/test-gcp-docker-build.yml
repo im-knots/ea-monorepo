@@ -2,10 +2,10 @@ name: Build & Push
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'ea-platform/ea-agent-manager/**'
+    # branches:
+    #   - main
+    # paths:
+    #   - 'ea-platform/ea-agent-manager/**'
 
 permissions:
   contents: write  # required for creating GitHub releases
