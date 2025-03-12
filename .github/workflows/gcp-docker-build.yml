@@ -96,9 +96,9 @@ jobs:
           IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
-          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
-          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
-          docker push ${IMAGE_BASE}:latest
+          # docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          # docker push ${IMAGE_BASE}:${IMAGE_VERSION}
+          # docker push ${IMAGE_BASE}:latest
 
           echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
           echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
@@ -109,8 +109,6 @@ jobs:
           CHART_REGISTRY="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images"
           IMAGE_VERSION="${{ env.IMAGE_VERSION }}"
           SERVICE_NAME=$(basename "${{ matrix.service }}")
-          CHART_NAME="${SERVICE_NAME}-chart"
-          CHART_REPO="${CHART_REGISTRY}/${CHART_NAME}"
 
           if [ -d "$CHART_DIR" ]; then
             echo "Found Helm chart in $CHART_DIR. Updating version and pushing..."
@@ -119,16 +117,10 @@ jobs:
             sed -i "s/^version: .*/version: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
             sed -i "s/^appVersion: .*/appVersion: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
 
-            # Package the Helm chart
+            # Package and push the chart with the modified name
             helm package --destination . $CHART_DIR
-
-            # Rename the Helm package to follow <app-name>-chart.tgz naming
-            ORIGINAL_PACKAGE=$(ls *.tgz)
-            RENAMED_PACKAGE="${CHART_NAME}-${IMAGE_VERSION}.tgz"
-            mv "$ORIGINAL_PACKAGE" "$RENAMED_PACKAGE"
-
-            # Push the renamed Helm package to Artifact Registry
-            helm push "$RENAMED_PACKAGE" oci://$CHART_REPO
+            CHART_PACKAGE=$(ls *.tgz)
+            helm push $CHART_PACKAGE oci://$CHART_REGISTRY
           else
             echo "No Helm chart found in $CHART_DIR, skipping..."
           fi
