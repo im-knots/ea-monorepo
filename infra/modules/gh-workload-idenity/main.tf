@@ -37,9 +37,14 @@ resource "google_service_account_iam_member" "github_actions_impersonation" {
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/eru-labs/*"
 }
 
+resource "google_service_account_iam_member" "github_actions_service_account_user" {
+  service_account_id = google_service_account.gh_actions.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/eru-labs/*"
+}
+
 resource "google_service_account_iam_member" "github_actions_token_creator" {
   service_account_id = google_service_account.gh_actions.name
   role               = "roles/iam.serviceAccountTokenCreator"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/eru-labs/*"
 }
-
