@@ -1,4 +1,4 @@
-name: Build & Push (Dynamic)
+name: Build & Push
 
 on:
   push:
@@ -15,7 +15,8 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      services: ${{ steps.filter.outputs.services }}
+      services: ${{ steps.filter.outputs.changes }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,13 +27,14 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
+          list-files: 'json'
           filters: |
-            services:
-              - 'ea-platform/*/*'
+            services: 
+              - 'ea-platform/**'
 
   build-and-push:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.services != '[]' }}  # Skip if no changes
+    # if: needs.detect-changes.outputs.services == true  # Skip if no changes
     runs-on: ubuntu-latest
     strategy:
       matrix:
