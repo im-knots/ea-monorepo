@@ -88,20 +88,20 @@ jobs:
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      # - name: Docker build and push
-      #   run: |
-      #     DATE_TAG=$(date '+%Y%m%d')
-      #     GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-      #     SERVICE=$(basename "${{ matrix.service }}")
-      #     IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
-      #     IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
+      - name: Docker build and push
+        run: |
+          DATE_TAG=$(date '+%Y%m%d')
+          GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+          SERVICE=$(basename "${{ matrix.service }}")
+          IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
+          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
-      #     docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
-      #     docker push ${IMAGE_BASE}:${IMAGE_VERSION}
-      #     docker push ${IMAGE_BASE}:latest
+          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
+          docker push ${IMAGE_BASE}:latest
 
-      #     echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
-      #     echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
+          echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
 
       - name: Build and Push Helm Chart (if present)
         run: |
