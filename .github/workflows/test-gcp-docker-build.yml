@@ -1,11 +1,11 @@
-name: Build & Push
+name: Build & Push Docker Image
 
 on:
   push:
-    # paths:
-    #   - 'ea-platform/ea-agent-manager/**'
-    # branches:
-    #   - main
+    paths:
+      - 'ea-platform/ea-agent-manager/**'
+    branches:
+      - main
 
 permissions:
   id-token: write
@@ -14,30 +14,21 @@ permissions:
 jobs:
   build-and-push:
     permissions:
-      contents: read
-      id-token: write
+      contents: 'read'
+      id-token: 'write'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - id: auth
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker auth directly with Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: us-central1-docker.pkg.dev
-          username: _json_key
-          password: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ea-platform/ea-agent-manager
-          file: ea-platform/ea-agent-manager/Dockerfile
-          push: true
-          tags: |
-            us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
+      - name: Docker build and push (Single Step!)
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          docker build -t us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest ea-platform/ea-agent-manager
+          docker push us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
