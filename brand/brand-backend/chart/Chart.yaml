@@ -1,5 +1,5 @@
 apiVersion: v2
-name: eru-labs-brand-backend
+name: brand-backend-chart
 description: A Helm chart for Kubernetes
 
 type: application
