@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'ea-platform/**'
-      - 'brand/**'
+      - 'ea-platform/**'  # Only trigger for changes inside ea-platform/
+      - 'brands/**'        # Only trigger for changes inside brands/
 
 permissions:
   contents: write
@@ -22,8 +22,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for git diff
+          fetch-depth: 0
 
+      # theres got to be a cleaner way to do this but this is the best i could figure out
       - name: Detect changed services
         id: filter
         uses: dorny/paths-filter@v3
@@ -32,26 +33,37 @@ jobs:
           filters: |
             brand/brand-frontend: 
               - 'brand/brand-frontend/**'
+              - '!brand/brand-frontend/**/*.md'
             brand/brand-backend: 
               - 'brand/brand-backend/**'
+              - '!brand/brand-backend/**/*.md'
             ea-platform/ea-agent-manager: 
               - 'ea-platform/ea-agent-manager/**'
+              - '!ea-platform/ea-agent-manager/**/*.md'
             ea-platform/ea-ainu-manager: 
               - 'ea-platform/ea-ainu-manager/**'
+              - '!ea-platform/ea-ainu-manager/**/*.md'
             ea-platform/ea-ainu-operator: 
               - 'ea-platform/ea-ainu-operator/**'
+              - '!ea-platform/ea-ainu-operator/**/*.md'
             ea-platform/ea-credentials-manager: 
               - 'ea-platform/ea-credentials-manager/**'
+              - '!ea-platform/ea-credentials-manager/**/*.md'
             ea-platform/ea-front: 
               - 'ea-platform/ea-front/**'
+              - '!ea-platform/ea-front/**/*.md'
             ea-platform/ea-job-api: 
               - 'ea-platform/ea-job-api/**'
+              - '!ea-platform/ea-job-api/**/*.md'
             ea-platform/ea-job-executor: 
               - 'ea-platform/ea-job-executor/**'
+              - '!ea-platform/ea-job-executor/**/*.md'
             ea-platform/ea-job-operator: 
               - 'ea-platform/ea-job-operator/**'
+              - '!ea-platform/ea-job-operator/**/*.md'
             ea-platform/ea-job-utils: 
               - 'ea-platform/ea-job-utils/**'
+              - '!ea-platform/ea-job-utils/**/*.md'
 
 
   build-and-push:
