@@ -28,15 +28,11 @@ jobs:
         with:
           filters: |
             services:
-              - 'ea-platform/*/*'
+              - 'ea-platform/**'
 
   build-and-push:
-    needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.services != '[]' }}  # Skip if no changes
+    if: steps.filter.outputs.services == true  # Skip if no changes
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
