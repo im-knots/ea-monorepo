@@ -92,7 +92,6 @@ Upon receiving a valid request, the service:
 
 ---
 
-
 ## Monitoring and Logging
 
 - Operations, including success and failure states, are extensively logged for auditability.
