@@ -25,21 +25,14 @@ jobs:
         name: authenticate to google cloud
         uses: google-github-actions/auth@v2
         with:
-          token_format: access_token
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker Login via explicit token (fully supported)
-        uses: docker/login-action@v3
-        with:
-          registry: us-central1-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+      - name: docker build and push
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          docker build -t us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest ea-platform/ea-agent-manager
+          docker push us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
 
-      - uses: docker/build-push-action@v5
-        with:
-          context: ea-platform/ea-agent-manager
-          push: true
-          tags: us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
 
 
