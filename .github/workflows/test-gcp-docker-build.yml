@@ -2,20 +2,20 @@ name: Build & Push
 
 on:
   push:
-    # branches:
-    #   - main
-    # paths:
-    #   - 'ea-platform/ea-agent-manager/**'
+    branches:
+      - main
+    paths:
+      - 'ea-platform/ea-agent-manager/**'
 
 permissions:
-  contents: write  # required for creating GitHub releases
+  contents: write
   id-token: write
 
 jobs:
   build-and-push:
     permissions:
-      contents: write
-      id-token: write
+      contents: 'write'
+      id-token: 'write'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -34,27 +34,20 @@ jobs:
 
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-          IMAGE_TAG="${DATE_TAG}-${GIT_COMMIT_TAG}"
-
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
 
           docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
           docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
           docker push ${IMAGE_BASE}:latest
 
-          # Set outputs for next step
-          echo "image_tag=${DATE_TAG}-${GIT_COMMIT_TAG}" >> $GITHUB_ENV
-        env:
-          DATE_TAG: $(date '+%Y%m%d')
-          GIT_COMMIT_TAG: $(git rev-parse --short HEAD)
+          # Export for subsequent GitHub Actions steps
+          echo "DATE_TAG=${DATE_TAG}" >> "$GITHUB_ENV"
+          echo "GIT_COMMIT_TAG=${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ea-agent-manager-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
           name: ea-agent-manager Release - ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
-          body: |
-            Automatic release for **ea-agent-manager** on `${{ env.DATE_TAG }}` at commit `${{ env.GIT_COMMIT_TAG }}`.
-        env:
-          DATE_TAG: ${{ env.DATE_TAG }}
-          GIT_COMMIT_TAG: ${{ env.GIT_COMMIT_TAG }}
+          draft: false
+          prerelease: false
