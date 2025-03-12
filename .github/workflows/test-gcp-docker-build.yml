@@ -36,6 +36,8 @@ jobs:
         name: Tag Docker image and push to Google Artifact Registry
         uses: docker/build-push-action@v2
         with:
+          context: ea-platform/ea-agent-manager
+          file: ea-platform/ea-agent-manager/Dockerfile
           push: true
           tags: |
              us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager:latest
