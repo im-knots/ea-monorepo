@@ -88,20 +88,20 @@ jobs:
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Docker build and push
-        run: |
-          DATE_TAG=$(date '+%Y%m%d')
-          GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
-          SERVICE=$(basename "${{ matrix.service }}")
-          IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
-          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
+      # - name: Docker build and push
+      #   run: |
+      #     DATE_TAG=$(date '+%Y%m%d')
+      #     GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+      #     SERVICE=$(basename "${{ matrix.service }}")
+      #     IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
+      #     IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
 
-          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
-          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
-          docker push ${IMAGE_BASE}:latest
+      #     docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+      #     docker push ${IMAGE_BASE}:${IMAGE_VERSION}
+      #     docker push ${IMAGE_BASE}:latest
 
-          echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
-          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
+      #     echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
+      #     echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
 
       - name: Build and Push Helm Chart (if present)
         run: |
@@ -119,12 +119,16 @@ jobs:
             sed -i "s/^version: .*/version: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
             sed -i "s/^appVersion: .*/appVersion: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
 
-            # Package the chart with the modified name
-            helm package --destination . --app-version $IMAGE_VERSION --version $IMAGE_VERSION --name-template "$CHART_NAME" $CHART_DIR
+            # Package the Helm chart
+            helm package --destination . $CHART_DIR
 
-            # Push the renamed chart to the correct OCI registry path
-            CHART_PACKAGE=$(ls ${CHART_NAME}-*.tgz)
-            helm push $CHART_PACKAGE oci://$CHART_REPO
+            # Rename the Helm package to follow <app-name>-chart.tgz naming
+            ORIGINAL_PACKAGE=$(ls *.tgz)
+            RENAMED_PACKAGE="${CHART_NAME}-${IMAGE_VERSION}.tgz"
+            mv "$ORIGINAL_PACKAGE" "$RENAMED_PACKAGE"
+
+            # Push the renamed Helm package to Artifact Registry
+            helm push "$RENAMED_PACKAGE" oci://$CHART_REPO
           else
             echo "No Helm chart found in $CHART_DIR, skipping..."
           fi
