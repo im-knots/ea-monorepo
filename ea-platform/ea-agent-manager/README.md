@@ -8,7 +8,6 @@ The Ea Platform Agent Manager API manages the creation of AI agents via an API t
 - **Edge**: A connection between Nodes that defines the workflow.
 - **Agent**: A collection of Nodes that execute a task or set of tasks.
 
-
 ## Nodes
 
 Nodes are grouped into general types depending on what they do. 
