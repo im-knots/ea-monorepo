@@ -84,11 +84,6 @@ Upon receiving a valid request, the service:
 
 ---
 
-
-
-
-
-
 ## Security
 
 - All credentials are stored securely as Kubernetes secrets.
