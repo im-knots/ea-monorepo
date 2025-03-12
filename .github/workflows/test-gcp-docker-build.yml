@@ -2,14 +2,14 @@ name: Build & Push
 
 on:
   push:
-    # paths:
-    #   - 'ea-platform/ea-agent-manager/**'
-    # branches:
-    #   - main
+    branches:
+      - main
+    paths:
+      - 'ea-platform/ea-agent-manager/**'
 
 permissions:
+  contents: write  # required for creating GitHub releases
   id-token: write
-  contents: write
 
 jobs:
   build-and-push:
@@ -28,36 +28,33 @@ jobs:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-      - name: Docker build and push (with git hash and date tags)
+      - name: Docker build and push
         run: |
           gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
           DATE_TAG=$(date '+%Y%m%d')
           GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+          IMAGE_TAG="${DATE_TAG}-${GIT_COMMIT_TAG}"
 
           IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager"
 
-          docker build \
-            -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} \
-            -t ${IMAGE_BASE}:latest \
-            ea-platform/ea-agent-manager
-
+          docker build -t ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG} -t ${IMAGE_BASE}:latest ea-platform/ea-agent-manager
           docker push ${IMAGE_BASE}:${DATE_TAG}-${GIT_COMMIT_TAG}
           docker push ${IMAGE_BASE}:latest
 
-          echo "TAG_NAME=${DATE_TAG}-${GIT_COMMIT_TAG}" >> "$GITHUB_ENV"
+          # Set outputs for next step
+          echo "image_tag=${DATE_TAG}-${GIT_COMMIT_TAG}" >> $GITHUB_ENV
         env:
-          IMAGE_BASE: us-central1-docker.pkg.dev/eru-labs-dev-446616/eru-labs-images/ea-agent-manager
           DATE_TAG: $(date '+%Y%m%d')
           GIT_COMMIT_TAG: $(git rev-parse --short HEAD)
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ea-agent-manager-${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
-          name: "ea-agent-manager Release ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}"
-          generate_release_notes: true
-          draft: false
-          prerelease: false
+          name: ea-agent-manager Release - ${{ env.DATE_TAG }}-${{ env.GIT_COMMIT_TAG }}
+          body: |
+            Automatic release for **ea-agent-manager** on `${{ env.DATE_TAG }}` at commit `${{ env.GIT_COMMIT_TAG }}`.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DATE_TAG: ${{ env.DATE_TAG }}
+          GIT_COMMIT_TAG: ${{ env.GIT_COMMIT_TAG }}
