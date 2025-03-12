@@ -28,10 +28,9 @@ jobs:
           workload_identity_provider: 'projects/135550390903/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
           service_account: 'github-actions@eru-labs-dev-446616.iam.gserviceaccount.com'
 
-
       - name: docker login
         run: |
-          gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin https://us-central1-docker.pkg.dev
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       - id: docker-push-tagged
         name: Tag Docker image and push to Google Artifact Registry
