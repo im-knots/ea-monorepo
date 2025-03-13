@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 export async function Register(user: { email: string, password: string }) {
   const { email, password } = user;
   const hashedPassword = await bcrypt.hash(password, 10);
-  const userRecord = await mongodb.db().collection("users").findOne({ email });
+  const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
   
   if (userRecord) {
     throw new Error("User already exists");
