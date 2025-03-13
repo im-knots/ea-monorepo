@@ -14,12 +14,15 @@ terraform {
 
 locals {
     project      = "eru-labs-mgmt"
+    env          = "mgmt"
     region       = "us-central1"
+    dns_name     = "erulabs.ai"
 
     gcp_apis = toset([
         "artifactregistry.googleapis.com",
         "iam.googleapis.com",
         "sts.googleapis.com",
+        "dns.googleapis.com",
     ])
 
 }
@@ -41,7 +44,7 @@ module "gh_actions_workload_idenity" {
   source = "../../../../modules/gh-workload-idenity"
 
   project = local.project
-  depends_on = [ local.gcp_apis ]
+  depends_on = [ module.project_apis ]
 }
 
 module "artifactregistry" {
@@ -49,4 +52,12 @@ module "artifactregistry" {
 
   region = local.region
   service_account_email = module.gh_actions_workload_idenity.service_account_email
+}
+
+module "dns_zone" {
+  source = "../../../../modules/gcp-dns"
+
+  dns_name    = local.dns_name
+  env         = local.env
+  depends_on  = [ module.project_apis ]
 }

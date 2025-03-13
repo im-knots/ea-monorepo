@@ -88,14 +88,14 @@ resource "helm_release" "grafana" {
 //    - It scans container images, Kubernetes configurations, and infrastructure for vulnerabilities & misconfigurations.
 //    - Helps with SOC 2 compliance by detecting security risks before they impact workloads.
 //    - Outputs vulnerability reports, misconfigurations, and exposed secrets directly into Kubernetes CRDs.
-resource "helm_release" "trivy" {
-    name             = "trivy"
-    repository       = "https://aquasecurity.github.io/helm-charts/"
-    chart            = "trivy-operator"
-    namespace        = kubernetes_namespace.monitoring.metadata[0].name
+# resource "helm_release" "trivy" {
+#     name             = "trivy"
+#     repository       = "https://aquasecurity.github.io/helm-charts/"
+#     chart            = "trivy-operator"
+#     namespace        = kubernetes_namespace.monitoring.metadata[0].name
 
-    values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
-}
+#     values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
+# }
 
 //  Falco is a real-time runtime security tool for Kubernetes.
 //    - It monitors system calls and detects suspicious behavior inside running containers.
