@@ -17,8 +17,8 @@ terraform {
 
 locals {
   cluster_name = "minikube"
-
-  namespaces = toset(["ea-platform", "eru-labs-brand"])
+  env          = "local"
+  namespaces   = toset(["ea-platform", "eru-labs-brand"])
 
   ea_apps = {
     "ea-agent-manager"       = "../../../ea-platform/ea-agent-manager/chart"
@@ -51,6 +51,7 @@ provider "helm" {
 
 module monitoring {
   source = "../../modules/monitoring"
+  env    = local.env
 }
 
 module "k8s_namespace" {

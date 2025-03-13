@@ -23,6 +23,7 @@ resource "helm_release" "alloy" {
 }
 
 resource "kubernetes_persistent_volume" "loki_pv" {
+  count = var.env == "local" ? 1 : 0
   metadata {
     name = "loki-pv"
   }
@@ -40,7 +41,8 @@ resource "kubernetes_persistent_volume" "loki_pv" {
   }
 }
 
-resource "kubernetes_persistent_volume_claim" "loki_pvc" {
+resource "kubernetes_persistent_volume_claim" "loki_pv_local" {
+  count = var.env == "local" ? 1 : 0
   metadata {
     name      = "loki-pvc"
     namespace = kubernetes_namespace.monitoring.metadata[0].name
@@ -57,6 +59,25 @@ resource "kubernetes_persistent_volume_claim" "loki_pvc" {
   }
 }
 
+resource "kubernetes_persistent_volume_claim" "loki_pvc_gcp" {
+  count = var.env == "local" ? 0 : 1
+  metadata {
+    name      = "loki-pvc"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+
+    resources {
+      requests = {
+        storage = "10Gi"
+      }
+    }
+    storage_class_name = "standard-rwo"
+  }
+}
+
 resource "helm_release" "loki" {
     name             = "loki"
     repository       = "https://grafana.github.io/helm-charts"
@@ -65,10 +86,6 @@ resource "helm_release" "loki" {
 
     values = [file("${path.module}/helm-values/loki-helm-values.yaml")]
 
-    depends_on = [ 
-        kubernetes_persistent_volume.loki_pv,
-        kubernetes_persistent_volume_claim.loki_pvc
-    ]
 }
 
 resource "helm_release" "grafana" {
@@ -79,36 +96,6 @@ resource "helm_release" "grafana" {
 
     values = [file("${path.module}/helm-values/grafana-helm-values.yaml")]
 }
-
-// =====================================
-//  Security/Compliance Tools
-// =====================================
-
-//  Trivy Operator is a continuous security scanning tool that runs inside the cluster.
-//    - It scans container images, Kubernetes configurations, and infrastructure for vulnerabilities & misconfigurations.
-//    - Helps with SOC 2 compliance by detecting security risks before they impact workloads.
-//    - Outputs vulnerability reports, misconfigurations, and exposed secrets directly into Kubernetes CRDs.
-resource "helm_release" "trivy" {
-    name             = "trivy"
-    repository       = "https://aquasecurity.github.io/helm-charts/"
-    chart            = "trivy-operator"
-    namespace        = kubernetes_namespace.monitoring.metadata[0].name
-
-    values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
-}
-
-//  Falco is a real-time runtime security tool for Kubernetes.
-//    - It monitors system calls and detects suspicious behavior inside running containers.
-//    - Uses pre-defined and custom rules to alert on security threats (e.g., unexpected process execution, privilege escalation).
-//    - Logs are collected in Loki via Alloy, enabling security monitoring and incident response.
-# resource "helm_release" "falco" {
-#   name       = "falco"
-#   repository = "https://falcosecurity.github.io/charts"
-#   chart      = "falco"
-#   namespace  = kubernetes_namespace.monitoring.metadata[0].name
-
-#   values = [file("${path.module}/helm-values/falco-helm-values.yaml")]
-# }
 
 resource "kubernetes_config_map" "global_dashboards" {
   for_each = fileset("${path.module}/global-dashboards", "*.json")
@@ -125,3 +112,35 @@ resource "kubernetes_config_map" "global_dashboards" {
     "${each.value}" = file("${path.module}/global-dashboards/${each.value}")
   }
 }
+
+// =====================================
+//  Security/Compliance Tools
+// =====================================
+
+//  Trivy Operator is a continuous security scanning tool that runs inside the cluster.
+//    - It scans container images, Kubernetes configurations, and infrastructure for vulnerabilities & misconfigurations.
+//    - Helps with SOC 2 compliance by detecting security risks before they impact workloads.
+//    - Outputs vulnerability reports, misconfigurations, and exposed secrets directly into Kubernetes CRDs.
+# resource "helm_release" "trivy" {
+#     name             = "trivy"
+#     repository       = "https://aquasecurity.github.io/helm-charts/"
+#     chart            = "trivy-operator"
+#     namespace        = kubernetes_namespace.monitoring.metadata[0].name
+
+#     values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
+# }
+
+//  Falco is a real-time runtime security tool for Kubernetes.
+//    - It monitors system calls and detects suspicious behavior inside running containers.
+//    - Uses pre-defined and custom rules to alert on security threats (e.g., unexpected process execution, privilege escalation).
+//    - Logs are collected in Loki via Alloy, enabling security monitoring and incident response.
+# resource "helm_release" "falco" {
+#   name       = "falco"
+#   repository = "https://falcosecurity.github.io/charts"
+#   chart      = "falco"
+#   namespace  = kubernetes_namespace.monitoring.metadata[0].name
+
+#   values = [file("${path.module}/helm-values/falco-helm-values.yaml")]
+# }
+
+

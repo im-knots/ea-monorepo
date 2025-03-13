@@ -86,4 +86,3 @@ Example:
 ```go
 logger.Slog.Info("Executing node", "nodeType", node.Type) logger.Slog.Error("Execution failed", "error", err)
 ```
-

@@ -29,11 +29,18 @@ with Diagram("Eru Labs", show=False):
         eaFrontend = Pod("Ea Frontend")
         eaAPIGateway = Pod("Ea API Gateway")
         dns >> eaLB >> eaFrontend >> eaAPIGateway
+
+    # Ea Agent Engine
+    with Cluster("Agent Engine"):
+        eaAgentManager = Pod("Agent Manager API")
+        eaAgentDB = Storage("Agent Manager DB")
+        eaAPIGateway >> eaAgentManager >> eaAgentDB
     
     # Ea Job Engine
     with Cluster("Job Engine"):
         eaJobAPI = Pod("Job API")
         eaJobOperator = Pod("Job Operator")
+        eaJobUtils = Pod("Ea Job Utilities")
         eaAgentJobCRD = CRD("AgentJob CRD")
         eaAgentJobETCD = ETCD("AgentJob CRs")
         eaJobExecutor = Job("Ea Job Executor")
@@ -41,18 +48,15 @@ with Diagram("Eru Labs", show=False):
         eaAgentJobCRD >> eaJobAPI >> eaAgentJobETCD 
         eaJobOperator >> eaAgentJobETCD
         eaJobOperator >> eaJobExecutor >> ollama
+        eaJobExecutor >> eaJobUtils
+        eaJobExecutor >> eaAgentManager
         ollama >> eaJobExecutor
+        eaJobAPI >> eaAgentManager
 
         # Future state
         # eaFrontend >> eaJobOrchestrator >> [eaJobInf, eaJobTrn, eaJobAgt] >> ainuClients
 
-    # Ea Agent Engine
-    with Cluster("Agent Engine"):
-        eaAgentManager = Pod("Agent Manager API")
-        eaAgentDB = Storage("Agent Manager DB")
-        eaAPIGateway >> eaAgentManager >> eaAgentDB
-        eaJobAPI >> eaAgentManager
-        eaJobExecutor >> eaAgentManager
+
 
     # Ea Ainu Engine
     with Cluster("Ainulindale Engine"):

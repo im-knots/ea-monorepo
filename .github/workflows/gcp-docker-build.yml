@@ -1,0 +1,132 @@
+name: Build & Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ea-platform/**'
+      - 'brands/**'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # theres got to be a cleaner way to do this but this is the best i could figure out
+      - name: Detect changed services
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          list-files: 'json'
+          predicate-quantifier: 'every'
+          filters: |
+            brand/brand-frontend: 
+              - 'brand/brand-frontend/**'
+              - '!brand/brand-frontend/**/*.md'
+            brand/brand-backend: 
+              - 'brand/brand-backend/**'
+              - '!brand/brand-backend/**/*.md'
+            ea-platform/ea-agent-manager: 
+              - 'ea-platform/ea-agent-manager/**'
+              - '!ea-platform/ea-agent-manager/**/*.md'
+            ea-platform/ea-ainu-manager: 
+              - 'ea-platform/ea-ainu-manager/**'
+              - '!ea-platform/ea-ainu-manager/**/*.md'
+            ea-platform/ea-ainu-operator: 
+              - 'ea-platform/ea-ainu-operator/**'
+              - '!ea-platform/ea-ainu-operator/**/*.md'
+            ea-platform/ea-credentials-manager: 
+              - 'ea-platform/ea-credentials-manager/**'
+              - '!ea-platform/ea-credentials-manager/**/*.md'
+            ea-platform/ea-front: 
+              - 'ea-platform/ea-front/**'
+              - '!ea-platform/ea-front/**/*.md'
+            ea-platform/ea-job-api: 
+              - 'ea-platform/ea-job-api/**'
+              - '!ea-platform/ea-job-api/**/*.md'
+            ea-platform/ea-job-executor: 
+              - 'ea-platform/ea-job-executor/**'
+              - '!ea-platform/ea-job-executor/**/*.md'
+            ea-platform/ea-job-operator: 
+              - 'ea-platform/ea-job-operator/**'
+              - '!ea-platform/ea-job-operator/**/*.md'
+            ea-platform/ea-job-utils: 
+              - 'ea-platform/ea-job-utils/**'
+              - '!ea-platform/ea-job-utils/**/*.md'
+
+  build-and-push:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.changes != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/115597884357/locations/global/workloadIdentityPools/actions-pool/providers/github-provider'
+          service_account: 'github-actions@eru-labs-mgmt.iam.gserviceaccount.com'
+
+      - name: Configure Artifact Registry Auth
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Docker build and push
+        run: |
+          DATE_TAG=$(date '+%Y%m%d')
+          GIT_COMMIT_TAG=$(git rev-parse --short HEAD)
+          SERVICE=$(basename "${{ matrix.service }}")
+          IMAGE_VERSION="${DATE_TAG}-${GIT_COMMIT_TAG}"
+          IMAGE_BASE="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/${SERVICE}"
+
+          docker build -t ${IMAGE_BASE}:${IMAGE_VERSION} -t ${IMAGE_BASE}:latest ${{ matrix.service }}
+          docker push ${IMAGE_BASE}:${IMAGE_VERSION}
+          docker push ${IMAGE_BASE}:latest
+
+          echo "SERVICE=${SERVICE}" >> "$GITHUB_ENV"
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Build and Push Helm Chart (if present)
+        run: |
+          CHART_DIR="${{ matrix.service }}/chart"
+          CHART_REGISTRY="us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images"
+          IMAGE_VERSION="${{ env.IMAGE_VERSION }}"
+          SERVICE_NAME=$(basename "${{ matrix.service }}")
+
+          if [ -d "$CHART_DIR" ]; then
+            echo "Found Helm chart in $CHART_DIR. Updating version and pushing..."
+
+            # Update Chart.yaml version and appVersion to match the image version
+            sed -i "s/^version: .*/version: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
+            sed -i "s/^appVersion: .*/appVersion: $IMAGE_VERSION/" $CHART_DIR/Chart.yaml
+
+            # Package and push the chart with the modified name
+            helm package --destination . $CHART_DIR
+            CHART_PACKAGE=$(ls *.tgz)
+            helm push $CHART_PACKAGE oci://$CHART_REGISTRY
+          else
+            echo "No Helm chart found in $CHART_DIR, skipping..."
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "${{ env.SERVICE }}-${{ env.IMAGE_VERSION }}"
+          name: "${{ env.SERVICE }} Release - ${{ env.IMAGE_VERSION }}"
