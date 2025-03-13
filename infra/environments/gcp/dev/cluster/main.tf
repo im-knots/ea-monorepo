@@ -24,6 +24,7 @@ locals {
     project      = "eru-labs-dev-446616"
     region       = "us-central1"
     cluster_name = "eru-labs-dev"
+    env          = "dev"
 }
 
 provider "google" {
@@ -59,10 +60,10 @@ provider "helm" {
     }
 }
 
-# module monitoring {
-#   source = "../../../../modules/monitoring"
-  
-#   depends_on = [
-#     module.gke
-#   ]
-# }
+module monitoring {
+  source = "../../../../modules/monitoring"
+  env    = local.env 
+  depends_on = [
+    module.gke
+  ]
+}

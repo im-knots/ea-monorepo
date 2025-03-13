@@ -23,6 +23,7 @@ resource "helm_release" "alloy" {
 }
 
 resource "kubernetes_persistent_volume" "loki_pv" {
+  count = var.env == "local" ? 1 : 0
   metadata {
     name = "loki-pv"
   }
@@ -40,7 +41,8 @@ resource "kubernetes_persistent_volume" "loki_pv" {
   }
 }
 
-resource "kubernetes_persistent_volume_claim" "loki_pvc" {
+resource "kubernetes_persistent_volume_claim" "loki_pv_local" {
+  count = var.env == "local" ? 1 : 0
   metadata {
     name      = "loki-pvc"
     namespace = kubernetes_namespace.monitoring.metadata[0].name
@@ -57,6 +59,25 @@ resource "kubernetes_persistent_volume_claim" "loki_pvc" {
   }
 }
 
+resource "kubernetes_persistent_volume_claim" "loki_pvc_gcp" {
+  count = var.env == "local" ? 0 : 1
+  metadata {
+    name      = "loki-pvc"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+
+    resources {
+      requests = {
+        storage = "10Gi"
+      }
+    }
+    storage_class_name = "standard-rwo"
+  }
+}
+
 resource "helm_release" "loki" {
     name             = "loki"
     repository       = "https://grafana.github.io/helm-charts"
@@ -65,10 +86,6 @@ resource "helm_release" "loki" {
 
     values = [file("${path.module}/helm-values/loki-helm-values.yaml")]
 
-    depends_on = [ 
-        kubernetes_persistent_volume.loki_pv,
-        kubernetes_persistent_volume_claim.loki_pvc
-    ]
 }
 
 resource "helm_release" "grafana" {
@@ -78,6 +95,22 @@ resource "helm_release" "grafana" {
     namespace        = kubernetes_namespace.monitoring.metadata[0].name
 
     values = [file("${path.module}/helm-values/grafana-helm-values.yaml")]
+}
+
+resource "kubernetes_config_map" "global_dashboards" {
+  for_each = fileset("${path.module}/global-dashboards", "*.json")
+
+  metadata {
+    name      = "grafana-dashboard-${replace(each.value, ".json", "")}"
+    namespace = kubernetes_namespace.monitoring.metadata[0].name
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+
+  data = {
+    "${each.value}" = file("${path.module}/global-dashboards/${each.value}")
+  }
 }
 
 // =====================================
@@ -110,18 +143,4 @@ resource "helm_release" "grafana" {
 #   values = [file("${path.module}/helm-values/falco-helm-values.yaml")]
 # }
 
-resource "kubernetes_config_map" "global_dashboards" {
-  for_each = fileset("${path.module}/global-dashboards", "*.json")
 
-  metadata {
-    name      = "grafana-dashboard-${replace(each.value, ".json", "")}"
-    namespace = kubernetes_namespace.monitoring.metadata[0].name
-    labels = {
-      grafana_dashboard = "1"
-    }
-  }
-
-  data = {
-    "${each.value}" = file("${path.module}/global-dashboards/${each.value}")
-  }
-}
