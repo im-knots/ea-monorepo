@@ -1,8 +1,6 @@
 'use server';
 
-import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { prisma } from "@/app/lib/prisma";
 import { Login, Register } from './auth';
 import { redirect } from 'next/navigation';
 
@@ -29,8 +27,7 @@ export async function register(prevState: string | undefined, formData: FormData
       password: validatedForm.data.password
     })
   } catch (error) {
-     console.error('Registration error:', error);
-     return "Server error";
+     return "Registration error";
   }
   redirect('/dashboard');
 }
@@ -49,8 +46,7 @@ export async function login(prevState: string | undefined,formData: FormData) {
       password: validatedForm.data.password
     });  
   } catch (error) {
-     console.error('Login error:', error);
-     return "Server error";
+     return "Login error";
   }
   redirect('/dashboard');
 }
