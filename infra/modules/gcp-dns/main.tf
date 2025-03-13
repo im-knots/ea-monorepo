@@ -4,6 +4,7 @@ resource "google_dns_managed_zone" "zone" {
   description = "Public DNS zone for ${var.dns_name}"
 
   visibility = "public"
+
 }
 
 resource "google_dns_record_set" "mx_record" {
@@ -16,4 +17,8 @@ resource "google_dns_record_set" "mx_record" {
   rrdatas = [
     "1 SMTP.GOOGLE.COM."
   ]
+
+  lifecycle {
+    prevent_destroy = true # This is our google workspaces email MX record so we cant destroy it or we will break email
+  }
 }
