@@ -33,7 +33,11 @@ build_and_push() {
 
 deploy_stack_terraform() {
     echo -e "${BOLD_YELLOW}DEPLOYING APPS AND DEPENDENCIES TO MINIKUBE${RESET}"
-    cd infra/environments/local
+    cd infra/environments/local/cluster
+    terraform init
+    terraform apply -auto-approve
+    cd $REPO_DIR
+    cd infra/environments/local/apps
     terraform init
     terraform apply -auto-approve
     cd $REPO_DIR

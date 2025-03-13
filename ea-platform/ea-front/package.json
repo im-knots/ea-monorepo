@@ -4,7 +4,7 @@
   "description": "A NextJS Front-end client for all things EruLabs",
   "scripts": {
     "test": "jest",
-    "build": "prisma generate && next build",
+    "build": "next build",
     "dev": "next dev --turbopack",
     "d": "next dev",
     "start": "next start",
@@ -29,7 +29,6 @@
     "mongodb": "^6.13.1",
     "next": "^15.1.6",
     "postcss": "^8.5.1",
-    "prisma": "^6.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "reactflow": "^11.11.4",

@@ -17,7 +17,6 @@ COPY --from=deps /app/node_modules ./node_modules
 
 COPY package.json next.config.ts postcss.config.js tailwind.config.ts middleware.ts tsconfig.json ./
 COPY public/ public/
-COPY prisma/ prisma/
 COPY app/ app/
 
 RUN pnpm run build
@@ -34,7 +33,6 @@ COPY --from=builder /app/public ./public
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 USER nextjs
 

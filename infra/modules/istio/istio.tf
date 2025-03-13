@@ -1,12 +1,12 @@
-resource "kubernetes_namespace" "istio-system" {
+resource "kubernetes_namespace" "istio_system" {
   metadata {
     name = "istio-system"
   }
 }
 
-resource "null_resource" "istio-namespace" {
+resource "null_resource" "istio_namespace" {
   triggers = {
-    namespace = kubernetes_namespace.istio-system.metadata[0].name
+    namespace = kubernetes_namespace.istio_system.metadata[0].name
   }
 
   provisioner "local-exec" {
@@ -14,16 +14,16 @@ resource "null_resource" "istio-namespace" {
   }
 }
 
-resource "helm_release" "istio-base" {
+resource "helm_release" "istio_base" {
   name              = "istio-base"
   repository        = "https://istio-release.storage.googleapis.com/charts"
   chart             = "base"
-  namespace         = kubernetes_namespace.istio-system.metadata[0].name
+  namespace         = kubernetes_namespace.istio_system.metadata[0].name
 
   wait    = false
 
   depends_on = [ 
-    kubernetes_namespace.istio-system
+    kubernetes_namespace.istio_system
   ]
 
   set {
@@ -36,12 +36,12 @@ resource "helm_release" "istiod" {
   name              = "istiod"
   repository        = "https://istio-release.storage.googleapis.com/charts"
   chart             = "istiod"
-  namespace         = kubernetes_namespace.istio-system.metadata[0].name
+  namespace         = kubernetes_namespace.istio_system.metadata[0].name
 
   wait    = false
 
   depends_on = [ 
-    helm_release.istio-base
+    helm_release.istio_base
   ]
 
   set {
