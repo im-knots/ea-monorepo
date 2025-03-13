@@ -1,3 +1,3 @@
 output "zone_namesevers" {
-  value = module.dns_name.nameservers
+  value = module.dns_zone.nameservers
 }

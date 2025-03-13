@@ -23,7 +23,7 @@ terraform {
 locals {
     project      = "eru-labs-dev-446616"
     region       = "us-central1"
-
+    env          = "dev"
     dns_name     = "dev.erulabs.ai"
 
     gcp_apis = toset([
@@ -52,7 +52,8 @@ module project_apis {
 module "dns_zone" {
   source = "../../../../modules/gcp-dns"
 
-  dns_name = local.dns_name
+  dns_name   = local.dns_name
+  env        = local.env
   depends_on = [ module.project_apis ]
 }
 

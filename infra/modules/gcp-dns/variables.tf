@@ -5,3 +5,8 @@ variable "dns_name" {
 variable "env" {
   type = string
 }
+
+variable "delegated_nameservers" {
+  type = map(list(string))
+  default = {}
+}

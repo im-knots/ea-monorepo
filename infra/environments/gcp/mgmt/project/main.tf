@@ -25,6 +25,16 @@ locals {
         "dns.googleapis.com",
     ])
 
+    delegated_nameservers = {
+      # Dev project for dev.erulabs.ai
+      "dev.erulabs.ai." = [
+        "ns-cloud-c1.googledomains.com.",
+        "ns-cloud-c2.googledomains.com.",
+        "ns-cloud-c3.googledomains.com.",
+        "ns-cloud-c4.googledomains.com.",
+      ]
+    }
+
 }
 
 provider "google" {
@@ -57,7 +67,8 @@ module "artifactregistry" {
 module "dns_zone" {
   source = "../../../../modules/gcp-dns"
 
-  dns_name    = local.dns_name
-  env         = local.env
-  depends_on  = [ module.project_apis ]
+  dns_name              = local.dns_name
+  env                   = local.env
+  delegated_nameservers = local.delegated_nameservers
+  depends_on            = [ module.project_apis ]
 }
