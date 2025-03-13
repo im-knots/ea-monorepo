@@ -1,16 +1,19 @@
 import bcrypt from "bcryptjs";
-import { prisma } from "./prisma";
+import mongodb from "./mongodb";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
 
 export async function Register(user: { email: string, password: string }) {
   const { email, password } = user;
   const hashedPassword = await bcrypt.hash(password, 10);
-  return await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-    },
+  const userRecord = await mongodb.db().collection("users").findOne({ email });
+  
+  if (userRecord) {
+    throw new Error("User already exists");
+  }
+  await mongodb.db().collection("ainuUsers").insertOne({
+    email,
+    password: hashedPassword,
   });
 }
 
@@ -23,11 +26,7 @@ export async function Login(user: { email: string, password: string }) {
     throw new Error("JWT_SECRET not set");
   }
   
-  const userRecord = await prisma.user.findUnique({
-    where: {
-      email,
-    },
-  });
+  const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
 
   if (!userRecord) {
     throw new Error("User not found");

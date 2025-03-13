@@ -1,24 +1,31 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient } from "mongodb";
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb.ea-platform.svc.cluster.local:27017/ainuUsers';
-// const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:8086/ainuUsers';
-let cachedClient: MongoClient | null = null;
-
-export async function connectToDatabase() {
-  if (!cachedClient) {
-    console.log('🔄 Creating new MongoDB connection...');
-    cachedClient = new MongoClient(MONGO_URI);
-  }
-
-  try {
-    // 🔹 Check if the existing connection is still alive
-    await cachedClient.db().admin().ping();
-  } catch (error) {
-    console.error('⚠️ Lost MongoDB connection, reconnecting...', error);
-    cachedClient = new MongoClient(MONGO_URI);
-    await cachedClient.connect();
-  }
-
-  console.log('✅ MongoDB Connected');
-  return { db: cachedClient.db() };
+if (!process.env.MONGO_URI) {
+  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
 }
+
+const uri = process.env.MONGO_URI;
+const options = { appName: "ea" };
+
+let client: MongoClient;
+
+if (process.env.NODE_ENV === "development") {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClient?: MongoClient;
+  };
+
+  if (!globalWithMongo._mongoClient) {
+    globalWithMongo._mongoClient = new MongoClient(uri, options);
+  }
+  client = globalWithMongo._mongoClient;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri, options);
+}
+
+// Export a module-scoped MongoClient. By doing this in a
+// separate module, the client can be shared across functions.
+
+export default client;
