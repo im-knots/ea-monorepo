@@ -23,7 +23,6 @@ func main() {
 
 	// Pass MongoDB client to handlers
 	handlers.SetDBClient(dbClient)
-
 	log.Println("MongoDB client successfully passed to handlers")
 
 	mux := http.NewServeMux()
