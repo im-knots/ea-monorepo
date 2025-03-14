@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: brand-config
+data:
+  config.json: |
+    {
+      "apiBaseUrl": "{{ .Values.config.apiUrl }}"
+    }

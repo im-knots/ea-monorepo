@@ -35,6 +35,10 @@ locals {
         "dns.googleapis.com",
     ])
 
+    external_dns_service_accounts = [
+      "135550390903-compute@developer.gserviceaccount.com", #Dev Project
+    ]
+
 }
 
 provider "google" {
@@ -47,13 +51,5 @@ module project_apis {
   
   project  = local.project
   gcp_apis = local.gcp_apis
-}
-
-module "dns_zone" {
-  source = "../../../../modules/gcp-dns"
-
-  dns_name   = local.dns_name
-  env        = local.env
-  depends_on = [ module.project_apis ]
 }
 

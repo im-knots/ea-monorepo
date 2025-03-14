@@ -48,3 +48,8 @@ resource "google_container_cluster" "gke" {
   # accidentally delete this instance by use of Terraform.
   deletion_protection = false
 }
+
+data "google_container_cluster" "gke" {
+  name     = google_container_cluster.gke.name
+  location = google_container_cluster.gke.location
+}

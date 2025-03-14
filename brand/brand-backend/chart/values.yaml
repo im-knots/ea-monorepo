@@ -8,6 +8,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+gke:
+  enabled: true
+
 config:
   # TEST_ENV: TEST
 
@@ -52,7 +55,7 @@ ingress:
   className: "kong"
   annotations: {}
   hosts:
-    - host: 
+    - host: backend.erulabs.local
       paths:
         - path: /brand-backend
           pathType: ImplementationSpecific
