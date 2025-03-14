@@ -80,12 +80,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-initContainers:
-  - name: migrate
-    image: ea-front:latest
-    imagePullPolicy: IfNotPresent
-    command: ['sh', '-c', 'npx prisma migrate deploy']
-    envFrom:
-      - secretRef:
-          name: ea-front-secrets

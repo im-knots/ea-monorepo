@@ -10,7 +10,7 @@ resource "null_resource" "istio_namespace" {
   }
 
   provisioner "local-exec" {
-    command = "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml --context minikube"
+    command = "kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml"
   }
 }
 

@@ -32,8 +32,8 @@ locals {
   }
 
   eru_apps = {
-    "brand-backend"  = "../../../brand/brand-backend/chart"
-    "brand-frontend" = "../../../brand/brand-frontend/chart"
+    "brand-backend"  = "../../../../brand/brand-backend/chart"
+    "brand-frontend" = "../../../../brand/brand-frontend/chart"
   }
 }
 

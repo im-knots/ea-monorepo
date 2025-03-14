@@ -19,6 +19,9 @@ locals {
   cluster_name = "minikube"
   env          = "local"
   namespaces   = toset(["ea-platform", "eru-labs-brand"])
+  gateway_host = "*.erulabs.local"
+  
+  enable_sec_tooling = true
 }
 
 provider "kubernetes" {
@@ -33,25 +36,32 @@ provider "helm" {
   }
 }
 
-module monitoring {
-  source = "../../../modules/monitoring"
-  env    = local.env
+module "minikube" {
+  source = "../../../modules/minikube-setup"
 }
 
-module "k8s_namespace" {
-  for_each = local.namespaces
-  source     = "../../../modules/k8s-namespace"
-  namespace  = each.key
-}
+# module monitoring {
+#   source = "../../../modules/monitoring"
+  
+#   env                = local.env
+#   enable_sec_tooling = local.enable_sec_tooling
+# }
 
-module "istio" {
-  source = "../../../modules/istio"
-  depends_on = [ module.k8s_namespace ]
-}
+# module "k8s_namespace" {
+#   for_each = local.namespaces
+#   source     = "../../../modules/k8s-namespace"
+#   namespace  = each.key
+# }
 
-resource helm_release "ea-gateway" {
-  name      = "ea-gateway"
-  chart     = "../../../charts/gateway"
-  namespace = "ea-platform"
-  depends_on = [ module.k8s_namespace, module.istio ]
-}
+# module "istio" {
+#   source = "../../../modules/istio"
+#   depends_on = [ module.k8s_namespace ]
+# }
+
+# module "ea_gateway" {
+#   source       = "../../../modules/gateway"
+#   namespace    = "ea-platform"
+#   gateway_host = local.gateway_host
+#   depends_on   = [ module.k8s_namespace, module.istio ]
+# }
+

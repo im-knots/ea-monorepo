@@ -1,10 +1,11 @@
 import { MongoClient } from "mongodb";
 
-if (!process.env.MONGO_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
-}
+// if (!process.env.MONGO_URI) {
+//   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
+// }
 
-const uri = process.env.MONGO_URI;
+// const uri = process.env.MONGO_URI;
+const uri = "mongodb://mongodb.ea-platform.svc.cluster.local:27017/ainuUsers";
 const options = { appName: "ea" };
 
 let client: MongoClient;
