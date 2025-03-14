@@ -25,6 +25,7 @@ locals {
     region       = "us-central1"
     cluster_name = "eru-labs-dev"
     env          = "dev"
+    namespaces   = toset(["ea-platform", "eru-labs-brand"])
 
     enable_sec_tooling = false
 }
@@ -62,13 +63,23 @@ provider "helm" {
     }
 }
 
-module monitoring {
-  source = "../../../../modules/monitoring"
-  
-  env                = local.env 
-  enable_sec_tooling = local.enable_sec_tooling
-  
-  depends_on = [
-    module.gke
-  ]
+module "k8s_namespace" {
+  for_each = local.namespaces
+  source     = "../../../../modules/k8s-namespace"
+  namespace  = each.key
 }
+
+# module "external_dns" {
+#   source = "../../../../modules/external-dns"
+# }
+
+# module monitoring {
+#   source = "../../../../modules/monitoring"
+  
+#   env                = local.env 
+#   enable_sec_tooling = local.enable_sec_tooling
+  
+#   depends_on = [
+#     module.gke
+#   ]
+# }
