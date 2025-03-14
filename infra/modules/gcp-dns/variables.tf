@@ -6,15 +6,11 @@ variable "env" {
   type = string
 }
 
-variable "project" {
+variable "mgmt_project" {
   type = string
 }
 
-variable "delegated_users" {
+variable "nonprod_projects" {
   type = list(string)
 }
 
-variable "delegated_nameservers" {
-  type = map(list(string))
-  default = {}
-}

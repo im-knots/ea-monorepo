@@ -53,15 +53,3 @@ module project_apis {
   gcp_apis = local.gcp_apis
 }
 
-module "dns_zone" {
-  source = "../../../../modules/gcp-dns"
-
-  dns_name        = local.dns_name
-  env             = local.env
-  project         = local.project
-  delegated_users = local.external_dns_service_accounts
-
-  depends_on = [ module.project_apis ]
-  
-}
-

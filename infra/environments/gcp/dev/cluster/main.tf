@@ -26,6 +26,12 @@ locals {
     cluster_name = "eru-labs-dev"
     env          = "dev"
     namespaces   = toset(["ea-platform", "eru-labs-brand"])
+    
+    mgmt_project        = "eru-labs-mgmt"
+    public_domain       = "dev.erulabs.ai"
+    public_zone_id      = "erulabs-public-zone-dev"
+    dns_service_account = "external-dns@eru-labs-dev-446616.iam.gserviceaccount.com"
+
 
     enable_sec_tooling = false
 }
@@ -69,9 +75,14 @@ module "k8s_namespace" {
   namespace  = each.key
 }
 
-# module "external_dns" {
-#   source = "../../../../modules/external-dns"
-# }
+module "external_dns" {
+  source = "../../../../modules/external-dns"
+  mgmt_project        = local.mgmt_project
+  public_domain       = local.public_domain
+  public_zone_id      = local.public_zone_id
+  dns_service_account = local.dns_service_account
+  cluster_name        = local.cluster_name
+}
 
 # module monitoring {
 #   source = "../../../../modules/monitoring"

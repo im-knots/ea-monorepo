@@ -18,32 +18,17 @@ locals {
     region       = "us-central1"
     dns_name     = "erulabs.ai"
 
+    nonprod_projects = ["eru-labs-dev-446616"]
+
     gcp_apis = toset([
         "artifactregistry.googleapis.com",
         "iam.googleapis.com",
         "sts.googleapis.com",
         "dns.googleapis.com",
     ])
-
-    delegated_nameservers = {
-      # Dev project for dev.erulabs.ai
-      "dev.erulabs.ai." = [
-        "ns-cloud-c1.googledomains.com.",
-        "ns-cloud-c2.googledomains.com.",
-        "ns-cloud-c3.googledomains.com.",
-        "ns-cloud-c4.googledomains.com.",
-      ]
-    }
-
     artifact_pull_service_accounts = [
       "135550390903-compute@developer.gserviceaccount.com", #Dev Project
     ]
-
-    external_dns_service_accounts = [
-      "135550390903-compute@developer.gserviceaccount.com", #Dev Project
-    ]
-
-
 }
 
 provider "google" {
@@ -77,10 +62,9 @@ module "artifactregistry" {
 module "dns_zone" {
   source = "../../../../modules/gcp-dns"
 
-  project               = local.project 
+  mgmt_project          = local.project 
+  nonprod_projects      = local.nonprod_projects
   dns_name              = local.dns_name
   env                   = local.env
-  delegated_nameservers = local.delegated_nameservers
-  delegated_users       = local.external_dns_service_accounts
   depends_on            = [ module.project_apis ]
 }
