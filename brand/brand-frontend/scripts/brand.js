@@ -53,7 +53,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Update other fetch requests to use `apiBaseUrl`
+        // Ensure the modal and its body are properly selected
+        const waitlistModal = new bootstrap.Modal(document.getElementById('waitlistModal'));
+        const waitlistModalBody = document.querySelector('#waitlistModal .modal-body');
+
+        // Waitlist Form Submission
         const waitlistForm = document.getElementById('waitlistForm');
         if (waitlistForm) {
             waitlistForm.addEventListener('submit', async (e) => {
@@ -69,6 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
 
                     if (response.ok) {
+                        // Update the modal content on success
                         waitlistModalBody.innerHTML = `
                             <div class="text-center">
                                 <h5>Thanks for the early interest!</h5>
