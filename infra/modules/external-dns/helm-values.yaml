@@ -1,0 +1,6 @@
+---
+policy: upsert-only
+domainFilters:
+  - dev.erulabs.ai
+provider:
+  name: google

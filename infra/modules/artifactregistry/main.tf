@@ -13,3 +13,13 @@ resource "google_artifact_registry_repository_iam_member" "docker_push" {
   role       = "roles/artifactregistry.writer"
   member     = "serviceAccount:${var.service_account_email}"
 }
+
+resource "google_artifact_registry_repository_iam_member" "pull" {
+  for_each   = toset(var.artifact_pull_service_accounts)
+  location   = google_artifact_registry_repository.docker_repo.location
+  repository = google_artifact_registry_repository.docker_repo.name
+  role       = "roles/artifactregistry.reader"
+  member     = "serviceAccount:${each.key}"
+}
+
+

@@ -35,6 +35,15 @@ locals {
       ]
     }
 
+    artifact_pull_service_accounts = [
+      "135550390903-compute@developer.gserviceaccount.com", #Dev Project
+    ]
+
+    external_dns_service_accounts = [
+      "135550390903-compute@developer.gserviceaccount.com", #Dev Project
+    ]
+
+
 }
 
 provider "google" {
@@ -62,13 +71,16 @@ module "artifactregistry" {
 
   region = local.region
   service_account_email = module.gh_actions_workload_idenity.service_account_email
+  artifact_pull_service_accounts = local.artifact_pull_service_accounts
 }
 
 module "dns_zone" {
   source = "../../../../modules/gcp-dns"
 
+  project               = local.project 
   dns_name              = local.dns_name
   env                   = local.env
   delegated_nameservers = local.delegated_nameservers
+  delegated_users       = local.external_dns_service_accounts
   depends_on            = [ module.project_apis ]
 }
