@@ -8,6 +8,9 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+gke:
+  enabled: false
+
 config:
   # TEST_ENV: TEST
   apiUrl: https://backend.erulabs.local

@@ -35,12 +35,14 @@ locals {
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend"
                 "image.tag"             = "20250312-d70497f"
+                "gke.enabled"           = "true"
                 
                 "ingress.className"                  = "gce"
                 "ingress.hosts[0].host"              = "backend.dev.erulabs.ai"
                 "ingress.hosts[0].paths[0].path"     = "/"
                 "ingress.hosts[0].paths[0].pathType" = "Prefix"
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
+                "ingress.annotations.networking\\.gke\\.io/managed-certificates" = "brand-frontend-cert"
             }
         }
         "brand-frontend" = {
@@ -50,13 +52,14 @@ locals {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
                 "image.tag"             = "20250312-d70497f"
                 "config.apiUrl"         = "https://backend.dev.erulabs.ai"
+                "gke.enabled"           = "true"
                 
                 "ingress.className"                  = "gce"
                 "ingress.hosts[0].host"              = "dev.erulabs.ai"
                 "ingress.hosts[0].paths[0].path"     = "/"
                 "ingress.hosts[0].paths[0].pathType" = "Prefix"
-                
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
+                "ingress.annotations.networking\\.gke\\.io/managed-certificates" = "brand-frontend-cert"
             }
         }
     }

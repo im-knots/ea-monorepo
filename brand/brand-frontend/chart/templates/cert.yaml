@@ -1,0 +1,9 @@
+{{- if .Values.gke.enabled }}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: brand-frontend-cert
+spec:
+  domains:
+    - {{ index .Values.ingress.hosts 0 "host" }}
+{{- end }}
