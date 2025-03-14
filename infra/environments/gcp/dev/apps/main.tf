@@ -49,6 +49,7 @@ locals {
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
                 "image.tag"             = "20250312-d70497f"
+                "config.apiUrl"         = "https://backend.dev.erulabs.ai"
                 
                 "ingress.className"                  = "gce"
                 "ingress.hosts[0].host"              = "dev.erulabs.ai"

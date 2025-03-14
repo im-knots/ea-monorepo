@@ -1,127 +1,95 @@
-document.addEventListener('DOMContentLoaded', () => {
-    fetch('header.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('site-header').outerHTML = data;
-    })
-    .catch(error => console.error('Error loading header:', error));
-    fetch('footer.html')
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById('site-footer').outerHTML = data;
-    })
-    .catch(error => console.error('Error loading footer:', error));
-    // Contact form submission
-    const contactForm = document.getElementById('contactForm');
-    if (contactForm) {
-        contactForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent the default form submission
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // Load config.json dynamically
+        const configResponse = await fetch('/config/config.json');
+        const config = await configResponse.json();
+        const apiBaseUrl = config.apiBaseUrl;
 
-            const formData = new FormData(contactForm); // Collect form data
-            const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
+        // Fetch header and footer
+        fetch('header.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('site-header').outerHTML = data;
+            })
+            .catch(error => console.error('Error loading header:', error));
 
-            try {
-                const response = await fetch('http://api.ea.erulabs.local/brand-backend/submit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(jsonData),
-                });
+        fetch('footer.html')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('site-footer').outerHTML = data;
+            })
+            .catch(error => console.error('Error loading footer:', error));
 
-                if (response.ok) {
-                    contactForm.reset();
-                    // Show success modal for contact form
-                    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
-                    successModal.show();
-                    setTimeout(() => {
-                        waitlistModal.hide();
-                        window.location.hash = '#contact'; 
-                    }, 3000); 
-                } else {
-                    alert('Failed to send message. Please try again later.');
+        // Contact Form Submission
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(contactForm);
+                const jsonData = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch(`${apiBaseUrl}/submit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(jsonData),
+                    });
+
+                    if (response.ok) {
+                        contactForm.reset();
+                        const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                        successModal.show();
+                        setTimeout(() => {
+                            successModal.hide();
+                            window.location.hash = '#contact';
+                        }, 3000);
+                    } else {
+                        alert('Failed to send message. Please try again later.');
+                    }
+                } catch (error) {
+                    console.error('Error submitting form:', error);
+                    alert('An error occurred. Please try again.');
                 }
-            } catch (error) {
-                console.error('Error submitting form:', error);
-                alert('An error occurred. Please try again.');
-            }
-        });
-    }
+            });
+        }
 
-    // Subscription form submission
-    const subscribeForm = document.getElementById('subscribeForm');
-    if (subscribeForm) {
-        subscribeForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent the default form submission
+        // Update other fetch requests to use `apiBaseUrl`
+        const waitlistForm = document.getElementById('waitlistForm');
+        if (waitlistForm) {
+            waitlistForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(waitlistForm);
+                const jsonData = Object.fromEntries(formData.entries());
 
-            const email = subscribeForm.querySelector('input[name="email"]').value;
+                try {
+                    const response = await fetch(`${apiBaseUrl}/waitlist`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(jsonData),
+                    });
 
-            if (!email) {
-                alert('Please enter a valid email address.');
-                return;
-            }
-
-            try {
-                const response = await fetch('http://api.ea.erulabs.local/brand-backend/subscribe', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email }),
-                });
-
-                if (response.ok) {
-                    subscribeForm.reset();
-                    // Show success modal for subscription
-                    const subscriptionSuccessModal = new bootstrap.Modal(document.getElementById('subscriptionSuccessModal'));
-                    subscriptionSuccessModal.show();
-                    setTimeout(() => {
-                        waitlistModal.hide(); 
-                        window.location.hash = '#contact'; 
-                    }, 3000); 
-                } else {
-                    alert('Failed to subscribe. Please try again later.');
+                    if (response.ok) {
+                        waitlistModalBody.innerHTML = `
+                            <div class="text-center">
+                                <h5>Thanks for the early interest!</h5>
+                                <p>We'll be in touch soon.</p>
+                            </div>
+                        `;
+                        setTimeout(() => {
+                            waitlistModal.hide();
+                            window.location.hash = '#';
+                        }, 3000);
+                    } else {
+                        alert('Failed to join the waitlist. Please try again later.');
+                    }
+                } catch (error) {
+                    console.error('Error submitting waitlist form:', error);
+                    alert('An error occurred. Please try again.');
                 }
-            } catch (error) {
-                console.error('Error subscribing:', error);
-                alert('An error occurred. Please try again.');
-            }
-        });
-    }
+            });
+        }
 
-    const waitlistForm = document.getElementById('waitlistForm');
-    const waitlistModal = new bootstrap.Modal(document.getElementById('waitlistModal'));
-    const waitlistModalBody = document.querySelector('#waitlistModal .modal-body');
-
-    if (waitlistForm) {
-        waitlistForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Prevent the default form submission
-
-            const formData = new FormData(waitlistForm); // Collect form data
-            const jsonData = Object.fromEntries(formData.entries()); // Convert to JSON
-
-            try {
-                const response = await fetch('http://api.ea.erulabs.local/brand-backend/waitlist', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(jsonData),
-                });
-
-                if (response.ok) {
-                    // Change modal content to success message
-                    waitlistModalBody.innerHTML = `
-                        <div class="text-center">
-                            <h5>Thanks for the early interest!</h5>
-                            <p>We'll be in touch soon.</p>
-                        </div>
-                    `;
-                    setTimeout(() => {
-                        waitlistModal.hide(); // Close the modal after showing the message
-                        window.location.hash = '#'; // Redirect to the top of the page (or another section)
-                    }, 3000); // Adjust the delay (3 seconds here) as needed
-                } else {
-                    alert('Failed to join the waitlist. Please try again later.');
-                }
-            } catch (error) {
-                console.error('Error submitting waitlist form:', error);
-                alert('An error occurred. Please try again.');
-            }
-        });
+    } catch (error) {
+        console.error('Error loading configuration:', error);
     }
 });
