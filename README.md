@@ -140,13 +140,7 @@ minikube start \
   --cni calico
 
 # need to increase the filesystem user watches
-minikube ssh
-sudo sysctl -w fs.inotify.max_user_watches=10000
-sudo sysctl -w fs.inotify.max_user_instances=1000
-sudo sysctl -w fs.file-max=50000
-ulimit -n 50000
-
-exit
+minikube ssh -- "sudo sysctl -w fs.inotify.max_user_watches=10000 fs.inotify.max_user_instances=1000 fs.file-max=50000 && ulimit -n 50000"
 
 ./minikube.sh start # builds and runs all apps in local minikube, sets up portforwarding for local development, seeds test data, runs smoke tests
 

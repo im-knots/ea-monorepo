@@ -33,6 +33,7 @@ resource "google_container_cluster" "gke" {
   location                 = "us-central1"
   enable_autopilot         = true
   enable_l4_ilb_subsetting = true
+  allow_net_admin          = true
 
   network    = google_compute_network.eru_labs.id
   subnetwork = google_compute_subnetwork.eru_labs.id

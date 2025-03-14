@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: API Gateway
+description: The EA Platform API Gateway configurations
+version: 0.1.0
+appVersion: 0.1.0

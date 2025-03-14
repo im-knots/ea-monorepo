@@ -11,7 +11,9 @@ fullnameOverride: ""
 config:
   PORT: 8080
 
-secrets: []
+secrets:
+  DATABASE_URL: "postgresql://admin:super-password@postgresql:5432/ea"
+  JWT_SECRET: "super-secret"
 
 resources: 
   limits:
@@ -56,7 +58,7 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: "kong"
   annotations: {}
   hosts:
     - host: ea.erulabs.local

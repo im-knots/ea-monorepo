@@ -121,26 +121,28 @@ resource "kubernetes_config_map" "global_dashboards" {
 //    - It scans container images, Kubernetes configurations, and infrastructure for vulnerabilities & misconfigurations.
 //    - Helps with SOC 2 compliance by detecting security risks before they impact workloads.
 //    - Outputs vulnerability reports, misconfigurations, and exposed secrets directly into Kubernetes CRDs.
-# resource "helm_release" "trivy" {
-#     name             = "trivy"
-#     repository       = "https://aquasecurity.github.io/helm-charts/"
-#     chart            = "trivy-operator"
-#     namespace        = kubernetes_namespace.monitoring.metadata[0].name
+resource "helm_release" "trivy" {
+    count      = var.enable_sec_tooling == true ? 1 : 0
+    name       = "trivy"
+    repository = "https://aquasecurity.github.io/helm-charts/"
+    chart      = "trivy-operator"
+    namespace  = kubernetes_namespace.monitoring.metadata[0].name
 
-#     values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
-# }
+    values = [file("${path.module}/helm-values/trivy-helm-values.yaml")]
+}
 
 //  Falco is a real-time runtime security tool for Kubernetes.
 //    - It monitors system calls and detects suspicious behavior inside running containers.
 //    - Uses pre-defined and custom rules to alert on security threats (e.g., unexpected process execution, privilege escalation).
 //    - Logs are collected in Loki via Alloy, enabling security monitoring and incident response.
-# resource "helm_release" "falco" {
-#   name       = "falco"
-#   repository = "https://falcosecurity.github.io/charts"
-#   chart      = "falco"
-#   namespace  = kubernetes_namespace.monitoring.metadata[0].name
+resource "helm_release" "falco" {
+  count      = var.enable_sec_tooling == true ? 1 : 0
+  name       = "falco"
+  repository = "https://falcosecurity.github.io/charts"
+  chart      = "falco"
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
 
-#   values = [file("${path.module}/helm-values/falco-helm-values.yaml")]
-# }
+  values = [file("${path.module}/helm-values/falco-helm-values.yaml")]
+}
 
 

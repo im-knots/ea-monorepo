@@ -18,7 +18,7 @@ ollama:
          FROM llama3.2
          PARAMETER num_ctx 32768
   gpu:
-    enabled: true
+    enabled: false
     type: 'nvidia'
     number: 1
     nvidiaResource: "nvidia.com/gpu"

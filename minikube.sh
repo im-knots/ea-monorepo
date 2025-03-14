@@ -33,7 +33,11 @@ build_and_push() {
 
 deploy_stack_terraform() {
     echo -e "${BOLD_YELLOW}DEPLOYING APPS AND DEPENDENCIES TO MINIKUBE${RESET}"
-    cd infra/environments/local
+    cd infra/environments/local/cluster
+    terraform init
+    terraform apply -auto-approve
+    cd $REPO_DIR
+    cd infra/environments/local/apps
     terraform init
     terraform apply -auto-approve
     cd $REPO_DIR
@@ -150,9 +154,8 @@ cleanup() {
 # Main Script
 case "$1" in
     start)
-        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.1.0/standard-install.yaml
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
         
-        minikube addons enable ingress
         minikube addons enable registry
         minikube addons enable metrics-server
         helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -186,8 +189,25 @@ case "$1" in
     stop)
         cleanup
         ;;
+    build)
+        for dir in "${BASE_DIRS[@]}"; do
+            if [[ ! -d "$dir" ]]; then
+                echo "Base directory $dir does not exist. Skipping."
+                continue
+            fi
+
+            # Process each app in the directory
+            echo "Iterating through apps in $dir..."
+            for app_path in "$dir"/*; do
+                # Skip if it's not a directory
+                if [[ -d "$app_path" ]]; then
+                    build_and_push "$app_path"
+                fi
+            done
+        done
+        ;;
     *)
-        echo "Usage: $0 {start|stop} [version]"
+        echo "Usage: $0 {start|stop|build} [version]"
         exit 1
         ;;
 esac
