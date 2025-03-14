@@ -33,10 +33,13 @@ locals {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend-chart"
             version = "20250312-d70497f"
             helm_overrides = {
-                "image.repository"  = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend"
-                "image.tag"         = "20250312-d70497f"
-                "ingress.className" = "gce"
+                "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend"
+                "image.tag"             = "20250312-d70497f"
                 
+                "ingress.className"                  = "gce"
+                "ingress.hosts[0].host"              = "backend.dev.erulabs.ai"
+                "ingress.hosts[0].paths[0].path"     = "/"
+                "ingress.hosts[0].paths[0].pathType" = "Prefix"
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
             }
         }
@@ -44,9 +47,13 @@ locals {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend-chart"
             version = "20250312-d70497f"
             helm_overrides = {
-                "image.repository"  = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
-                "image.tag"         = "20250312-d70497f"
-                "ingress.className" = "gce"
+                "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
+                "image.tag"             = "20250312-d70497f"
+                
+                "ingress.className"                  = "gce"
+                "ingress.hosts[0].host"              = "dev.erulabs.ai"
+                "ingress.hosts[0].paths[0].path"     = "/"
+                "ingress.hosts[0].paths[0].pathType" = "Prefix"
                 
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
             }
@@ -164,15 +171,15 @@ module "eru_app_deployment" {
   ]
 }
 
-module "ea_app_deployment" {
-  source     = "../../../../modules/app-deployment"
-  apps       = local.ea_apps
-  namespace  = "ea-platform"
+# module "ea_app_deployment" {
+#   source     = "../../../../modules/app-deployment"
+#   apps       = local.ea_apps
+#   namespace  = "ea-platform"
 
-  depends_on = [ 
-    module.mongodb_deployment,
-  ]
-}
+#   depends_on = [ 
+#     module.mongodb_deployment,
+#   ]
+# }
 
 
 

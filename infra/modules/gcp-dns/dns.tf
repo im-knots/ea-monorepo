@@ -73,6 +73,16 @@ resource "google_project_iam_binding" "dns_wi_account_read" {
   ]
 }
 
+resource "google_project_iam_binding" "dns_wi_account_admin" {
+  for_each = toset(var.nonprod_projects)
+  project  = var.mgmt_project
+  role     = "roles/dns.admin"
+
+  members = [
+    "serviceAccount:${google_service_account.dns_wi_account[each.key].email}",
+  ]
+}
+
 resource "google_service_account_iam_binding" "workload_identity_binding" {
   for_each           = toset(var.nonprod_projects)
   service_account_id = google_service_account.dns_wi_account[each.key].name
