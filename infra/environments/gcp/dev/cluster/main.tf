@@ -25,6 +25,8 @@ locals {
     region       = "us-central1"
     cluster_name = "eru-labs-dev"
     env          = "dev"
+
+    enable_sec_tooling = false
 }
 
 provider "google" {
@@ -62,7 +64,10 @@ provider "helm" {
 
 module monitoring {
   source = "../../../../modules/monitoring"
-  env    = local.env 
+  
+  env                = local.env 
+  enable_sec_tooling = local.enable_sec_tooling
+  
   depends_on = [
     module.gke
   ]

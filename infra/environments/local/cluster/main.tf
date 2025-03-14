@@ -40,28 +40,28 @@ module "minikube" {
   source = "../../../modules/minikube-setup"
 }
 
-# module monitoring {
-#   source = "../../../modules/monitoring"
+module monitoring {
+  source = "../../../modules/monitoring"
   
-#   env                = local.env
-#   enable_sec_tooling = local.enable_sec_tooling
-# }
+  env                = local.env
+  enable_sec_tooling = local.enable_sec_tooling
+}
 
-# module "k8s_namespace" {
-#   for_each = local.namespaces
-#   source     = "../../../modules/k8s-namespace"
-#   namespace  = each.key
-# }
+module "k8s_namespace" {
+  for_each = local.namespaces
+  source     = "../../../modules/k8s-namespace"
+  namespace  = each.key
+}
 
-# module "istio" {
-#   source = "../../../modules/istio"
-#   depends_on = [ module.k8s_namespace ]
-# }
+module "istio" {
+  source = "../../../modules/istio"
+  depends_on = [ module.k8s_namespace ]
+}
 
-# module "ea_gateway" {
-#   source       = "../../../modules/gateway"
-#   namespace    = "ea-platform"
-#   gateway_host = local.gateway_host
-#   depends_on   = [ module.k8s_namespace, module.istio ]
-# }
+module "ea_gateway" {
+  source       = "../../../modules/gateway"
+  namespace    = "ea-platform"
+  gateway_host = local.gateway_host
+  depends_on   = [ module.k8s_namespace, module.istio ]
+}
 

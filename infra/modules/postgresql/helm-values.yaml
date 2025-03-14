@@ -1,5 +1,0 @@
-auth:
-  username: "admin"
-  password: "super-password"
-  database: "ea"
-architecture: standalone
