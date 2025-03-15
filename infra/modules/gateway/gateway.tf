@@ -38,3 +38,18 @@ resource "kubernetes_manifest" "ea_gateway" {
     }
   }
 }
+
+resource "kubernetes_manifest" "ea-gateway-tls" {
+  manifest = {
+    "apiVersion" = "v1"
+    "kind"       = "Secret"
+    "metadata" = {
+      "name"      = "ea-gateway-tls"
+      "namespace" = var.namespace
+    }
+    "data" = {
+      "tls.crt" = filebase64("${path.module}/certs/tls.crt")
+      "tls.key" = filebase64("${path.module}/certs/tls.key")
+    }
+  }
+}
