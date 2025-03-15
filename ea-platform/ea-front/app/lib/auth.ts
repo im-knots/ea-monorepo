@@ -1,12 +1,13 @@
 import bcrypt from "bcryptjs";
-import mongodb from "./mongodb";
+import mongoClient from "./mongodb";
 import * as jose from "jose";
 import { cookies } from "next/headers";
-import { JWKS, privateKey } from "./jwks";
+import { getJWKS, getPrivateKey } from "./jwks";
 
 export async function Register(user: { email: string, password: string }) {
   const { email, password } = user;
   const hashedPassword = await bcrypt.hash(password, 10);
+  const mongodb = await mongoClient();
   const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
   
   if (userRecord) {
@@ -23,11 +24,8 @@ export async function Login(user: { email: string, password: string }) {
   const cookieStore = await cookies();
 
   const { email, password } = user;
-  
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET not set");
-  }
-  
+
+  const mongodb = await mongoClient();
   const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
 
   if (!userRecord) {
@@ -42,6 +40,7 @@ export async function Login(user: { email: string, password: string }) {
     throw new Error("Invalid password");
   }
   try {
+    const privateKey = await getPrivateKey();
     const token = await new jose.SignJWT({
       email: userRecord.email,
     })
@@ -67,6 +66,7 @@ export async function GetTokenClaims(token: string) {
     return {};
   }
   try {
+    const JWKS = await getJWKS();
     const { payload } = await jose.jwtVerify(token, JWKS);
     return payload;
   } catch (error) {

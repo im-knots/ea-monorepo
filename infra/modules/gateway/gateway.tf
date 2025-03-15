@@ -17,6 +17,22 @@ resource "kubernetes_manifest" "ea_gateway" {
           "allowedRoutes" = {
             "namespaces" = { "from" = "All" }
           }
+        },
+        {
+          "name"     = "https"
+          "hostname" = var.gateway_host
+          "port"     = 443
+          "protocol" = "HTTPS"
+          "allowedRoutes" = {
+            "namespaces" = { "from" = "All" }
+          }
+          "tls" = {
+            "mode" = "Terminate"
+            "certificateRefs" = [{
+              "kind" = "Secret"
+              "name" = "ea-gateway-tls"
+            }]
+          }
         }
       ]
     }

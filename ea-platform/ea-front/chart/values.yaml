@@ -12,8 +12,15 @@ config:
   PORT: 8080
 
 secrets:
-  DATABASE_URL: "postgresql://admin:super-password@postgresql:5432/ea"
-  JWT_SECRET: "super-secret"
+  MONGO_URI: "mongodb://"
+
+jwks:
+  fromSecret: ""
+
+gateway:
+  enabled: true
+  name: ea-gateway
+  host: ea.erulabs.local
 
 resources: 
   limits:
@@ -57,14 +64,7 @@ service:
   port: 8080
 
 ingress:
-  enabled: true
-  className: "kong"
-  annotations: {}
-  hosts:
-    - host: ea.erulabs.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
+  enabled: false
 
 livenessProbe:
   httpGet:

@@ -25,7 +25,6 @@ locals {
     "ea-credentials-manager" = "../../../../ea-platform/ea-credentials-manager/chart"
     "ea-ainu-manager"        = "../../../../ea-platform/ea-ainu-manager/chart"
     "ea-ainu-operator"       = "../../../../ea-platform/ea-ainu-operator/chart"
-    "ea-front"               = "../../../../ea-platform/ea-front/chart"
     "ea-job-api"             = "../../../../ea-platform/ea-job-api/chart"
     "ea-job-operator"        = "../../../../ea-platform/ea-job-operator/chart"
     "ea-job-utils"           = "../../../../ea-platform/ea-job-utils/chart"
@@ -84,4 +83,43 @@ module "eru_labs_brand_app_deployment" {
   depends_on = [ 
     module.mongodb_deployment,
   ]
+}
+
+
+resource "helm_release" "ea-front" {
+  name       = "ea-front"
+  chart      = "../../../../ea-platform/ea-front/chart"
+  namespace  = "ea-platform"
+  
+  create_namespace = false
+  
+  set {
+    name  = "secrets.MONGO_URI"
+    value = "mongodb://mongodb.ea-platform:27017/ea"
+  }
+
+  set {
+    name = "jwks.fromSecret"
+    value = "ea-front-jwks"
+  }
+
+  depends_on = [
+    module.mongodb_deployment,
+    kubernetes_manifest.ea-front-jwks,
+  ]
+}
+
+resource "kubernetes_manifest" "ea-front-jwks" {
+  manifest = {
+    apiVersion = "v1"
+    kind        = "Secret"
+    metadata = {
+      name      = "ea-front-jwks"
+      namespace = "ea-platform"
+    }
+    data = {
+      "jwks.json" = filebase64("./jwks/jwks.json")
+      "private.json" = filebase64("./jwks/private.json")
+    }
+  }
 }

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const toggleSidebar = () => setIsCollapsed((prev) => !prev);
+  
   const router = useRouter();
   useEffect(() => {
     fetch("/api/user").then(async (res) => {
