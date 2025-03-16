@@ -19,6 +19,7 @@ locals {
     dns_name     = "erulabs.ai"
 
     nonprod_projects = ["eru-labs-dev-446616"]
+    prod_projects    = ["eru-labs-prod-453516"]
 
     gcp_apis = toset([
         "artifactregistry.googleapis.com",
@@ -28,6 +29,7 @@ locals {
     ])
     artifact_pull_service_accounts = [
       "135550390903-compute@developer.gserviceaccount.com", #Dev Project
+      "1031528967800-compute@developer.gserviceaccount.com", #Prod Project
     ]
 }
 
@@ -64,6 +66,7 @@ module "dns_zone" {
 
   mgmt_project          = local.project 
   nonprod_projects      = local.nonprod_projects
+  prod_projects         = local.prod_projects
   dns_name              = local.dns_name
   env                   = local.env
   depends_on            = [ module.project_apis ]

@@ -57,14 +57,14 @@ resource "google_project_iam_binding" "dns_admin_account" {
 }
 
 resource "google_service_account" "dns_wi_account" {
-  for_each     = toset(var.nonprod_projects)
+  for_each     = toset(concat(var.nonprod_projects, var.prod_projects))
   project      = each.key
   account_id   = "external-dns"
   display_name = "Workload Identity Service Account for ExternalDNS"
 }
 
 resource "google_project_iam_binding" "dns_wi_account_read" {
-  for_each = toset(var.nonprod_projects)
+  for_each = toset(concat(var.nonprod_projects, var.prod_projects))
   project  = var.mgmt_project
   role     = "roles/dns.reader"
 
@@ -74,7 +74,7 @@ resource "google_project_iam_binding" "dns_wi_account_read" {
 }
 
 resource "google_project_iam_binding" "dns_wi_account_admin" {
-  for_each = toset(var.nonprod_projects)
+  for_each = toset(concat(var.nonprod_projects, var.prod_projects))
   project  = var.mgmt_project
   role     = "roles/dns.admin"
 
@@ -84,7 +84,7 @@ resource "google_project_iam_binding" "dns_wi_account_admin" {
 }
 
 resource "google_service_account_iam_binding" "workload_identity_binding" {
-  for_each           = toset(var.nonprod_projects)
+  for_each           = toset(concat(var.nonprod_projects, var.prod_projects))
   service_account_id = google_service_account.dns_wi_account[each.key].name
   role               = "roles/iam.workloadIdentityUser"
 
@@ -94,7 +94,7 @@ resource "google_service_account_iam_binding" "workload_identity_binding" {
 }
 
 resource "google_service_account_iam_binding" "allow_dns_updates" {
-  for_each           = toset(var.nonprod_projects)
+  for_each           = toset(concat(var.nonprod_projects, var.prod_projects))
   service_account_id = google_service_account.dns_admin_account.name
   role               = "roles/iam.serviceAccountTokenCreator"
 

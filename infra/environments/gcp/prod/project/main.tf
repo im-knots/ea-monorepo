@@ -1,8 +1,8 @@
 terraform {
     required_version = "1.10.3"
     backend "gcs" {
-        bucket  = "eru-labs-terraform-state-dev"
-        prefix  = "eru-labs-project-dev/terraform.tfstate" # Optional: folder-like structure for state
+        bucket  = "eru-labs-terraform-state-prod"
+        prefix  = "eru-labs-project-prod/terraform.tfstate" # Optional: folder-like structure for state
     }
     required_providers {
         google = {
@@ -21,9 +21,9 @@ terraform {
 }
 
 locals {
-    project      = "eru-labs-dev-446616"
+    project      = "eru-labs-prod-453516"
     region       = "us-central1"
-    env          = "dev"
+    env          = "prod"
 
     gcp_apis = toset([
         "compute.googleapis.com",
@@ -33,6 +33,7 @@ locals {
         "sts.googleapis.com",
         "dns.googleapis.com",
     ])
+
 }
 
 provider "google" {
