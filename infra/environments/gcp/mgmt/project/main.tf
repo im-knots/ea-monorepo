@@ -18,7 +18,7 @@ locals {
     region       = "us-central1"
     dns_name     = "erulabs.ai"
 
-    nonprod_projects = ["eru-labs-dev-446616"]
+    nonprod_projects = []
     prod_projects    = ["eru-labs-prod-453516"]
 
     gcp_apis = toset([
