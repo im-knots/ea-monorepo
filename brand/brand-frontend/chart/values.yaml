@@ -9,7 +9,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 gke:
-  enabled: true
+  enabled: false
 
 config:
   # TEST_ENV: TEST
