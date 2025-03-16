@@ -54,8 +54,7 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-  annotations: 
-    some.test: test
+  annotations: {}
   hosts:
     - host: erulabs.local
       paths:
