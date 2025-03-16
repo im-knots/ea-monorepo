@@ -47,10 +47,10 @@ locals {
         }
         "brand-frontend" = {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend-chart"
-            version = "20250316-e2c812d"
+            version = "20250316-ebeb158"
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
-                "image.tag"             = "20250316-e2c812d"
+                "image.tag"             = "20250316-ebeb158"
                 "config.apiUrl"         = "https://backend.dev.erulabs.ai"
                 "gke.enabled"           = "true"
                 
