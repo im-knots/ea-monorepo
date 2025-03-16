@@ -31,10 +31,10 @@ locals {
     eru_apps = {
         "brand-backend" = {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend-chart"
-            version = "20250312-d70497f"
+            version = "20250314-805e4bf"
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend"
-                "image.tag"             = "20250312-d70497f"
+                "image.tag"             = "20250314-805e4bf"
                 "gke.enabled"           = "true"
                 
                 "ingress.className"                  = "gce"
@@ -42,15 +42,15 @@ locals {
                 "ingress.hosts[0].paths[0].path"     = "/"
                 "ingress.hosts[0].paths[0].pathType" = "Prefix"
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
-                "ingress.annotations.networking\\.gke\\.io/managed-certificates" = "brand-frontend-cert"
+                "ingress.annotations.networking\\.gke\\.io/managed-certificates" = "brand-backend-cert"
             }
         }
         "brand-frontend" = {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend-chart"
-            version = "20250312-d70497f"
+            version = "20250314-805e4bf"
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
-                "image.tag"             = "20250312-d70497f"
+                "image.tag"             = "20250314-805e4bf"
                 "config.apiUrl"         = "https://backend.dev.erulabs.ai"
                 "gke.enabled"           = "true"
                 
