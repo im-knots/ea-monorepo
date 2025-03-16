@@ -60,6 +60,7 @@ locals {
                 "ingress.hosts[0].paths[0].pathType" = "Prefix"
                 "ingress.annotations.kubernetes\\.io/ingress\\.class" = "gce"
                 "ingress.annotations.networking\\.gke\\.io/managed-certificates" = "brand-frontend-cert"
+                "ingress.annotations.networking\\.gke\\.io/v1beta1\\.FrontendConfig" = "brand-frontend-redirect-http"
             }
         }
     }

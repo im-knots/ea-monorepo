@@ -9,7 +9,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 gke:
-  enabled: false
+  enabled: true
 
 config:
   # TEST_ENV: TEST
@@ -54,7 +54,8 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-  annotations: {}
+  annotations: 
+    some.test: test
   hosts:
     - host: erulabs.local
       paths:
