@@ -31,10 +31,10 @@ locals {
     eru_apps = {
         "brand-backend" = {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend-chart"
-            version = "20250314-805e4bf"
+            version = "20250316-befc6d9"
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-backend"
-                "image.tag"             = "20250314-805e4bf"
+                "image.tag"             = "20250316-befc6d9"
                 "gke.enabled"           = "true"
                 
                 "ingress.className"                  = "gce"
@@ -48,10 +48,10 @@ locals {
         }
         "brand-frontend" = {
             chart = "oci://us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend-chart"
-            version = "20250316-ca2246b"
+            version = "20250316-befc6d9"
             helm_overrides = {
                 "image.repository"      = "us-central1-docker.pkg.dev/eru-labs-mgmt/eru-labs-images/brand-frontend"
-                "image.tag"             = "20250316-ca2246b"
+                "image.tag"             = "20250316-befc6d9"
                 "config.apiUrl"         = "https://backend.erulabs.ai"
                 "gke.enabled"           = "true"
                 
