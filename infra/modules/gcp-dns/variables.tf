@@ -14,3 +14,6 @@ variable "nonprod_projects" {
   type = list(string)
 }
 
+variable "prod_projects" {
+  type = list(string)
+}
