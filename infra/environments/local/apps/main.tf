@@ -20,20 +20,64 @@ locals {
   env          = "local"
   namespaces   = toset(["ea-platform", "eru-labs-brand"])
 
-  ea_apps = {
-    "ea-agent-manager"       = "../../../../ea-platform/ea-agent-manager/chart"
-    "ea-credentials-manager" = "../../../../ea-platform/ea-credentials-manager/chart"
-    "ea-ainu-manager"        = "../../../../ea-platform/ea-ainu-manager/chart"
-    "ea-ainu-operator"       = "../../../../ea-platform/ea-ainu-operator/chart"
-    "ea-job-api"             = "../../../../ea-platform/ea-job-api/chart"
-    "ea-job-operator"        = "../../../../ea-platform/ea-job-operator/chart"
-    "ea-job-utils"           = "../../../../ea-platform/ea-job-utils/chart"
-  }
+    eru_apps = {
+        "brand-backend" = {
+            chart = "../../../../brand/brand-backend/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "brand-frontend" = {
+            chart = "../../../../brand/brand-frontend/chart"
+            version = null
+            helm_overrides = {}
+        }
+    }
 
-  eru_apps = {
-    "brand-backend"  = "../../../../brand/brand-backend/chart"
-    "brand-frontend" = "../../../../brand/brand-frontend/chart"
-  }
+    ea_apps = {
+        "ea-agent-manager" = {
+            chart = "../../../../ea-platform/ea-agent-manager/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-ainu-manager" = {
+            chart = "../../../../ea-platform/ea-ainu-manager/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-ainu-operator" = {
+            chart = "../../../../ea-platform/ea-ainu-operator/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-credentials-manager" = {
+            chart = "../../../../ea-platform/ea-credentials-manager/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-front" = {
+            chart = "../../../../ea-platform/ea-front/chart"
+            version = null
+            helm_overrides = {
+              "secrets.MONGO_URI" = "mongodb://mongodb.ea-platform:27017/ea"
+              "jwks.fromSecret"   = "ea-front-jwks"
+            }
+        }
+        "ea-job-api" = {
+            chart = "../../../../ea-platform/ea-job-api/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-job-operator" = {
+            chart = "../../../../ea-platform/ea-job-operator/chart"
+            version = null
+            helm_overrides = {}
+        }
+        "ea-job-utils" = {
+            chart = "../../../../ea-platform/ea-job-utils/chart"
+            version = null
+            helm_overrides = {}
+        }
+    }
 }
 
 provider "kubernetes" {
@@ -54,30 +98,9 @@ module "mongodb_deployment" {
   namespace  = each.key
 }
 
-module "ea_app_deployment" {
-  for_each = local.ea_apps
-
+module "eru_app_deployment" {
   source     = "../../../modules/app-deployment"
-  app_name   = each.key
-  chart_path = each.value
-  namespace  = "ea-platform"
-
-  depends_on = [ 
-    module.mongodb_deployment,
-  ]
-}
-
-module ollama {
-  source    = "../../../modules/ollama"
-  namespace = "ea-platform"
-}
-
-module "eru_labs_brand_app_deployment" {
-  for_each = local.eru_apps
-
-  source     = "../../../modules/app-deployment"
-  app_name   = each.key
-  chart_path = each.value
+  apps       = local.eru_apps
   namespace  = "eru-labs-brand"
 
   depends_on = [ 
@@ -85,27 +108,18 @@ module "eru_labs_brand_app_deployment" {
   ]
 }
 
+# module ollama {
+#   source    = "../../../modules/ollama"
+#   namespace = "ea-platform"
+# }
 
-resource "helm_release" "ea-front" {
-  name       = "ea-front"
-  chart      = "../../../../ea-platform/ea-front/chart"
+module "eru_labs_brand_app_deployment" {
+  source     = "../../../modules/app-deployment"
+  apps       = local.ea_apps
   namespace  = "ea-platform"
-  
-  create_namespace = false
-  
-  set {
-    name  = "secrets.MONGO_URI"
-    value = "mongodb://mongodb.ea-platform:27017/ea"
-  }
 
-  set {
-    name = "jwks.fromSecret"
-    value = "ea-front-jwks"
-  }
-
-  depends_on = [
+  depends_on = [ 
     module.mongodb_deployment,
-    kubernetes_manifest.ea-front-jwks,
   ]
 }
 

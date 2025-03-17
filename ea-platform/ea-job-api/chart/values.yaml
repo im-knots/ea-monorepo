@@ -60,15 +60,13 @@ networkPolicy:
   enabled: true 
 
 ingress:
-  enabled: true
-  className: "kong"
-  annotations:
-    konghq.com/strip-path: 'true'
-    konghq.com/plugins: global-jwt-auth, global-cors
+  enabled: false
+  className: "nginx"
+  annotations: {}
   hosts:
-    - host: 
+    - host: job-api.ea.erulabs.local
       paths:
-        - path: /job-api
+        - path: /
           pathType: ImplementationSpecific
 
 livenessProbe:

@@ -9,7 +9,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 gke:
-  enabled: true
+  enabled: false
 
 config:
   # TEST_ENV: TEST
@@ -51,13 +51,13 @@ service:
   port: 8080
 
 ingress:
-  enabled: true
-  className: "kong"
+  enabled: false
+  className: "nginx"
   annotations: {}
   hosts:
     - host: backend.erulabs.local
       paths:
-        - path: /brand-backend
+        - path: /
           pathType: ImplementationSpecific
 
 livenessProbe:

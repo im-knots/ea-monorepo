@@ -36,9 +36,9 @@ provider "helm" {
   }
 }
 
-module "minikube" {
-  source = "../../../modules/minikube-setup"
-}
+# module "minikube" {
+#   source = "../../../modules/minikube-setup"
+# }
 
 module monitoring {
   source = "../../../modules/monitoring"
