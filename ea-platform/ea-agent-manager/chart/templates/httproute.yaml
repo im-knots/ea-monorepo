@@ -10,9 +10,15 @@ spec:
   - {{ .Values.gateway.host }}
   rules:
   - matches:
-    - path:
-        type: PathPrefix
-        value: {{ .Values.gateway.pathPrefix }}
+      - path:
+          type: PathPrefix
+          value: {{ .Values.gateway.pathPrefix }}
+    filters:
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            replacePrefixMatch: /
+            type: ReplacePrefixMatch
     backendRefs:
     - name: {{ include "ea-agent-manager.fullname" $ }}
       port: {{ $.Values.service.port }}

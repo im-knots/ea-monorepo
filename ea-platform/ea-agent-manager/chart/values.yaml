@@ -59,7 +59,7 @@ networkPolicy:
 gateway:
   enabled: true
   name: ea-gateway
-  host: api.ea.erulabs.local
+  host: api.erulabs.local
   pathPrefix: /agent-manager
 
 ingress:

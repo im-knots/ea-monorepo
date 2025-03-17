@@ -13,6 +13,12 @@ spec:
     - path:
         type: PathPrefix
         value: {{ .Values.gateway.pathPrefix }}
+    filters:
+      - type: URLRewrite
+        urlRewrite:
+          path:
+            replacePrefixMatch: /
+            type: ReplacePrefixMatch
     backendRefs:
     - name: {{ include "ea-job-api.fullname" $ }}
       port: {{ $.Values.service.port }}
