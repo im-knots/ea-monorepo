@@ -47,7 +47,8 @@ serviceAccount:
 
 podAnnotations: {}
 
-podLabels: {}
+podLabels: 
+ jwt: "true"
 
 service:
   type: ClusterIP

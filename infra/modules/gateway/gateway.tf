@@ -53,3 +53,76 @@ resource "kubernetes_manifest" "ea-gateway-tls" {
     }
   }
 }
+
+resource "kubernetes_manifest" "request_authentication_httpbin" {
+  manifest = {
+    "apiVersion" = "security.istio.io/v1"
+    "kind"       = "RequestAuthentication"
+    "metadata" = {
+      "name"      = "ea-gateway-request-auth"
+      "namespace" = var.namespace
+    }
+    "spec" = {
+      "selector" = {
+        "matchLabels" = {
+          "jwt" = "true"
+        }
+      }
+      "jwtRules" = [
+        {
+          "issuer"  = "issuer-ea-front"
+          "jwksUri" = var.jwks_uri
+        }
+      ]
+    }
+  }
+}
+
+resource "kubernetes_manifest" "authorization_policy_httpbin" {
+  manifest = {
+    "apiVersion" = "security.istio.io/v1"
+    "kind"       = "AuthorizationPolicy"
+    "metadata" = {
+      "name"      = "ea-gateway-auth-policy"
+      "namespace" = var.namespace
+    }
+    "spec" = {
+      "selector" = {
+        "matchLabels" = {
+          "jwt" = "true"
+        }
+      }
+      "rules" = [
+        {
+          "from" = [
+            {
+              "source" = {
+                "requestPrincipals" = ["*"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+
+# resource "kubernetes_manifest" "authorization_policy_default_deny" {
+#   manifest = {
+#     "apiVersion" = "security.istio.io/v1"
+#     "kind"       = "AuthorizationPolicy"
+#     "metadata" = {
+#       "name"      = "ea-gateway-default-deny"
+#       "namespace" = var.namespace
+#     }
+#     "spec" = {
+#       "selector" = {
+#         "matchLabels" = {
+#           "jwt" = "true"
+#         }
+#       }
+#       "action" = "DENY"
+#       "rules" = [{}] # matches all traffic
+#     }
+#   }
+# }
