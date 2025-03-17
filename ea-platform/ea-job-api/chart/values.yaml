@@ -59,6 +59,12 @@ service:
 networkPolicy:
   enabled: true 
 
+gateway:
+  enabled: true
+  name: ea-gateway
+  host: api.erulabs.local
+  pathPrefix: /job-api
+
 ingress:
   enabled: false
   className: "nginx"

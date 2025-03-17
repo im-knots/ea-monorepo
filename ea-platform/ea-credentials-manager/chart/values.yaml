@@ -59,6 +59,12 @@ service:
 networkPolicy:
   enabled: true  # Enforce in cluster network traffic controlls for the deployement
 
+gateway:
+  enabled: true
+  name: ea-gateway
+  host: api.erulabs.local
+  pathPrefix: /credentials-manager
+
 ingress:
   enabled: false
   className: "nginx"
