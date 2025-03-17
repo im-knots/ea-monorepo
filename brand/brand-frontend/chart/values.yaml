@@ -8,8 +8,12 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+gke:
+  enabled: false
+
 config:
   # TEST_ENV: TEST
+  apiUrl: https://backend.erulabs.local
 
 secrets:
   DB_URL: mongodb://user:password@mongodb.brand-backend.svc.cluster.local

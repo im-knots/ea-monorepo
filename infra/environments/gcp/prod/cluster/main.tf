@@ -1,8 +1,8 @@
 terraform {
     required_version = "1.10.3"
     backend "gcs" {
-        bucket  = "eru-labs-terraform-state-dev"
-        prefix  = "eru-labs-cluster-dev/terraform.tfstate" # Optional: folder-like structure for state
+        bucket  = "eru-labs-terraform-state-prod"
+        prefix  = "eru-labs-cluster-prod/terraform.tfstate" # Optional: folder-like structure for state
     }
     required_providers {
         google = {
@@ -21,16 +21,16 @@ terraform {
 }
 
 locals {
-    project      = "eru-labs-dev-446616"
+    project      = "eru-labs-prod-453516"
     region       = "us-central1"
-    cluster_name = "eru-labs-dev"
-    env          = "dev"
+    cluster_name = "eru-labs-prod"
+    env          = "prod"
     namespaces   = toset(["ea-platform", "eru-labs-brand"])
     
     mgmt_project        = "eru-labs-mgmt"
-    public_domain       = "dev.erulabs.ai"
-    public_zone_id      = "erulabs-public-zone-dev"
-    dns_service_account = "external-dns@eru-labs-dev-446616.iam.gserviceaccount.com"
+    public_domain       = "erulabs.ai"
+    public_zone_id      = "erulabs-public-zone"
+    dns_service_account = "external-dns@eru-labs-prod-453516.iam.gserviceaccount.com"
 
 
     enable_sec_tooling = false
