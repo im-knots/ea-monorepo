@@ -62,14 +62,6 @@ func HandleGetAllUsers(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	// Log all incoming request headers for debugging
-	logger.Slog.Info("Request Headers:")
-	for key, values := range c.Request.Header {
-		for _, value := range values {
-			logger.Slog.Info("Header", "key", key, "value", value)
-		}
-	}
-
 	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
 		logger.Slog.Error("Authenticated user ID missing in context")

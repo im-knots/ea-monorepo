@@ -27,7 +27,7 @@ func RegisterRoutes() *gin.Engine {
 
 	// User routes
 	users := router.Group("/api/v1/users")
-	users.Use(jwtAuthMiddleware())
+	users.Use(authMiddleware())
 	{
 		users.GET("", handlers.HandleGetAllUsers)      // List all users
 		users.GET("/:user_id", handlers.HandleGetUser) // Get user by ID
@@ -61,12 +61,27 @@ func corsMiddleware() gin.HandlerFunc {
 	}
 }
 
-// jwtAuthMiddleware extracts JWT claims and sets authenticated user ID in context
-func jwtAuthMiddleware() gin.HandlerFunc {
+// authMiddleware extracts JWT claims and sets authenticated user ID in context
+func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Log all incoming request headers for debugging
+		logger.Slog.Info("Request Headers:")
+		for key, values := range c.Request.Header {
+			for _, value := range values {
+				logger.Slog.Info("Header", "key", key, "value", value)
+			}
+		}
+
+		internalHeader := c.GetHeader("X-EA-Internal")
+		if internalHeader == "internal" {
+			// Internal request bypasses JWT validation
+			c.Set("AuthenticatedUserID", "internal")
+			c.Next()
+			return
+		}
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			logger.Slog.Error("Missing Authorization header")
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
@@ -75,21 +90,18 @@ func jwtAuthMiddleware() gin.HandlerFunc {
 		parser := new(jwt.Parser)
 		token, _, err := parser.ParseUnverified(tokenString, jwt.MapClaims{})
 		if err != nil {
-			logger.Slog.Error("Failed to parse JWT token", "error", err)
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			logger.Slog.Error("JWT token claims invalid")
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}
 
 		sub, ok := claims["sub"].(string)
 		if !ok || sub == "" {
-			logger.Slog.Error("JWT missing 'sub' claim")
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return
 		}

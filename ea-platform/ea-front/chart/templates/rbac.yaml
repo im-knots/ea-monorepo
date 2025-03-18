@@ -30,12 +30,6 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["create", "patch", "update"]
-
-  # 🔹 Allow managing KongConsumers (Kong CRD)
-  - apiGroups: ["configuration.konghq.com"]
-    resources: ["kongconsumers"]
-    verbs: ["create", "delete"]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

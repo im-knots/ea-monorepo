@@ -72,6 +72,7 @@ resource "kubernetes_manifest" "request_authentication_httpbin" {
         {
           "issuer"  = "eru-labs-jwt-issuer"
           "jwksUri" = "${var.jwks_uri}/api/jwks"
+          "forwardOriginalToken"  = true
         }
       ]
     }

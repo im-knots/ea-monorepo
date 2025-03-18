@@ -63,18 +63,9 @@ func HandleCreateJob(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Job creation request received")
 
-	// Log all incoming request headers for debugging
-	logger.Slog.Info("Request Headers:")
-	for key, values := range c.Request.Header {
-		for _, value := range values {
-			logger.Slog.Info("Header", "key", key, "value", value)
-		}
-	}
-
-	// Extract authenticated user ID from Kong's header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -121,9 +112,6 @@ func HandleCreateJob(c *gin.Context) {
 	if authHeader != "" {
 		agentReq.Header.Set("Authorization", authHeader)
 	}
-
-	// Pass the user's ID as a security measure (instead of using `internal`)
-	agentReq.Header.Set("X-Consumer-Username", authenticatedUserID)
 
 	// Send the request
 	agentClient := &http.Client{}

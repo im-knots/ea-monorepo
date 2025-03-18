@@ -140,7 +140,7 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+	req.Header.Set("X-Ea-Internal", "internal") // Use internal header
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -173,7 +173,7 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+		req.Header.Set("X-Ea-Internal", "internal") // Use internal header
 
 		resp, err := client.Do(req)
 		if err != nil {
