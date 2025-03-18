@@ -29,7 +29,7 @@ export async function register(prevState: string | undefined, formData: FormData
   } catch (error) {
      return "Registration error";
   }
-  redirect('/dashboard');
+  redirect('/login');
 }
 
 export async function login(prevState: string | undefined,formData: FormData) {

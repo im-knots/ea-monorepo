@@ -4,8 +4,8 @@
 PAYLOAD_DIR="smoke/payloads"
 
 # API Endpoints
-AGENT_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/nodes"
-AINU_URL="http://api.ea.erulabs.local/ainu-manager/api/v1/users"
+AGENT_ENDPOINT="http://api.erulabs.local/agent-manager/api/v1/nodes"
+AINU_URL="http://api.erulabs.local/ainu-manager/api/v1/users"
 
 # Check if JWT_TOKEN is set
 if [[ -z "$JWT_TOKEN" ]]; then

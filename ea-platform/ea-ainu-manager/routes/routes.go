@@ -2,9 +2,12 @@ package routes
 
 import (
 	"ea-ainu-manager/handlers"
+	"ea-ainu-manager/logger"
 	"ea-ainu-manager/metrics"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -24,6 +27,7 @@ func RegisterRoutes() *gin.Engine {
 
 	// User routes
 	users := router.Group("/api/v1/users")
+	users.Use(jwtAuthMiddleware())
 	{
 		users.GET("", handlers.HandleGetAllUsers)      // List all users
 		users.GET("/:user_id", handlers.HandleGetUser) // Get user by ID
@@ -52,6 +56,46 @@ func corsMiddleware() gin.HandlerFunc {
 			c.AbortWithStatus(200)
 			return
 		}
+
+		c.Next()
+	}
+}
+
+// jwtAuthMiddleware extracts JWT claims and sets authenticated user ID in context
+func jwtAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			logger.Slog.Error("Missing Authorization header")
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		parser := new(jwt.Parser)
+		token, _, err := parser.ParseUnverified(tokenString, jwt.MapClaims{})
+		if err != nil {
+			logger.Slog.Error("Failed to parse JWT token", "error", err)
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			logger.Slog.Error("JWT token claims invalid")
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			logger.Slog.Error("JWT missing 'sub' claim")
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+
+		// Set authenticated user ID in context
+		c.Set("AuthenticatedUserID", sub)
 
 		c.Next()
 	}

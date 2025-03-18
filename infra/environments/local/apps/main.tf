@@ -58,7 +58,7 @@ locals {
             chart = "../../../../ea-platform/ea-front/chart"
             version = null
             helm_overrides = {
-              "secrets.MONGO_URI" = "mongodb://mongodb.ea-platform:27017/ea"
+              "secrets.MONGO_URI" = "mongodb://mongodb.ea-platform:27017/ainuUsers"
               "jwks.fromSecret"   = "ea-front-jwks"
             }
         }

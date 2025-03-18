@@ -107,22 +107,3 @@ resource "kubernetes_manifest" "authorization_policy_httpbin" {
   }
 }
 
-# resource "kubernetes_manifest" "authorization_policy_default_deny" {
-#   manifest = {
-#     "apiVersion" = "security.istio.io/v1"
-#     "kind"       = "AuthorizationPolicy"
-#     "metadata" = {
-#       "name"      = "ea-gateway-default-deny"
-#       "namespace" = var.namespace
-#     }
-#     "spec" = {
-#       "selector" = {
-#         "matchLabels" = {
-#           "jwt" = "true"
-#         }
-#       }
-#       "action" = "DENY"
-#       "rules" = [{}] # matches all traffic
-#     }
-#   }
-# }

@@ -1,20 +1,26 @@
 import bcrypt from "bcryptjs";
+import { v4 as uuidv4 } from "uuid";
 import mongoClient from "./mongodb";
 import * as jose from "jose";
 import { cookies } from "next/headers";
 import { getJWKS, getPrivateKey } from "./jwks";
 
-export async function Register(user: { email: string, password: string }) {
+export async function Register(user: { email: string; password: string }) {
   const { email, password } = user;
   const hashedPassword = await bcrypt.hash(password, 10);
   const mongodb = await mongoClient();
-  const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
-  
+
+  const userRecord = await mongodb.db().collection("users").findOne({ email });
+
   if (userRecord) {
     console.log("User already exists");
     throw new Error("User already exists");
   }
-  await mongodb.db().collection("ainuUsers").insertOne({
+
+  const id = uuidv4();
+
+  await mongodb.db().collection("users").insertOne({
+    id,
     email,
     password: hashedPassword,
   });
@@ -26,7 +32,7 @@ export async function Login(user: { email: string, password: string }) {
   const { email, password } = user;
 
   const mongodb = await mongoClient();
-  const userRecord = await mongodb.db().collection("ainuUsers").findOne({ email });
+  const userRecord = await mongodb.db().collection("users").findOne({ email });
 
   if (!userRecord) {
     console.log("User not found");
@@ -44,7 +50,7 @@ export async function Login(user: { email: string, password: string }) {
     const token = await new jose.SignJWT({
       email: userRecord.email,
       iss: "eru-labs-jwt-issuer",
-      sub: userRecord.email,
+      sub: userRecord.id,
     })
     .setProtectedHeader({ alg: "RS256" })
     .setIssuedAt()

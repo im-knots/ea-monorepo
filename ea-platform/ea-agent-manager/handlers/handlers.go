@@ -113,6 +113,14 @@ func HandleCreateNodeDef(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Node definition creation request received")
 
+	// Log all incoming request headers for debugging
+	logger.Slog.Info("Request Headers:")
+	for key, values := range c.Request.Header {
+		for _, value := range values {
+			logger.Slog.Info("Header", "key", key, "value", value)
+		}
+	}
+
 	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
 	authenticatedUserID := c.GetHeader("X-Consumer-Username")
 	if authenticatedUserID == "" {
