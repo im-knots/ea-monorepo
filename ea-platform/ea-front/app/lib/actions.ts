@@ -4,35 +4,47 @@ import { z } from 'zod';
 import { Login, Register } from './auth';
 import { redirect } from 'next/navigation';
 
+// Separate form schemas
+const RegisterForm = z.object({
+  email: z.string().email(),
+  password: z.string(),
+  alphaCode: z.string(),
+});
+
 const LoginForm = z.object({
   email: z.string().email(),
   password: z.string(),
 });
 
 export async function register(prevState: string | undefined, formData: FormData) {
-  const validatedForm = LoginForm.safeParse({
+  const validatedRegisterForm = RegisterForm.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
+    alphaCode: formData.get('alphaCode')
   });
-  if (!validatedForm.success) {
+
+  if (!validatedRegisterForm.success) {
     return "Invalid form data";
   }
+
   try {
     await Register({
-      email: validatedForm.data.email,
-      password: validatedForm.data.password
+      email: validatedRegisterForm.data.email,
+      password: validatedRegisterForm.data.password,
+      alphaCode: validatedRegisterForm.data.alphaCode
     });
     await Login({
-      email: validatedForm.data.email,
-      password: validatedForm.data.password
-    })
+      email: validatedRegisterForm.data.email,
+      password: validatedRegisterForm.data.password
+    });
   } catch (error) {
-     return "Registration error";
+    console.error("Registration error:", error);
+    return "Registration error";
   }
   redirect('/login');
 }
 
-export async function login(prevState: string | undefined,formData: FormData) {
+export async function login(prevState: string | undefined, formData: FormData) {
   const validatedForm = LoginForm.safeParse({
     email: formData.get('email'),
     password: formData.get('password'),
@@ -46,7 +58,8 @@ export async function login(prevState: string | undefined,formData: FormData) {
       password: validatedForm.data.password
     });  
   } catch (error) {
-     return "Login error";
+    console.error("Login error:", error);
+    return "Login error";
   }
   redirect('/dashboard');
 }

@@ -36,6 +36,14 @@ export default function Page() {
               fullWidth
               className="bg-neutral-700 rounded-md"
             />
+            <TextField
+              id="alphaCode"
+              name="alphaCode"
+              label="Alpha Code"
+              type="password"
+              fullWidth
+              className="bg-neutral-700 rounded-md"
+            />
             <Button type="submit" variant="contained" color="primary" className="w-full">Register</Button>
             <Button variant='contained' color='secondary' className='w-full' onClick={() => redirect('/login')}>Login</Button>
           </form>
