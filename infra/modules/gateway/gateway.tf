@@ -70,8 +70,8 @@ resource "kubernetes_manifest" "request_authentication_httpbin" {
       }
       "jwtRules" = [
         {
-          "issuer"  = "issuer-ea-front"
-          "jwksUri" = var.jwks_uri
+          "issuer"  = "eru-labs-jwt-issuer"
+          "jwksUri" = "${var.jwks_uri}/api/jwks"
         }
       ]
     }

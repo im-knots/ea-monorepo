@@ -20,7 +20,7 @@ locals {
   env          = "local"
   namespaces   = toset(["ea-platform", "eru-labs-brand"])
   gateway_host = "*.erulabs.local"
-  jwks_uri     = "http://ea.erulabs.local/api/jwks"
+  jwks_uri     = "http://ea-front-ea-front-chart.ea-platform.svc.cluster.local:8080"
   
   enable_sec_tooling = true
 }

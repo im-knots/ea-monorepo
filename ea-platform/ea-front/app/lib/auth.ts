@@ -43,6 +43,8 @@ export async function Login(user: { email: string, password: string }) {
     const privateKey = await getPrivateKey();
     const token = await new jose.SignJWT({
       email: userRecord.email,
+      iss: "eru-labs-jwt-issuer",
+      sub: userRecord.email,
     })
     .setProtectedHeader({ alg: "RS256" })
     .setIssuedAt()
