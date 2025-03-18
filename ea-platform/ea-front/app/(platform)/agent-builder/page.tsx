@@ -7,19 +7,6 @@ import WorkflowBuilder from "../components/WorkflowBuilder";
 import { Node, Edge } from "reactflow";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-// Function to fetch JWT from `/api/auth/token`
-const fetchToken = async () => {
-  try {
-    const res = await fetch("/api/auth/token", { credentials: "include" });
-    if (!res.ok) throw new Error("Failed to fetch token");
-    const data = await res.json();
-    return data.token;
-  } catch (error) {
-    console.error("Error fetching token:", error);
-    return null;
-  }
-};
-
 export default function AgentBuilderPage() {
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
   const jsonEditorWidth = jsonEditorOpen ? "20rem" : "4rem";
@@ -34,27 +21,22 @@ export default function AgentBuilderPage() {
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [runningJobId, setRunningJobId] = useState<string | null>(null);
 
-  // Fetch and set creator ID from JWT token
+  // Fetch user ID from /api/user endpoint
   useEffect(() => {
-    const fetchCreatorId = async () => {
+    const fetchUserId = async () => {
       try {
-        const token = await fetchToken();
-        if (!token) {
-          console.error("No token found.");
-          return;
-        }
-
-        // Decode JWT payload and extract the `iss` field (which is the userId)
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        if (payload.iss) {
-          setCreator(payload.iss); // ✅ Extract UUID from `iss` field
+        const res = await fetch("/api/user", { credentials: "include" });
+        if (!res.ok) throw new Error("Unauthorized or failed request");
+        const data = await res.json();
+        if (data?.id) {
+          setCreator(data.id);
         }
       } catch (error) {
-        console.error("Error fetching or decoding token:", error);
+        console.error("Error fetching user ID:", error);
       }
     };
 
-    fetchCreatorId();
+    fetchUserId();
   }, []);
 
   // Generate JSON representation of the workflow
@@ -106,7 +88,7 @@ export default function AgentBuilderPage() {
   return (
     <div className="relative flex min-h-screen bg-neutral-900 text-white overflow-hidden">
       
-      {/* ✅ Title Bar Hack - Only Extends Across Textbox */}
+      {/* Title Bar */}
       <div 
         className="absolute top-0 left-4 bg-neutral-900 p-3 flex items-center shadow-md z-50 rounded-lg pointer-events-auto transition-all duration-300"
         style={{ maxWidth: "400px" }}
