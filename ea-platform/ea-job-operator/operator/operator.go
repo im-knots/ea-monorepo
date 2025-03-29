@@ -488,7 +488,10 @@ func processInactiveQueue(dynamicClient dynamic.Interface, clientset *kubernetes
 									"job-group": "ea-agent-executor-job",
 								},
 								Annotations: map[string]string{
-									"proxy.istio.io/config": `{"holdApplicationUntilProxyStarts": true}`,
+									"proxy.istio.io/config": `{
+										"holdApplicationUntilProxyStarts": true
+									}`,
+									"sidecar.istio.io/proxyExitOnCompletion": "true",
 								},
 							},
 							Spec: corev1.PodSpec{
