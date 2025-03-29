@@ -46,7 +46,7 @@ export async function Register(user: { email: string; password: string; alphaCod
   await createK8sRoleBinding(roleBindingName, roleName, serviceAccountName);
 
   await mongodb.db().collection("users").insertOne({
-    userId,
+    id: userId,
     email,
     password: hashedPassword,
   });

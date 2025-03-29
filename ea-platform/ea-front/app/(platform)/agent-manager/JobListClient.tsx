@@ -1,8 +1,7 @@
+// app/(platform)/agent-manager/JobListClient.tsx
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-const AINU_MANAGER_URL = "http://api.ea.erulabs.local/ainu-manager/api/v1";
+import { useState } from "react";
 
 interface Job {
   id: string;
@@ -22,108 +21,47 @@ interface Node {
   lastUpdated?: string;
 }
 
-export default function JobList({
+export default function JobListClient({
+  initialJobs,
   agentId,
   userId,
-  refreshJobs,
 }: {
+  initialJobs: Job[];
   agentId: string;
-  userId: string | null;
-  refreshJobs: () => void;
+  userId: string;
 }) {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs] = useState<Job[]>(initialJobs);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [autoRefresh, setAutoRefresh] = useState<string | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-
-  // 🔹 Fetch JWT token from /api/auth/token
-  useEffect(() => {
-    const fetchToken = async () => {
-      try {
-        const res = await fetch("/api/auth/token", { credentials: "include" });
-        if (!res.ok) throw new Error("Failed to fetch token");
-        const data = await res.json();
-        setToken(data.token);
-      } catch (error) {
-        console.error("Error fetching token:", error);
-        setToken(null);
-      }
-    };
-
-    fetchToken();
-  }, []);
-
-  // 🔹 Fetch jobs for the agent with JWT token
-  const fetchJobs = async () => {
-    if (!token) {
-      console.error("No token available for authentication.");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${AINU_MANAGER_URL}/users/${userId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`, // ✅ Attach JWT token
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      if (!res.ok) throw new Error(`Failed to fetch jobs: ${res.status}`);
-
-      const data = await res.json();
-      const filteredJobs = (data.jobs || []).filter((job: Job) => job.agent_id === agentId);
-
-      setJobs(filteredJobs);
-      refreshJobs(); // 🔥 Notify AgentRow to update job count
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (token) fetchJobs();
-  }, [agentId, userId, token]);
-
-  // 🔹 Auto-refresh job details when expanded
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(async () => {
-      await fetchJobs();
-      const job = jobs.find((job) => job.id === autoRefresh);
-      if (job?.status.toLowerCase() === "completed" || job?.status.toLowerCase() === "complete") {
-        setAutoRefresh(null);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, jobs]);
 
   const getStatusColor = (status: string | undefined) => {
-    if (!status) return "bg-gray-500 text-white";
-    const lowerStatus = status.toLowerCase();
-
-    return lowerStatus === "completed" || lowerStatus === "complete"
+    const s = status?.toLowerCase();
+    return s === "completed" || s === "complete"
       ? "bg-green-600 text-white"
-      : lowerStatus === "pending"
+      : s === "pending"
       ? "bg-yellow-500 text-black"
-      : lowerStatus === "error"
-      ? "bg-red-600 text-white"
-      : lowerStatus === "executing"
+      : s === "executing"
       ? "bg-blue-500 text-white"
+      : s === "error"
+      ? "bg-red-600 text-white"
       : "bg-gray-500 text-white";
   };
 
   const handleExpand = (jobId: string) => {
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
-    setAutoRefresh(jobId);
   };
 
   return (
     <div className="bg-neutral-900 text-white p-4 rounded-lg shadow-md">
-      <h3 className="text-sm font-semibold mb-2">Jobs</h3>
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="text-sm font-semibold">Jobs</h3>
+        <button
+          onClick={() => location.reload()}
+          className="text-xs bg-neutral-700 hover:bg-neutral-600 px-2 py-1 rounded"
+        >
+          Refresh
+        </button>
+      </div>
+
       {jobs.length > 0 ? (
         <table className="w-full text-sm border border-gray-700 rounded-lg">
           <thead className="bg-neutral-800 text-gray-300 uppercase">
@@ -136,14 +74,17 @@ export default function JobList({
           </thead>
           <tbody>
             {jobs.map((job) => (
-              <React.Fragment key={job.id}>
+              <>
                 <tr
-                  className="border-b border-gray-700 hover:bg-neutral-800 transition cursor-pointer"
+                  key={job.id}
+                  className="border-b border-gray-700 hover:bg-neutral-800 cursor-pointer"
                   onClick={() => handleExpand(job.id)}
                 >
                   <td className="px-4 py-2">{job.job_name}</td>
                   <td className="px-4 py-2">{new Date(job.created_time).toLocaleString()}</td>
-                  <td className="px-4 py-2">{job.last_active ? new Date(job.last_active).toLocaleString() : "N/A"}</td>
+                  <td className="px-4 py-2">
+                    {job.last_active ? new Date(job.last_active).toLocaleString() : "N/A"}
+                  </td>
                   <td className="px-4 py-2">
                     <span className={`px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(job.status)}`}>
                       {job.status}
@@ -151,9 +92,8 @@ export default function JobList({
                   </td>
                 </tr>
 
-                {/* Expanded Job Row: Shows Individual Node Statuses */}
                 {expandedJobId === job.id && (
-                  <tr>
+                  <tr key={job.id + "-expanded"}>
                     <td colSpan={4} className="p-4 bg-neutral-800 rounded-lg">
                       <h4 className="text-sm font-semibold text-gray-300 mb-2">Node Outputs</h4>
                       {job.nodes?.length ? (
@@ -163,7 +103,6 @@ export default function JobList({
                               key={node.alias}
                               className="bg-neutral-900 p-3 rounded-md shadow-sm relative"
                             >
-                              {/* Status in the upper right corner */}
                               <span
                                 className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(node.status)}`}
                               >
@@ -189,7 +128,7 @@ export default function JobList({
                     </td>
                   </tr>
                 )}
-              </React.Fragment>
+              </>
             ))}
           </tbody>
         </table>

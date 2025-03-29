@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-const API_URL = "http://api.ea.erulabs.local/credentials-manager/api/v1/credentials";
+const API_URL = "http://api.erulabs.local/credentials-manager/api/v1/credentials";
 
 const SUPPORTED_APIS = [
   { name: "OpenAI", key: "openai_api_key", icon: "/openai-icon.png" },

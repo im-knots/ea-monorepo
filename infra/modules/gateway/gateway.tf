@@ -81,24 +81,36 @@ resource "kubernetes_manifest" "request_authentication_httpbin" {
 
 resource "kubernetes_manifest" "authorization_policy_httpbin" {
   manifest = {
-    "apiVersion" = "security.istio.io/v1"
-    "kind"       = "AuthorizationPolicy"
-    "metadata" = {
-      "name"      = "ea-gateway-auth-policy"
-      "namespace" = var.namespace
+    apiVersion = "security.istio.io/v1"
+    kind       = "AuthorizationPolicy"
+    metadata = {
+      name      = "ea-gateway-auth-policy"
+      namespace = var.namespace
     }
-    "spec" = {
-      "selector" = {
-        "matchLabels" = {
-          "jwt" = "true"
+    spec = {
+      selector = {
+        matchLabels = {
+          jwt = "true"
         }
       }
-      "rules" = [
+      action = "ALLOW"
+      rules = [
+        # Allow requests that have valid JWT tokens
         {
-          "from" = [
+          from = [
             {
-              "source" = {
-                "requestPrincipals" = ["*"]
+              source = {
+                requestPrincipals = ["*"]
+              }
+            }
+          ]
+        },
+        # Allow internal cluster traffic (no JWT required)
+        {
+          from = [
+            {
+              source = {
+                namespaces = ["ea-platform"]  # Adjust if needed
               }
             }
           ]
@@ -107,4 +119,5 @@ resource "kubernetes_manifest" "authorization_policy_httpbin" {
     }
   }
 }
+
 

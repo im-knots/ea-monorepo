@@ -108,10 +108,10 @@ module "eru_app_deployment" {
   ]
 }
 
-# module ollama {
-#   source    = "../../../modules/ollama"
-#   namespace = "ea-platform"
-# }
+module ollama {
+  source    = "../../../modules/ollama"
+  namespace = "ea-platform"
+}
 
 module "eru_labs_brand_app_deployment" {
   source     = "../../../modules/app-deployment"

@@ -48,7 +48,7 @@ k8s_ingress_dns() {
     echo "I need sudo permissions to update your /etc/hosts file"
 
     HOST_ENTRIES=(
-        "api.ea.erulabs.local"
+        "api.erulabs.local"
         "ea.erulabs.local"
         "erulabs.local"
         "grafana.erulabs.local"
@@ -70,7 +70,7 @@ remove_k8s_ingress_dns() {
     echo "I need sudo permissions to remove entries from your /etc/hosts file"
 
     HOST_ENTRIES=(
-        "api.ea.erulabs.local"
+        "api.erulabs.local"
         "ea.erulabs.local"
         "erulabs.local"
         "grafana.erulabs.local"

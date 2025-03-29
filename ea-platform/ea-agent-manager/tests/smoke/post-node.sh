@@ -24,7 +24,7 @@ PAYLOAD_DIR="smoke/payloads"
 AGENT_ENDPOINT="http://api.erulabs.local/agent-manager/api/v1/nodes"
 
 # Iterate through matching payload files
-for file in "$PAYLOAD_DIR"/*create-agent*.json; do
+for file in "$PAYLOAD_DIR"/*create-node*.json; do
     if [[ -f "$file" ]]; then
         echo "Processing file: $file"
 
