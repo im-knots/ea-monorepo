@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import AgentRow from "./AgentRow";
 import { fetchJobsForAgent } from "./JobActions";
+import { Paper, Box, Typography, Button, Table, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
 
 const AGENT_MANAGER_URL = "http://api.erulabs.local/agent-manager/api/v1/agents";
 
 export default async function AgentTable() {
-  const cookieStore = await cookies();  // ✅ Add await here
+  const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 
   if (!token) {
@@ -47,39 +47,50 @@ export default async function AgentTable() {
       return {
         ...agent,
         ...details,
-        jobs, 
+        jobs,
         jobCount: jobs.length,
       };
     })
   );
 
   return (
-    <div className="bg-neutral-900 text-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">My Agents</h2>
-        <div className="flex space-x-2 ml-auto">
-          <Link href="/agent-builder" className="btn">+ Create Agent</Link>
-          <Link href="/node-builder" className="btn">+ Create Node</Link>
-        </div>
-      </div>
+    <Box sx={{ padding: 4 }}>
+      <Paper elevation={4} sx={{ padding: 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h5" component="h2">
+            My Agents
+          </Typography>
+          <Box display="flex" gap={1}>
+            <Button variant="contained" color="primary" href="/agent-builder">
+              + Create Agent
+            </Button>
+            <Button variant="contained" color="primary" href="/node-builder">
+              + Create Node
+            </Button>
+          </Box>
+        </Box>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-700 rounded-lg text-sm">
-          <thead className="bg-neutral-800 text-gray-300 uppercase">
-            <tr>
-              <th className="px-4 py-3 text-left">Agent Name</th>
-              <th className="px-4 py-3 text-center">Nodes</th>
-              <th className="px-4 py-3 text-center">Jobs</th>
-              <th className="px-4 py-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {detailedAgents.map(agent => (
-              <AgentRow key={agent.id} agent={agent} userId={userId} initialJobs={agent.jobs} />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Agent Name</TableCell>
+              <TableCell align="center">Nodes</TableCell>
+              <TableCell align="center">Jobs</TableCell>
+              <TableCell align="center">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {detailedAgents.map((agent) => (
+              <AgentRow
+                key={agent.id}
+                agent={agent}
+                userId={userId}
+                initialJobs={agent.jobs}
+              />
             ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </Paper>
+    </Box>
   );
 }

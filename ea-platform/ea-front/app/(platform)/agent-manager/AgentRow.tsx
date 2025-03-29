@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import JobListClient from "./JobListClient";
 import { startAgentJob, deleteAgent } from "./AgentActions";
+import { Button, TableCell, TableRow, Collapse, Box } from "@mui/material";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 
 export default function AgentRow({ agent, userId, initialJobs }: { agent: any; userId: string; initialJobs: any[] }) {
   const [expanded, setExpanded] = useState(false);
@@ -25,28 +27,46 @@ export default function AgentRow({ agent, userId, initialJobs }: { agent: any; u
 
   return (
     <>
-      <tr className="hover:bg-neutral-800 transition cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <td className="px-4 py-3">{agent.name}</td>
-        <td className="px-4 py-3 text-center">{agent.nodes.length}</td>
-        <td className="px-4 py-3 text-center">{agent.jobCount}</td>
-        <td className="px-4 py-3 text-center flex justify-center space-x-2">
-          <button onClick={(e) => { e.stopPropagation(); handleStart(); }} disabled={isStarting} className="btn bg-green-600">
-            {isStarting ? "Starting..." : "Start"}
-          </button>
-          <button className="btn bg-blue-600">Modify</button>
-          <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} disabled={isDeleting} className="btn bg-red-600">
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
-        </td>
-      </tr>
-
-      {expanded && (
-        <tr>
-          <td colSpan={4} className="bg-neutral-900 p-4 border-t border-gray-700">
-            <JobListClient initialJobs={initialJobs} agentId={agent.id} userId={userId} />
-          </td>
-        </tr>
-      )}
+      <TableRow hover sx={{ cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
+        <TableCell>{agent.name}</TableCell>
+        <TableCell align="center">{agent.nodes.length}</TableCell>
+        <TableCell align="center">{agent.jobCount}</TableCell>
+        <TableCell align="center">
+          <Box display="flex" justifyContent="center" gap={1}>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disabled={isStarting}
+              onClick={(e) => { e.stopPropagation(); handleStart(); }}
+            >
+              {isStarting ? "Starting..." : "Start"}
+            </Button>
+            <Button variant="contained" color="primary" size="small">Modify</Button>
+            <Button
+              variant="contained"
+              color="error"
+              size="small"
+              disabled={isDeleting}
+              onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
+            <Button size="small">
+              {expanded ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+            </Button>
+          </Box>
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell colSpan={4} sx={{ padding: 0, borderBottom: "none" }}>
+          <Collapse in={expanded} timeout="auto" unmountOnExit>
+            <Box sx={{ margin: 1 }}>
+              <JobListClient initialJobs={initialJobs} agentId={agent.id} userId={userId} />
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
     </>
   );
 }

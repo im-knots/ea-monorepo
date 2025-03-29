@@ -1,7 +1,23 @@
-// app/(platform)/agent-manager/JobListClient.tsx
 "use client";
 
 import { useState } from "react";
+import {
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+  Paper,
+  Collapse,
+  Box,
+  Grid,
+  Chip,
+  IconButton,
+} from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 
 interface Job {
   id: string;
@@ -33,108 +49,142 @@ export default function JobListClient({
   const [jobs] = useState<Job[]>(initialJobs);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
-  const getStatusColor = (status: string | undefined) => {
-    const s = status?.toLowerCase();
-    return s === "completed" || s === "complete"
-      ? "bg-green-600 text-white"
-      : s === "pending"
-      ? "bg-yellow-500 text-black"
-      : s === "executing"
-      ? "bg-blue-500 text-white"
-      : s === "error"
-      ? "bg-red-600 text-white"
-      : "bg-gray-500 text-white";
-  };
-
   const handleExpand = (jobId: string) => {
     setExpandedJobId(expandedJobId === jobId ? null : jobId);
   };
 
+  const getStatusColor = (
+    status: string | undefined
+  ): "success" | "warning" | "info" | "error" | "default" => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+      case "complete":
+        return "success";
+      case "pending":
+        return "warning";
+      case "executing":
+        return "info";
+      case "error":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
   return (
-    <div className="bg-neutral-900 text-white p-4 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-sm font-semibold">Jobs</h3>
-        <button
+    <Paper elevation={3} sx={{ p: 2, bgcolor: "grey.900", color: "white" }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography variant="h6">Jobs</Typography>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<RefreshIcon />}
           onClick={() => location.reload()}
-          className="text-xs bg-neutral-700 hover:bg-neutral-600 px-2 py-1 rounded"
         >
           Refresh
-        </button>
-      </div>
+        </Button>
+      </Box>
 
       {jobs.length > 0 ? (
-        <table className="w-full text-sm border border-gray-700 rounded-lg">
-          <thead className="bg-neutral-800 text-gray-300 uppercase">
-            <tr>
-              <th className="px-4 py-2 text-left">Job Name</th>
-              <th className="px-4 py-2 text-left">Created</th>
-              <th className="px-4 py-2 text-left">Last Active</th>
-              <th className="px-4 py-2 text-left">Status</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell />
+              <TableCell>Job Name</TableCell>
+              <TableCell>Created</TableCell>
+              <TableCell>Last Active</TableCell>
+              <TableCell>Status</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {jobs.map((job) => (
               <>
-                <tr
-                  key={job.id}
-                  className="border-b border-gray-700 hover:bg-neutral-800 cursor-pointer"
-                  onClick={() => handleExpand(job.id)}
-                >
-                  <td className="px-4 py-2">{job.job_name}</td>
-                  <td className="px-4 py-2">{new Date(job.created_time).toLocaleString()}</td>
-                  <td className="px-4 py-2">
+                <TableRow hover key={job.id}>
+                  <TableCell>
+                    <IconButton size="small" onClick={() => handleExpand(job.id)}>
+                      {expandedJobId === job.id ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                    </IconButton>
+                  </TableCell>
+                  <TableCell
+                    onClick={() => handleExpand(job.id)}
+                    sx={{ cursor: "pointer", fontWeight: "medium" }}
+                  >
+                    {job.job_name}
+                  </TableCell>
+                  <TableCell>{new Date(job.created_time).toLocaleString()}</TableCell>
+                  <TableCell>
                     {job.last_active ? new Date(job.last_active).toLocaleString() : "N/A"}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(job.status)}`}>
-                      {job.status}
-                    </span>
-                  </td>
-                </tr>
+                  </TableCell>
+                  <TableCell>
+                    <Chip label={job.status} color={getStatusColor(job.status)} size="small" />
+                  </TableCell>
+                </TableRow>
 
-                {expandedJobId === job.id && (
-                  <tr key={job.id + "-expanded"}>
-                    <td colSpan={4} className="p-4 bg-neutral-800 rounded-lg">
-                      <h4 className="text-sm font-semibold text-gray-300 mb-2">Node Outputs</h4>
-                      {job.nodes?.length ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                          {job.nodes.map((node) => (
-                            <div
-                              key={node.alias}
-                              className="bg-neutral-900 p-3 rounded-md shadow-sm relative"
-                            >
-                              <span
-                                className={`absolute top-2 right-2 px-2 py-1 rounded-md text-xs font-semibold ${getStatusColor(node.status)}`}
-                              >
-                                {node.status}
-                              </span>
-
-                              <p className="text-gray-300 text-sm font-semibold">{node.alias}</p>
-                              <p className="text-xs text-gray-400">
-                                {node.lastUpdated
-                                  ? `Last Updated: ${new Date(node.lastUpdated).toLocaleString()}`
-                                  : "No timestamp"}
-                              </p>
-
-                              <pre className="bg-neutral-950 p-2 text-xs text-gray-300 rounded mt-2 overflow-y-auto max-h-40 whitespace-pre-wrap break-words">
-                                {node.output ? JSON.stringify(JSON.parse(node.output), null, 2) : "No output"}
-                              </pre>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 text-sm">No node outputs available.</p>
-                      )}
-                    </td>
-                  </tr>
-                )}
+                <TableRow key={`${job.id}-expanded`}>
+                  <TableCell colSpan={5} sx={{ p: 0, border: 0 }}>
+                    <Collapse in={expandedJobId === job.id} timeout="auto" unmountOnExit>
+                      <Box sx={{ margin: 2 }}>
+                        <Typography variant="subtitle1" gutterBottom>
+                          Node Outputs
+                        </Typography>
+                        {job.nodes?.length ? (
+                          <Grid container spacing={2}>
+                            {job.nodes.map((node) => (
+                              <Grid item xs={12} sm={6} md={4} key={node.alias}>
+                                <Paper elevation={1} sx={{ p: 2, position: "relative", bgcolor: "grey.800" }}>
+                                  <Chip
+                                    label={node.status || "unknown"}
+                                    color={getStatusColor(node.status)}
+                                    size="small"
+                                    sx={{ position: "absolute", top: 8, right: 8 }}
+                                  />
+                                  <Typography variant="body2" fontWeight="bold" color="grey.200">
+                                    {node.alias}
+                                  </Typography>
+                                  <Typography variant="caption" color="grey.400">
+                                    {node.lastUpdated
+                                      ? `Updated: ${new Date(node.lastUpdated).toLocaleString()}`
+                                      : "No timestamp"}
+                                  </Typography>
+                                  <Box
+                                    component="pre"
+                                    sx={{
+                                      bgcolor: "grey.900",
+                                      color: "grey.300",
+                                      p: 1,
+                                      borderRadius: 1,
+                                      maxHeight: 120,
+                                      overflow: "auto",
+                                      fontSize: "0.75rem",
+                                      mt: 1,
+                                      whiteSpace: "pre-wrap",     // Ensures content wraps to the next line
+                                      wordWrap: "break-word",     // Breaks long words/strings properly
+                                    }}
+                                  >
+                                    {node.output ? JSON.stringify(JSON.parse(node.output), null, 2) : "No output"}
+                                  </Box>
+                                </Paper>
+                              </Grid>
+                            ))}
+                          </Grid>
+                        ) : (
+                          <Typography variant="body2" color="grey.400">
+                            No node outputs available.
+                          </Typography>
+                        )}
+                      </Box>
+                    </Collapse>
+                  </TableCell>
+                </TableRow>
               </>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       ) : (
-        <p className="text-gray-400 text-sm">No jobs found for this agent.</p>
+        <Typography variant="body2" color="grey.400">
+          No jobs found for this agent.
+        </Typography>
       )}
-    </div>
+    </Paper>
   );
 }
