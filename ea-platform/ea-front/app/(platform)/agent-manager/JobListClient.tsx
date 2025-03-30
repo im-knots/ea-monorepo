@@ -1,20 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-  Paper,
-  Collapse,
-  Box,
-  Grid,
-  Chip,
-  IconButton,
+  Button, Table, TableBody, TableCell, TableHead, TableRow,
+  Typography, Paper, Collapse, Box, Grid, Chip, IconButton
 } from "@mui/material";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
@@ -49,8 +38,17 @@ export default function JobListClient({
   const [jobs] = useState<Job[]>(initialJobs);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const storedExpandedJob = sessionStorage.getItem(`expanded-job-${agentId}`);
+    setExpandedJobId(storedExpandedJob || null);
+  }, [agentId]);
+
   const handleExpand = (jobId: string) => {
-    setExpandedJobId(expandedJobId === jobId ? null : jobId);
+    setExpandedJobId((prev) => {
+      const newId = prev === jobId ? null : jobId;
+      sessionStorage.setItem(`expanded-job-${agentId}`, newId || "");
+      return newId;
+    });
   };
 
   const getStatusColor = (
@@ -105,10 +103,7 @@ export default function JobListClient({
                       {expandedJobId === job.id ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
                     </IconButton>
                   </TableCell>
-                  <TableCell
-                    onClick={() => handleExpand(job.id)}
-                    sx={{ cursor: "pointer", fontWeight: "medium" }}
-                  >
+                  <TableCell onClick={() => handleExpand(job.id)} sx={{ cursor: "pointer", fontWeight: "medium" }}>
                     {job.job_name}
                   </TableCell>
                   <TableCell>{new Date(job.created_time).toLocaleString()}</TableCell>
@@ -142,25 +137,20 @@ export default function JobListClient({
                                     {node.alias}
                                   </Typography>
                                   <Typography variant="caption" color="grey.400">
-                                    {node.lastUpdated
-                                      ? `Updated: ${new Date(node.lastUpdated).toLocaleString()}`
-                                      : "No timestamp"}
+                                    {node.lastUpdated ? `Updated: ${new Date(node.lastUpdated).toLocaleString()}` : "No timestamp"}
                                   </Typography>
-                                  <Box
-                                    component="pre"
-                                    sx={{
-                                      bgcolor: "grey.900",
-                                      color: "grey.300",
-                                      p: 1,
-                                      borderRadius: 1,
-                                      maxHeight: 120,
-                                      overflow: "auto",
-                                      fontSize: "0.75rem",
-                                      mt: 1,
-                                      whiteSpace: "pre-wrap",     // Ensures content wraps to the next line
-                                      wordWrap: "break-word",     // Breaks long words/strings properly
-                                    }}
-                                  >
+                                  <Box component="pre" sx={{
+                                    bgcolor: "grey.900",
+                                    color: "grey.300",
+                                    p: 1,
+                                    borderRadius: 1,
+                                    maxHeight: 120,
+                                    overflow: "auto",
+                                    fontSize: "0.75rem",
+                                    mt: 1,
+                                    whiteSpace: "pre-wrap",
+                                    wordWrap: "break-word",
+                                  }}>
                                     {node.output ? JSON.stringify(JSON.parse(node.output), null, 2) : "No output"}
                                   </Box>
                                 </Paper>
@@ -168,9 +158,7 @@ export default function JobListClient({
                             ))}
                           </Grid>
                         ) : (
-                          <Typography variant="body2" color="grey.400">
-                            No node outputs available.
-                          </Typography>
+                          <Typography variant="body2" color="grey.400">No node outputs available.</Typography>
                         )}
                       </Box>
                     </Collapse>
@@ -181,9 +169,7 @@ export default function JobListClient({
           </TableBody>
         </Table>
       ) : (
-        <Typography variant="body2" color="grey.400">
-          No jobs found for this agent.
-        </Typography>
+        <Typography variant="body2" color="grey.400">No jobs found for this agent.</Typography>
       )}
     </Paper>
   );

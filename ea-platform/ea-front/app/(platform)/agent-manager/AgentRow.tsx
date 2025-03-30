@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import JobListClient from "./JobListClient";
 import { startAgentJob, deleteAgent } from "./AgentActions";
 import { Button, TableCell, TableRow, Collapse, Box } from "@mui/material";
@@ -11,10 +11,24 @@ export default function AgentRow({ agent, userId, initialJobs }: { agent: any; u
   const [isStarting, startTransition] = useTransition();
   const [isDeleting, deleteTransition] = useTransition();
 
+  useEffect(() => {
+    const storedExpanded = sessionStorage.getItem(`agent-expanded-${agent.id}`);
+    setExpanded(storedExpanded === "true");
+  }, [agent.id]);
+
+  const handleExpandToggle = () => {
+    setExpanded((prev) => {
+      const newVal = !prev;
+      sessionStorage.setItem(`agent-expanded-${agent.id}`, newVal.toString());
+      return newVal;
+    });
+  };
+
   const handleStart = () => {
     startTransition(async () => {
       await startAgentJob(agent.id, userId);
       setExpanded(true);
+      sessionStorage.setItem(`agent-expanded-${agent.id}`, "true");
     });
   };
 
@@ -27,7 +41,7 @@ export default function AgentRow({ agent, userId, initialJobs }: { agent: any; u
 
   return (
     <>
-      <TableRow hover sx={{ cursor: "pointer" }} onClick={() => setExpanded(!expanded)}>
+      <TableRow hover sx={{ cursor: "pointer" }} onClick={handleExpandToggle}>
         <TableCell>{agent.name}</TableCell>
         <TableCell align="center">{agent.nodes.length}</TableCell>
         <TableCell align="center">{agent.jobCount}</TableCell>
