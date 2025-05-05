@@ -34,7 +34,6 @@ Core features of the Ea Platform are:
 |  | [ea-job-operator](ea-platform/ea-job-operator/README.md) | Operator to process agent jobs |
 |  | [ea-job-executor](ea-platform/ea-job-executor/README.md) | Executor for executing agent jobs |
 |  | [ea-job-utils](ea-platform/ea-job-utils/README.md) | utilities API for in house node functionality |
-| **Ainulindale Client Software** | [Ainulindale Clients](ainulindale-client/README.md) | Distributed compute client for AI workloads |
 | **Infrastructure & Deployment** | [infra](infra/README.md) | Terraform configurations for local and cloud deployments |
 | **Documentation** | [diagrams](docs/diagrams/README.md) | Diagrams managed as code |
 
