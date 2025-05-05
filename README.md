@@ -13,8 +13,6 @@ A monorepo for all things the ea platform
 Core features of the Ea Platform are:
 - A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with their own APIs or 3rd parties. 
 - A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
-- A marketplace for users to buy and sell Agent workflows, datasets, or their earned compute credits 
-- Leaderboards and gamification challenges for users to show off and earn more compute credits by completing challenges and gaining ranks
 - Dataset storage for users models, datasets, outputs, ect
 
 ## UI Screenshots
