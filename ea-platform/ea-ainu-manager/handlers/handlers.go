@@ -62,40 +62,32 @@ func HandleGetAllUsers(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// 🔹 Allow internal services to bypass restrictions
-	if authenticatedUserID == "internal" {
-		logger.Slog.Info("Internal service access granted")
-	} else {
-		// 🔹 Extract optional requested user ID from query params
+	// Allow internal services to bypass restrictions
+	if authenticatedUserID != "internal" {
 		requestedUserID := c.Query("user_id")
-
-		// 🔹 Enforce access control for non-internal users:
-		// - If `user_id` is provided, ensure it matches the authenticated user.
-		// - Otherwise, default to fetching the authenticated user's data.
 		if requestedUserID != "" && requestedUserID != authenticatedUserID {
 			logger.Slog.Error("User spoofing attempt detected", "authenticated", authenticatedUserID, "requested", requestedUserID)
-			metrics.StepCounter.WithLabelValues(path, "user_spoofing_attempt", "failure").Inc()
-			c.JSON(http.StatusForbidden, gin.H{"error": "User ID does not match authenticated user"})
+			metrics.StepCounter.WithLabelValues(path, "spoof_attempt", "failure").Inc()
+			c.JSON(http.StatusForbidden, gin.H{"error": "User spoofing attempt detected"})
 			return
 		}
 	}
 
-	// 🔹 Define which fields to return
+	// Define fields to return
 	projection := bson.M{"name": 1, "id": 1, "_id": 0}
 
 	users, err := dbClient.FindRecordsWithProjection("ainuUsers", "users", bson.M{}, projection)
 	if err != nil {
-		metrics.StepCounter.WithLabelValues(path, "db_retrieval_error", "error").Inc()
 		logger.Slog.Error("Failed to retrieve users", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve users"})
+		metrics.StepCounter.WithLabelValues(path, "retrieval_error", "failure").Inc()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
 		return
 	}
 
@@ -109,10 +101,9 @@ func HandleGetUser(c *gin.Context) {
 	userID := c.Param("user_id")
 	metrics.StepCounter.WithLabelValues(path, "get_user", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -152,10 +143,9 @@ func HandleAddComputeDevice(c *gin.Context) {
 	userID := c.Param("user_id")
 	metrics.StepCounter.WithLabelValues(path, "add_device", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -217,10 +207,9 @@ func HandleDeleteComputeDevice(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues(path, "delete_device", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -326,10 +315,9 @@ func HandleAddJob(c *gin.Context) {
 	userID := c.Param("user_id")
 	metrics.StepCounter.WithLabelValues(path, "add_job", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -396,10 +384,9 @@ func HandleDeleteJob(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues(path, "delete_job", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -505,12 +492,10 @@ func HandleUpdateComputeCredits(c *gin.Context) {
 
 	metrics.StepCounter.WithLabelValues(path, "update_credits", "request").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
-	if authenticatedUserID != "internal" {
-		logger.Slog.Error("Unauthorized attempt to update compute credits", "authenticated", authenticatedUserID, "user_id", userID)
-		metrics.StepCounter.WithLabelValues(path, "unauthorized_access_attempt", "failure").Inc()
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
+	if authenticatedUserID == "" {
+		logger.Slog.Error("Authenticated user ID missing in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 

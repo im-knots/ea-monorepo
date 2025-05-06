@@ -65,6 +65,10 @@ spec:
                   key: {{ $key | quote }}
             {{- end }}
             {{- end }}
+          volumeMounts:
+            - name: jwks-secret
+              mountPath: /app/jwks
+              readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -77,3 +81,7 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        - name: jwks-secret
+          secret:
+            secretName: {{ .Values.jwks.fromSecret }}

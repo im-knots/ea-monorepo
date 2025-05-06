@@ -35,19 +35,13 @@ Provide the required environment variables, with examples available in `.env.exa
 ```
 $ cp .env.example .env
 $ cat .env
-DATABASE_URL="postgresql://admin:password@localhost:5432/ea?schema=public"
-JWT_SECRET=super-secret
+MONGO_URI=mongodb://admin:password@localhost:27017/
 ```
 
-Run Prisma migrations to prepare your PostgreSQL instance, then run the project:
+Generate JWKS keys, then run the project:
 
 ```
-$ npx prisma migrate dev
-Environment variables loaded from .env
-Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "ea", schema "public" at "localhost:5432"
-...
-
+$ pnpm run generateKeys
 $ pnpm run dev
 > ea-front@1.0.0 dev
 > next dev --turbopack

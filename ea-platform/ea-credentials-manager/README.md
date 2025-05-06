@@ -17,7 +17,7 @@ POST /api/v1/credentials
 
 ### Request Headers
 
-- **`X-Consumer-Username`** *(Required)*: The user identifier injected by the API gateway (Kong).
+- **`X-Ea-Internal`** *(optional)*: The internal user header for services communicating behind the istio gateway.
 
 ### Request Body
 
@@ -35,7 +35,7 @@ Provide credentials as key-value pairs in a JSON object:
 ```bash
 curl -X POST http://<service-url>/api/v1/credentials \
 -H 'Content-Type: application/json' \
--H 'X-Consumer-Username: user123' \
+-H 'X-Ea-Internal: internal' \
 -d '{"api_key": "abcd1234", "secret_token": "secret9876"}'
 ```
 
@@ -80,7 +80,7 @@ curl -X POST http://<service-url>/api/v1/credentials \
 ## How it Works
 
 Upon receiving a valid request, the service:
-1. Retrieves the `X-Consumer-Username` header to identify the user.
+1. Retrieves the `X-Ea-Internal` header to identify an internal user or the `Authorization` header and JWT to identify the user.
 2. Parses and base64 encodes the provided credentials.
 3. Uses Kubernetes API to securely PATCH the corresponding secret in the `ea-platform` namespace.
 

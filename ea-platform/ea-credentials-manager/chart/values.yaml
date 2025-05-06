@@ -50,7 +50,8 @@ rbac:
 
 podAnnotations: {}
 
-podLabels: {}
+podLabels: 
+ jwt: "true"
 
 service:
   type: ClusterIP
@@ -59,16 +60,20 @@ service:
 networkPolicy:
   enabled: true  # Enforce in cluster network traffic controlls for the deployement
 
-ingress:
+gateway:
   enabled: true
-  className: "kong"
-  annotations: 
-    konghq.com/strip-path: 'true'
-    konghq.com/plugins: global-jwt-auth, global-cors 
+  name: ea-gateway
+  host: api.erulabs.local
+  pathPrefix: /credentials-manager
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
   hosts:
-    - host: 
+    - host: credentiaals-manager.ea.erulabs.local
       paths: 
-        - path: /credentials-manager
+        - path: /
           pathType: ImplementationSpecific
 
 livenessProbe:

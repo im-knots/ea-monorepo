@@ -1,41 +1,39 @@
 #!/bin/bash
 
-# Directory containing the payload files
+# Check if JWT_TOKEN environment variable is set
+if [ -z "$JWT_TOKEN" ]; then
+  echo "Error: JWT_TOKEN environment variable not set"
+  exit 1
+fi
+
+# Extract user ID from JWT (sub claim)
+USER_ID=$(echo "$JWT_TOKEN" | cut -d '.' -f2 | base64 -d 2>/dev/null | jq -r '.sub')
+
+# Validate extracted user ID
+if [[ -z "$USER_ID" || "$USER_ID" == "null" ]]; then
+  echo "Error: Unable to extract user ID from JWT token"
+  exit 1
+fi
+
+echo "Authenticated user ID: $USER_ID"
+
+# Directory containing payload files
 PAYLOAD_DIR="smoke/payloads"
 
-# API Endpoints
-AGENT_ENDPOINT="http://api.ea.erulabs.local/agent-manager/api/v1/nodes"
-AINU_URL="http://api.ea.erulabs.local/ainu-manager/api/v1/users"
+# API Endpoint (user-specific nodes)
+AGENT_ENDPOINT="http://api.erulabs.local/agent-manager/api/v1/nodes"
 
-# Check if JWT_TOKEN is set
-if [[ -z "$JWT_TOKEN" ]]; then
-    echo "Error: JWT_TOKEN environment variable is not set."
-    exit 1
-fi
-
-# Fetch users from AINU manager
-AINU_RESPONSE=$(curl -s -H "Authorization: Bearer $JWT_TOKEN" "$AINU_URL")
-echo $AINU_RESPONSE
-
-# Extract the first user ID
-FIRST_USER_ID=$(echo "$AINU_RESPONSE" | jq -r '.[0].id')
-
-if [[ -z "$FIRST_USER_ID" || "$FIRST_USER_ID" == "null" ]]; then
-    echo "Error: Unable to fetch a valid creator ID."
-    exit 1
-fi
-
-# Iterate through matching files in the payload directory
+# Iterate through matching payload files
 for file in "$PAYLOAD_DIR"/*create-node*.json; do
     if [[ -f "$file" ]]; then
         echo "Processing file: $file"
 
-        # Inject creatorID into the JSON payload
-        MODIFIED_PAYLOAD=$(jq --arg creatorID "$FIRST_USER_ID" '.creator = $creatorID' "$file")
+        # Inject creatorID (authenticated user ID) into payload
+        MODIFIED_PAYLOAD=$(jq --arg creatorID "$USER_ID" '.creator = $creatorID' "$file")
 
-        echo "Posting payload with creatorID: $FIRST_USER_ID"
+        echo "Posting payload with creatorID: $USER_ID"
 
-        # Send the modified payload to the API with Authorization header
+        # Post payload to API endpoint
         curl -X POST "$AGENT_ENDPOINT" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $JWT_TOKEN" \
@@ -45,3 +43,4 @@ for file in "$PAYLOAD_DIR"/*create-node*.json; do
         echo "No matching files found in $PAYLOAD_DIR."
     fi
 done
+echo ""

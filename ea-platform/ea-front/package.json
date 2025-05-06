@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A NextJS Front-end client for all things EruLabs",
   "scripts": {
+    "generateKeys": "node ./scripts/generateKeys.mjs",
     "test": "jest",
     "build": "next build",
     "dev": "next dev --turbopack",

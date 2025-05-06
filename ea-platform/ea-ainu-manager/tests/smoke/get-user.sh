@@ -1,26 +1,29 @@
 #!/bin/bash
 
-# API Endpoint
-API_ENDPOINT="http://api.ea.erulabs.local/ainu-manager/api/v1/users"
-
-# Get all users
-ALL_USERS=$(curl -s "$API_ENDPOINT")
-
-# Extract the first `_id` from the response
-FIRST_USER_ID=$(echo "$ALL_USERS" | jq -r '.[0].id')
-
-# Check if an ID was found
-if [ -z "$FIRST_USER_ID" ] || [ "$FIRST_USER_ID" == "null" ]; then
-  echo "Error: No users found or unable to extract id"
+# Verify JWT_TOKEN is set
+if [ -z "$JWT_TOKEN" ]; then
+  echo "Error: JWT_TOKEN environment variable not set"
   exit 1
 fi
 
-echo "First user id: $FIRST_USER_ID"
+# Extract user ID from JWT sub claim
+USER_ID=$(echo "$JWT_TOKEN" | cut -d '.' -f2 | base64 -d 2>/dev/null | jq -r '.sub')
 
-# Fetch the specific user by id
-echo "Fetching user with id: $FIRST_USER_ID"
-SPECIFIC_USER=$(curl -s "$API_ENDPOINT/$FIRST_USER_ID")
+# Validate extracted user ID
+if [ -z "$USER_ID" ] || [ "$USER_ID" == "null" ]; then
+  echo "Error: Unable to extract user ID from JWT token"
+  exit 1
+fi
 
-# Output the specific user's details
-echo "Specific User Details:"
-echo "$SPECIFIC_USER"
+echo "Authenticated user ID: $USER_ID"
+
+# API Endpoint for retrieving authenticated user's data
+API_ENDPOINT="http://api.erulabs.local/ainu-manager/api/v1/users/$USER_ID"
+
+# Fetch authenticated user's data
+echo "Fetching user data..."
+USER_DATA=$(curl -s "$API_ENDPOINT" -H "Authorization: Bearer $JWT_TOKEN")
+
+# Output the retrieved user details
+echo "User details:"
+echo "$USER_DATA" | jq .

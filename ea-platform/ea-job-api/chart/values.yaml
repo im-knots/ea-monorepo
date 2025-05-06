@@ -9,7 +9,7 @@ nameOverride: ""
 fullnameOverride: ""
 
 config:
-  AGENT_MANAGER_URL: http://ea-agent-manager.ea-platform.svc.cluster.local:8080/api/v1/agents/
+  AGENT_MANAGER_URL: http://ea-agent-manager-ea-agent-manager-chart.ea-platform.svc.cluster.local:8080/api/v1/agents/
   GIN_MODE: release
 
 secrets:
@@ -50,7 +50,8 @@ rbac:
 
 podAnnotations: {}
 
-podLabels: {}
+podLabels: 
+ jwt: "true"
 
 service:
   type: ClusterIP
@@ -59,16 +60,20 @@ service:
 networkPolicy:
   enabled: true 
 
-ingress:
+gateway:
   enabled: true
-  className: "kong"
-  annotations:
-    konghq.com/strip-path: 'true'
-    konghq.com/plugins: global-jwt-auth, global-cors
+  name: ea-gateway
+  host: api.erulabs.local
+  pathPrefix: /job-api
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
   hosts:
-    - host: 
+    - host: job-api.ea.erulabs.local
       paths:
-        - path: /job-api
+        - path: /
           pathType: ImplementationSpecific
 
 livenessProbe:

@@ -20,6 +20,7 @@ locals {
   env          = "local"
   namespaces   = toset(["ea-platform", "eru-labs-brand"])
   gateway_host = "*.erulabs.local"
+  jwks_uri     = "http://ea-front-ea-front-chart.ea-platform.svc.cluster.local:8080"
   
   enable_sec_tooling = true
 }
@@ -36,9 +37,9 @@ provider "helm" {
   }
 }
 
-module "minikube" {
-  source = "../../../modules/minikube-setup"
-}
+# module "minikube" {
+#   source = "../../../modules/minikube-setup"
+# }
 
 module monitoring {
   source = "../../../modules/monitoring"
@@ -62,6 +63,7 @@ module "ea_gateway" {
   source       = "../../../modules/gateway"
   namespace    = "ea-platform"
   gateway_host = local.gateway_host
+  jwks_uri     = local.jwks_uri 
   depends_on   = [ module.k8s_namespace, module.istio ]
 }
 
