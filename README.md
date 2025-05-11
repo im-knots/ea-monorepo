@@ -11,7 +11,8 @@ A monorepo for all things the ea platform
 
 ## Core features
 Core features of the Ea Platform are:
-- A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with their own APIs or 3rd parties. 
+- A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with their own APIs or 3rd parties.
+- Low code json Schemas for defining Nodes and Agents.
 - A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
 - Dataset storage for users models, datasets, outputs, ect
 
