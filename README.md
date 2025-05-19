@@ -116,7 +116,7 @@ The script will update your /etc/hosts file and these domains should be avialabl
 
 | Domain | Description | 
 |----------|-----------|
-| api.ea.erulabs.local | The ea-platfor api gatewway |
+| api.erulabs.local | The ea-platform api gatewway |
 | ea.erulabs.local | The Ea frontend UI |
 | erulabs.local | The brand-frontend Eru Labs brand webpage |
 | grafana.erulabs.local | Grafana for visualizing system metric and log data |

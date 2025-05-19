@@ -22,11 +22,10 @@ const KUBERNETES_NAMESPACE = "ea-platform"
 
 // HandleAddCredential updates a user's Kubernetes secret using PATCH
 func HandleAddCredential(c *gin.Context) {
-	// Step 1: Extract `X-Consumer-Username` from the request headers (Injected by Kong)
-	userId := c.GetHeader("X-Consumer-Username")
+	userId := c.GetString("AuthenticatedUserID")
 	if userId == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: Missing X-Consumer-User header"})
+		logger.Slog.Error("Authenticated user ID missing in context")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 

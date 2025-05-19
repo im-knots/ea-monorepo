@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -117,6 +118,7 @@ func ExecuteAgentJob(filePath string) {
 
 	logger.Slog.Info("Execution completed successfully", "output", finalOutput)
 
+	shutdownIstioSidecar()
 	os.Exit(0)
 }
 
@@ -140,7 +142,7 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+	req.Header.Set("X-Ea-Internal", "internal") // Use internal header
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -173,7 +175,7 @@ func loadNodesLibrary(agentManagerURL string) (NodesLibrary, error) {
 		if err != nil {
 			return nil, err
 		}
-		req.Header.Set("X-Consumer-Username", "internal") // Use internal header
+		req.Header.Set("X-Ea-Internal", "internal") // Use internal header
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -842,4 +844,14 @@ func hasIncomingEdges(graph ExecutionGraph, nodeAlias string) bool {
 		}
 	}
 	return false
+}
+
+func shutdownIstioSidecar() {
+	resp, err := http.Post("http://localhost:15020/quitquitquit", "application/json", nil)
+	if err != nil {
+		logger.Slog.Error("Failed to shutdown Istio sidecar", "error", err)
+		return
+	}
+	defer resp.Body.Close()
+	log.Println("Istio sidecar shutdown initiated")
 }

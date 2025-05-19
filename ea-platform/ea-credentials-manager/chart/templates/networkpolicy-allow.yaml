@@ -20,8 +20,5 @@ spec:
               kubernetes.io/metadata.name: monitoring
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: kube-system
-        - namespaceSelector:
-            matchLabels:
-              kubernetes.io/metadata.name: kong          
+              kubernetes.io/metadata.name: kube-system      
 {{- end }}

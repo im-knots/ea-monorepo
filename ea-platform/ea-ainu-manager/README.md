@@ -47,12 +47,12 @@ All requests to this API coming into the cluster via the api gateway must includ
 Authorization: Bearer <YOUR JWT>
 ```
 
-Internal systems within the cluster (behind Kong) can access this service by providing
+Internal systems within the cluster (behind the istio gateway) can access this service by providing
 
 (**Note: network level access is restricted in the cluster via NetworkPolicies**)
 
 ```
-x-consumer-username: internal
+X-Ea-Internal: internal
 ```
 
 

@@ -113,10 +113,9 @@ func HandleCreateNodeDef(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Node definition creation request received")
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -164,10 +163,9 @@ func HandleGetAllNodeDefs(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -223,10 +221,9 @@ func HandleGetNodeDef(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -288,10 +285,9 @@ func HandleUpdateNodeDef(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -353,10 +349,9 @@ func HandleDeleteNodeDef(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract the authenticated user from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -407,10 +402,9 @@ func HandleCreateAgent(c *gin.Context) {
 	metrics.StepCounter.WithLabelValues(path, "api_request_start", "success").Inc()
 	logger.Slog.Info("Agent creation request received")
 
-	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -465,10 +459,9 @@ func HandleGetAllAgents(c *gin.Context) {
 	path := c.FullPath()
 	metrics.StepCounter.WithLabelValues(path, "api_hit", "success").Inc()
 
-	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -522,10 +515,9 @@ func HandleGetAgent(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -589,10 +581,9 @@ func HandleUpdateAgent(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -673,10 +664,9 @@ func HandleDeleteAgent(c *gin.Context) {
 		return
 	}
 
-	// 🔹 Extract authenticated user ID from Kong's `X-Consumer-Username` header
-	authenticatedUserID := c.GetHeader("X-Consumer-Username")
+	authenticatedUserID := c.GetString("AuthenticatedUserID")
 	if authenticatedUserID == "" {
-		logger.Slog.Error("Missing X-Consumer-Username header")
+		logger.Slog.Error("Authenticated user ID missing in context")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
