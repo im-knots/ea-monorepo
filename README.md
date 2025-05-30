@@ -11,10 +11,11 @@ A monorepo for all things the ea platform
 
 ## Core features
 Core features of the Ea Platform are:
-- A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with their own APIs or 3rd parties.
-- Low code json Schemas for defining Nodes and Agents.
-- A job engine that allows users to run Agent Workflows, Inference jobs, and Training jobs on the Ea network
-- Dataset storage for users models, datasets, outputs, ect
+- A Node based AI agent/workflow builder to allow users to build complex AI workflows integrated with Chatgpt, Grok, Claude, Gemini, and Ollama. As well as their own APIs or 3rd parties (such as Github, NOAA Weather API, etc) via a low code/no code json interface
+- A kubernetes native job engine that allows users to run Agent Workflows distributed across nodes
+- Deigned with kubernetes native patterns such as custom resources and operators. 
+- Implements platform scaling best practices.
+- Implements security best practices like JWT/JWKS auth, NetworkPolicy network segmentation, Istio Network control, and Kubernetes Gateway API.
 
 ## UI Screenshots
 ![Agent Builder UI Example](docs/screenshots/agent-builder.png)
